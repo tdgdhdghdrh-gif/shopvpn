@@ -77,6 +77,135 @@ function StatCard({ label, value, icon: Icon, color }: {
   )
 }
 
+/* ── Input field component (ต้องอยู่นอก component หลักเพื่อป้องกัน re-mount ทุก keystroke) ── */
+function InputField({ label, value, onChange, placeholder, icon: Icon, type = 'text', color = 'blue', hint, revealed, onToggleReveal }: {
+  label: string; value: string | number; onChange: (value: string | number) => void; placeholder: string;
+  icon: React.ElementType; type?: string; color?: string; hint?: string;
+  revealed?: boolean; onToggleReveal?: () => void;
+}) {
+  const isSecret = type === 'password'
+  const focusColor: Record<string, string> = {
+    blue: 'focus:border-blue-500/50', red: 'focus:border-red-500/50',
+    emerald: 'focus:border-emerald-500/50', indigo: 'focus:border-indigo-500/50',
+    purple: 'focus:border-purple-500/50',
+  }
+  const iconFocus: Record<string, string> = {
+    blue: 'group-focus-within:text-blue-400', red: 'group-focus-within:text-red-400',
+    emerald: 'group-focus-within:text-emerald-400', indigo: 'group-focus-within:text-indigo-400',
+    purple: 'group-focus-within:text-purple-400',
+  }
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">{label}</label>
+      <div className="relative group">
+        <Icon className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 ${iconFocus[color]} transition-colors`} />
+        <input
+          type={isSecret && !revealed ? 'password' : type === 'number' ? 'number' : 'text'}
+          min={type === 'number' ? 0 : undefined}
+          step={type === 'number' ? '0.5' : undefined}
+          value={value}
+          onChange={(e) => onChange(type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value)}
+          placeholder={placeholder}
+          className={`w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-11 pr-${isSecret ? '11' : '4'} py-3 text-sm text-white ${focusColor[color]} transition-all font-medium placeholder:text-zinc-700`}
+        />
+        {isSecret && onToggleReveal && (
+          <button
+            type="button"
+            onClick={onToggleReveal}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+          >
+            {revealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        )}
+      </div>
+      {hint && <p className="text-[10px] text-zinc-600 ml-0.5">{hint}</p>}
+    </div>
+  )
+}
+
+/* ── Image upload area component ── */
+function ImageUploadArea({ type, label, imgSrc, inputRef, onUpload, onRemove, uploading, maxW = 'max-w-[200px]', maxH = 'max-h-[100px]', areaW = 'w-full', areaH = 'h-[120px]' }: {
+  type: 'qr' | 'logo' | 'background'; label: string; imgSrc: string;
+  inputRef: React.RefObject<HTMLInputElement | null>; onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemove: () => void; uploading: boolean;
+  maxW?: string; maxH?: string; areaW?: string; areaH?: string
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">{label}</label>
+      {imgSrc ? (
+        <div className="relative group inline-block">
+          <div className={`${type === 'qr' ? 'bg-white' : 'bg-zinc-900'} rounded-xl ${type === 'qr' ? 'p-4' : 'p-2'} flex items-center justify-center overflow-hidden border border-white/[0.06] group-hover:border-purple-500/20 transition-all`}>
+            <img src={imgSrc} alt={label} className={`${maxW} ${maxH} object-contain`} />
+          </div>
+          <button
+            onClick={onRemove}
+            className="absolute -top-2 -right-2 w-7 h-7 bg-red-600 hover:bg-red-500 rounded-lg flex items-center justify-center text-white shadow-lg active:scale-90 transition-all"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          className={`group border-2 border-dashed border-white/[0.06] hover:border-purple-500/30 rounded-xl text-center cursor-pointer transition-all hover:bg-purple-500/[0.03] flex flex-col items-center justify-center gap-2 ${areaW} ${areaH}`}
+        >
+          {uploading ? (
+            <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+          ) : (
+            <>
+              <Upload className="w-5 h-5 text-zinc-600 group-hover:text-purple-400 transition-colors" />
+              <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">อัปโหลด</p>
+            </>
+          )}
+        </div>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" onChange={onUpload} className="hidden" />
+    </div>
+  )
+}
+
+/* ── Section card wrapper ── */
+function SectionCard({ id, title, desc, icon: Icon, color, mobileSection, onToggle, children }: {
+  id: string; title: string; desc: string; icon: React.ElementType; color: string;
+  mobileSection: string | null; onToggle: (id: string) => void; children: React.ReactNode
+}) {
+  const colorMap: Record<string, { icon: string; gradient: string }> = {
+    indigo: { icon: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20', gradient: 'from-indigo-500/5' },
+    blue: { icon: 'text-blue-400 bg-blue-500/10 border-blue-500/20', gradient: 'from-blue-500/5' },
+    emerald: { icon: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', gradient: 'from-emerald-500/5' },
+    red: { icon: 'text-red-400 bg-red-500/10 border-red-500/20', gradient: 'from-red-500/5' },
+    purple: { icon: 'text-purple-400 bg-purple-500/10 border-purple-500/20', gradient: 'from-purple-500/5' },
+  }
+  const c = colorMap[color] || colorMap.purple
+  const isOpen = mobileSection === id
+
+  return (
+    <div className="bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => onToggle(id)}
+        className="w-full p-5 sm:p-6 border-b border-white/5 bg-gradient-to-r to-transparent flex items-center gap-3 sm:gap-4 text-left sm:cursor-default"
+        style={{ backgroundImage: `linear-gradient(to right, var(--tw-gradient-from), transparent)` }}
+      >
+        <div className={`w-10 h-10 sm:w-11 sm:h-11 ${c.icon} border rounded-xl flex items-center justify-center shrink-0`}>
+          <Icon className="w-5 h-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">{title}</h3>
+          <p className="text-[11px] sm:text-xs text-zinc-500 font-medium truncate">{desc}</p>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-zinc-600 sm:hidden transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      <div className={`sm:block ${isOpen ? 'block' : 'hidden'}`}>
+        <div className="p-5 sm:p-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Settings>(INITIAL_SETTINGS)
   const [savedSettings, setSavedSettings] = useState<Settings>(INITIAL_SETTINGS)
@@ -245,134 +374,6 @@ export default function AdminSettingsPage() {
     )
   }
 
-  /* ── Shared input builder ── */
-  function InputField({ label, field, placeholder, icon: Icon, type = 'text', color = 'blue', hint }: {
-    label: string; field: keyof Settings; placeholder: string;
-    icon: React.ElementType; type?: string; color?: string; hint?: string
-  }) {
-    const isSecret = type === 'password'
-    const revealed = revealFields[field]
-    const focusColor: Record<string, string> = {
-      blue: 'focus:border-blue-500/50', red: 'focus:border-red-500/50',
-      emerald: 'focus:border-emerald-500/50', indigo: 'focus:border-indigo-500/50',
-      purple: 'focus:border-purple-500/50',
-    }
-    const iconFocus: Record<string, string> = {
-      blue: 'group-focus-within:text-blue-400', red: 'group-focus-within:text-red-400',
-      emerald: 'group-focus-within:text-emerald-400', indigo: 'group-focus-within:text-indigo-400',
-      purple: 'group-focus-within:text-purple-400',
-    }
-    return (
-      <div className="space-y-1.5">
-        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">{label}</label>
-        <div className="relative group">
-          <Icon className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 ${iconFocus[color]} transition-colors`} />
-          <input
-            type={isSecret && !revealed ? 'password' : type === 'number' ? 'number' : 'text'}
-            min={type === 'number' ? 0 : undefined}
-            step={type === 'number' ? '0.5' : undefined}
-            value={(settings as any)[field]}
-            onChange={(e) => updateField(field, type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value)}
-            placeholder={placeholder}
-            className={`w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-11 pr-${isSecret ? '11' : '4'} py-3 text-sm text-white ${focusColor[color]} transition-all font-medium placeholder:text-zinc-700`}
-          />
-          {isSecret && (
-            <button
-              type="button"
-              onClick={() => toggleReveal(field)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
-            >
-              {revealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          )}
-        </div>
-        {hint && <p className="text-[10px] text-zinc-600 ml-0.5">{hint}</p>}
-      </div>
-    )
-  }
-
-  /* ── Image upload area builder ── */
-  function ImageUploadArea({ type, label, imgSrc, inputRef, maxW = 'max-w-[200px]', maxH = 'max-h-[100px]', areaW = 'w-full', areaH = 'h-[120px]' }: {
-    type: 'qr' | 'logo' | 'background'; label: string; imgSrc: string;
-    inputRef: React.RefObject<HTMLInputElement | null>; maxW?: string; maxH?: string; areaW?: string; areaH?: string
-  }) {
-    return (
-      <div className="space-y-1.5">
-        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">{label}</label>
-        {imgSrc ? (
-          <div className="relative group inline-block">
-            <div className={`${type === 'qr' ? 'bg-white' : 'bg-zinc-900'} rounded-xl ${type === 'qr' ? 'p-4' : 'p-2'} flex items-center justify-center overflow-hidden border border-white/[0.06] group-hover:border-purple-500/20 transition-all`}>
-              <img src={imgSrc} alt={label} className={`${maxW} ${maxH} object-contain`} />
-            </div>
-            <button
-              onClick={() => removeImage(type)}
-              className="absolute -top-2 -right-2 w-7 h-7 bg-red-600 hover:bg-red-500 rounded-lg flex items-center justify-center text-white shadow-lg active:scale-90 transition-all"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ) : (
-          <div
-            onClick={() => inputRef.current?.click()}
-            className={`group border-2 border-dashed border-white/[0.06] hover:border-purple-500/30 rounded-xl text-center cursor-pointer transition-all hover:bg-purple-500/[0.03] flex flex-col items-center justify-center gap-2 ${areaW} ${areaH}`}
-          >
-            {uploading === type ? (
-              <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
-            ) : (
-              <>
-                <Upload className="w-5 h-5 text-zinc-600 group-hover:text-purple-400 transition-colors" />
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">อัปโหลด</p>
-              </>
-            )}
-          </div>
-        )}
-        <input ref={inputRef} type="file" accept="image/*" onChange={(e) => handleImageUpload(e, type)} className="hidden" />
-      </div>
-    )
-  }
-
-  /* ── Section card wrapper ── */
-  function SectionCard({ id, title, desc, icon: Icon, color, children }: {
-    id: string; title: string; desc: string; icon: React.ElementType; color: string; children: React.ReactNode
-  }) {
-    const colorMap: Record<string, { icon: string; gradient: string }> = {
-      indigo: { icon: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20', gradient: 'from-indigo-500/5' },
-      blue: { icon: 'text-blue-400 bg-blue-500/10 border-blue-500/20', gradient: 'from-blue-500/5' },
-      emerald: { icon: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', gradient: 'from-emerald-500/5' },
-      red: { icon: 'text-red-400 bg-red-500/10 border-red-500/20', gradient: 'from-red-500/5' },
-      purple: { icon: 'text-purple-400 bg-purple-500/10 border-purple-500/20', gradient: 'from-purple-500/5' },
-    }
-    const c = colorMap[color] || colorMap.purple
-    const isOpen = mobileSection === id
-
-    return (
-      <div className="bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden">
-        {/* Header - acts as accordion trigger on mobile */}
-        <button
-          type="button"
-          onClick={() => toggleMobileSection(id)}
-          className="w-full p-5 sm:p-6 border-b border-white/5 bg-gradient-to-r to-transparent flex items-center gap-3 sm:gap-4 text-left sm:cursor-default"
-          style={{ backgroundImage: `linear-gradient(to right, var(--tw-gradient-from), transparent)` }}
-        >
-          <div className={`w-10 h-10 sm:w-11 sm:h-11 ${c.icon} border rounded-xl flex items-center justify-center shrink-0`}>
-            <Icon className="w-5 h-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">{title}</h3>
-            <p className="text-[11px] sm:text-xs text-zinc-500 font-medium truncate">{desc}</p>
-          </div>
-          <ChevronDown className={`w-4 h-4 text-zinc-600 sm:hidden transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {/* Content - always visible on desktop, accordion on mobile */}
-        <div className={`sm:block ${isOpen ? 'block' : 'hidden'}`}>
-          <div className="p-5 sm:p-6">
-            {children}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6 sm:space-y-8 pb-28 sm:pb-12">
       {/* ── Toast ── */}
@@ -423,40 +424,40 @@ export default function AdminSettingsPage() {
         <div className="xl:col-span-2 space-y-5 sm:space-y-6">
 
           {/* Site Configuration */}
-          <SectionCard id="site" title="ตั้งค่าเว็บไซต์" desc="ชื่อเว็บ โลโก้ และพื้นหลัง" icon={Layout} color="indigo">
+          <SectionCard id="site" title="ตั้งค่าเว็บไซต์" desc="ชื่อเว็บ โลโก้ และพื้นหลัง" icon={Layout} color="indigo" mobileSection={mobileSection} onToggle={toggleMobileSection}>
             <div className="space-y-5">
-              <InputField label="ชื่อเว็บไซต์" field="siteName" placeholder="ชื่อเว็บไซต์ของคุณ" icon={Type} color="indigo" />
+              <InputField label="ชื่อเว็บไซต์" value={settings.siteName} onChange={(v) => updateField('siteName', v)} placeholder="ชื่อเว็บไซต์ของคุณ" icon={Type} color="indigo" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <ImageUploadArea type="logo" label="โลโก้เว็บไซต์" imgSrc={settings.siteLogo} inputRef={logoInputRef} />
-                <ImageUploadArea type="background" label="พื้นหลังเว็บไซต์" imgSrc={settings.backgroundImage} inputRef={bgInputRef} maxW="max-w-[300px]" maxH="max-h-[120px]" />
+                <ImageUploadArea type="logo" label="โลโก้เว็บไซต์" imgSrc={settings.siteLogo} inputRef={logoInputRef} onUpload={(e) => handleImageUpload(e, 'logo')} onRemove={() => removeImage('logo')} uploading={uploading === 'logo'} />
+                <ImageUploadArea type="background" label="พื้นหลังเว็บไซต์" imgSrc={settings.backgroundImage} inputRef={bgInputRef} onUpload={(e) => handleImageUpload(e, 'background')} onRemove={() => removeImage('background')} uploading={uploading === 'background'} maxW="max-w-[300px]" maxH="max-h-[120px]" />
               </div>
             </div>
           </SectionCard>
 
           {/* VPN Pricing */}
-          <SectionCard id="pricing" title="ตั้งค่าราคา VPN" desc="กำหนดราคาแพ็คเกจ VPN ได้เอง" icon={DollarSign} color="emerald">
+          <SectionCard id="pricing" title="ตั้งค่าราคา VPN" desc="กำหนดราคาแพ็คเกจ VPN ได้เอง" icon={DollarSign} color="emerald" mobileSection={mobileSection} onToggle={toggleMobileSection}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-              <InputField label="รายวัน (บาท)" field="vpnDailyPrice" placeholder="4" icon={DollarSign} type="number" color="emerald" />
-              <InputField label="รายสัปดาห์ (บาท)" field="vpnWeeklyPrice" placeholder="25" icon={DollarSign} type="number" color="emerald" />
-              <InputField label="รายเดือน (บาท)" field="vpnMonthlyPrice" placeholder="100" icon={DollarSign} type="number" color="emerald" />
+              <InputField label="รายวัน (บาท)" value={settings.vpnDailyPrice} onChange={(v) => updateField('vpnDailyPrice', v)} placeholder="4" icon={DollarSign} type="number" color="emerald" />
+              <InputField label="รายสัปดาห์ (บาท)" value={settings.vpnWeeklyPrice} onChange={(v) => updateField('vpnWeeklyPrice', v)} placeholder="25" icon={DollarSign} type="number" color="emerald" />
+              <InputField label="รายเดือน (บาท)" value={settings.vpnMonthlyPrice} onChange={(v) => updateField('vpnMonthlyPrice', v)} placeholder="100" icon={DollarSign} type="number" color="emerald" />
             </div>
           </SectionCard>
 
           {/* TrueMoney Wallet */}
-          <SectionCard id="truemoney" title="TrueMoney Wallet" desc="การประมวลผลวอชเชอร์และยอดเงินอัตโนมัติ" icon={Wallet} color="red">
+          <SectionCard id="truemoney" title="TrueMoney Wallet" desc="การประมวลผลวอชเชอร์และยอดเงินอัตโนมัติ" icon={Wallet} color="red" mobileSection={mobileSection} onToggle={toggleMobileSection}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-              <InputField label="เบอร์รับเงิน" field="truemoneyPhone" placeholder="08X-XXX-XXXX" icon={Phone} color="red" />
-              <InputField label="วอชเชอร์ API Token" field="truemoneyApiKey" placeholder="dx_xxxxxxxx" icon={Key} type="password" color="red" />
+              <InputField label="เบอร์รับเงิน" value={settings.truemoneyPhone} onChange={(v) => updateField('truemoneyPhone', v)} placeholder="08X-XXX-XXXX" icon={Phone} color="red" />
+              <InputField label="วอชเชอร์ API Token" value={settings.truemoneyApiKey} onChange={(v) => updateField('truemoneyApiKey', v)} placeholder="dx_xxxxxxxx" icon={Key} type="password" color="red" revealed={revealFields.truemoneyApiKey} onToggleReveal={() => toggleReveal('truemoneyApiKey')} />
             </div>
           </SectionCard>
 
           {/* Bank Slip Verification */}
-          <SectionCard id="slip" title="ระบบตรวจสอบสลิปธนาคาร" desc="การตรวจสอบ OCR และธุรกรรมแบบเรียลไทม์" icon={ScanLine} color="blue">
+          <SectionCard id="slip" title="ระบบตรวจสอบสลิปธนาคาร" desc="การตรวจสอบ OCR และธุรกรรมแบบเรียลไทม์" icon={ScanLine} color="blue" mobileSection={mobileSection} onToggle={toggleMobileSection}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-              <InputField label="Slip API Key" field="slipApiKey" placeholder="dx_xxxxxxxx" icon={Key} type="password" color="blue" />
-              <InputField label="ชื่อโปรไฟล์ผู้รับเงิน" field="bankReceiverName" placeholder="ระบุให้ตรงตามสลิป" icon={User} color="blue" />
+              <InputField label="Slip API Key" value={settings.slipApiKey} onChange={(v) => updateField('slipApiKey', v)} placeholder="dx_xxxxxxxx" icon={Key} type="password" color="blue" revealed={revealFields.slipApiKey} onToggleReveal={() => toggleReveal('slipApiKey')} />
+              <InputField label="ชื่อโปรไฟล์ผู้รับเงิน" value={settings.bankReceiverName} onChange={(v) => updateField('bankReceiverName', v)} placeholder="ระบุให้ตรงตามสลิป" icon={User} color="blue" />
               <div className="sm:col-span-2">
-                <InputField label="หมายเลขบัญชีปลายทาง" field="bankAccountNumber" placeholder="XXX-X-XXXXX-X" icon={Building2} color="blue" />
+                <InputField label="หมายเลขบัญชีปลายทาง" value={settings.bankAccountNumber} onChange={(v) => updateField('bankAccountNumber', v)} placeholder="XXX-X-XXXXX-X" icon={Building2} color="blue" />
               </div>
             </div>
           </SectionCard>
