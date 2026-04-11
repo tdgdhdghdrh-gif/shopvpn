@@ -6,6 +6,19 @@ import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
+// Helper: หา remote ที่ใช้ pull ได้ (codevpnshop > origin)
+async function getGitRemote(cwd: string): Promise<string> {
+  try {
+    const { stdout } = await execAsync('git remote', { cwd })
+    const remotes = stdout.trim().split('\n').map(r => r.trim())
+    if (remotes.includes('codevpnshop')) return 'codevpnshop'
+    if (remotes.includes('origin')) return 'origin'
+    return remotes[0] || 'origin'
+  } catch {
+    return 'origin'
+  }
+}
+
 // POST - Pull latest code, install deps, build, restart
 export async function POST(request: NextRequest) {
   try {
@@ -30,6 +43,7 @@ export async function POST(request: NextRequest) {
       logs.push(`[${step}] ${output.trim()}`)
     }
     const startTime = Date.now()
+    const remote = await getGitRemote(projectDir)
 
     // บันทึก commit ก่อนอัพเดท
     let commitBefore = ''
@@ -38,13 +52,13 @@ export async function POST(request: NextRequest) {
       commitBefore = stdout.trim()
     } catch {}
 
-    // Step 1: Git pull from codevpnshop
+    // Step 1: Git pull
     try {
-      const { stdout, stderr } = await execAsync('git pull codevpnshop main', {
+      const { stdout, stderr } = await execAsync(`git pull ${remote} main`, {
         cwd: projectDir,
         timeout: 60000,
       })
-      addLog('GIT PULL', stdout || stderr || 'Done')
+      addLog('GIT PULL', `[${remote}] ${stdout || stderr || 'Done'}`)
     } catch (err: any) {
       addLog('GIT PULL ERROR', err.message || String(err))
       await saveUpdateLog({
@@ -237,9 +251,10 @@ export async function GET(request: NextRequest) {
     // Check for updates
     let hasUpdates = false
     let remoteCommit = ''
+    const remote = await getGitRemote(projectDir)
     try {
-      await execAsync('git fetch codevpnshop main', { cwd: projectDir, timeout: 15000 })
-      const { stdout: diff } = await execAsync('git log HEAD..codevpnshop/main --oneline', { cwd: projectDir })
+      await execAsync(`git fetch ${remote} main`, { cwd: projectDir, timeout: 15000 })
+      const { stdout: diff } = await execAsync(`git log HEAD..${remote}/main --oneline`, { cwd: projectDir })
       hasUpdates = diff.trim().length > 0
       remoteCommit = diff.trim()
     } catch {}
