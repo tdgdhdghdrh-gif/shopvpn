@@ -298,7 +298,8 @@ export default function AdminSettingsPage() {
         setSavedSettings({ ...settings })
         setMessage({ type: 'success', text: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' })
       } else {
-        setMessage({ type: 'error', text: data.error || 'การบันทึกล้มเหลว' })
+        const detail = data.detail ? ` (${data.detail})` : ''
+        setMessage({ type: 'error', text: (data.error || 'การบันทึกล้มเหลว') + detail })
       }
     } catch {
       setMessage({ type: 'error', text: 'การเชื่อมต่อล้มเหลว' })

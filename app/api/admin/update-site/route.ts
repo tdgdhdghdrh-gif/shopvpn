@@ -111,6 +111,17 @@ export async function POST(request: NextRequest) {
       addLog('PRISMA GENERATE WARNING', err.message?.slice(-300) || String(err))
     }
 
+    // Step 3.5: Prisma db push (sync new schema fields to database)
+    try {
+      const { stdout, stderr } = await execAsync('npx prisma db push --skip-generate --accept-data-loss', {
+        cwd: projectDir,
+        timeout: 60000,
+      })
+      addLog('PRISMA DB PUSH', stdout?.slice(-300) || stderr?.slice(-300) || 'Done')
+    } catch (err: any) {
+      addLog('PRISMA DB PUSH WARNING', err.message?.slice(-300) || String(err))
+    }
+
     // Step 4: Build
     try {
       const { stdout, stderr } = await execAsync('npx next build', {

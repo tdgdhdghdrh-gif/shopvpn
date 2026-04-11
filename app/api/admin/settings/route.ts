@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
+import { execSync } from 'child_process'
 
 // GET - Get settings
 export async function GET(request: NextRequest) {
@@ -21,7 +22,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Get or create settings
-    let settings = await prisma.settings.findFirst()
+    let settings = await prisma.settings.findFirst().catch(async (err: any) => {
+      // If findFirst fails due to missing columns, auto-migrate
+      const errMsg = err?.message || ''
+      if (errMsg.includes('column') || errMsg.includes('field') || errMsg.includes('does not exist')) {
+        console.log('Settings findFirst failed, attempting auto db push...')
+        try {
+          execSync('npx prisma db push --skip-generate --accept-data-loss', {
+            cwd: process.cwd(),
+            timeout: 30000,
+            stdio: 'pipe'
+          })
+          return prisma.settings.findFirst()
+        } catch {
+          return null
+        }
+      }
+      return null
+    })
     
     if (!settings) {
       settings = await prisma.settings.create({
@@ -75,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Get existing settings or create new
     let settings = await prisma.settings.findFirst()
     
-    const data = {
+    const data: Record<string, any> = {
       truemoneyPhone: body.truemoneyPhone || settings?.truemoneyPhone || '',
       truemoneyApiKey: body.truemoneyApiKey || settings?.truemoneyApiKey || '',
       slipApiKey: body.slipApiKey || settings?.slipApiKey || '',
@@ -113,19 +131,66 @@ export async function POST(request: NextRequest) {
       menuClickEffect: body.menuClickEffect !== undefined ? body.menuClickEffect : (settings?.menuClickEffect || 'none'),
       updatedAt: new Date()
     }
+
+    // Helper to save settings
+    async function doSave() {
+      if (settings) {
+        return prisma.settings.update({
+          where: { id: settings!.id },
+          data
+        })
+      } else {
+        return prisma.settings.create({ data })
+      }
+    }
     
-    if (settings) {
-      settings = await prisma.settings.update({
-        where: { id: settings.id },
-        data
-      })
-    } else {
-      settings = await prisma.settings.create({ data })
+    try {
+      settings = await doSave()
+    } catch (firstError: any) {
+      // If save fails (likely missing columns), auto-migrate DB schema and retry
+      const errMsg = firstError?.message || ''
+      if (errMsg.includes('Unknown arg') || errMsg.includes('column') || errMsg.includes('field')) {
+        console.log('Settings save failed, attempting auto db push...')
+        try {
+          execSync('npx prisma db push --skip-generate --accept-data-loss', {
+            cwd: process.cwd(),
+            timeout: 30000,
+            stdio: 'pipe'
+          })
+          console.log('Auto db push succeeded, retrying save...')
+          settings = await doSave()
+        } catch (pushError: any) {
+          console.error('Auto db push failed:', pushError?.message)
+          // Try saving with only core fields as last resort
+          const coreFields = [
+            'truemoneyPhone', 'truemoneyApiKey', 'slipApiKey', 'bankReceiverName',
+            'bankAccountNumber', 'qrCodeImage', 'siteName', 'siteLogo', 'backgroundImage',
+            'googleApiKey', 'vpnDailyPrice', 'vpnWeeklyPrice', 'vpnMonthlyPrice', 'updatedAt'
+          ]
+          const coreData: Record<string, any> = {}
+          for (const key of coreFields) {
+            if (data[key] !== undefined) coreData[key] = data[key]
+          }
+          try {
+            if (settings) {
+              settings = await prisma.settings.update({ where: { id: settings.id }, data: coreData })
+            } else {
+              settings = await prisma.settings.create({ data: coreData })
+            }
+          } catch (coreError: any) {
+            throw firstError // throw original error
+          }
+        }
+      } else {
+        throw firstError
+      }
     }
 
     return NextResponse.json({ success: true, settings })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to save settings:', error)
-    return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 })
+    // Return more detail so admin can diagnose
+    const detail = error?.meta?.cause || error?.message || ''
+    return NextResponse.json({ error: 'Failed to save settings', detail }, { status: 500 })
   }
 }
