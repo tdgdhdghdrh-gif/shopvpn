@@ -130,6 +130,8 @@ model Settings {
   globalAdLinkUrl     String?  // URL ลิงก์โฆษณา global (redirect หลังนับเวลา)
   globalAdDuration    Int      @default(5) // ระยะเวลาโฆษณา (วินาที)
   menuClickEffect     String   @default("none") // Menu click effect: none, ripple, glow, bounce, particle, shockwave, neon, slide, morphGlow, electricArc, hologram
+  licenseKey          String?  // License key สำหรับเช็คอายุเว็บ (ได้จากเว็บต้นทาง)
+  licenseApiUrl       String?  // URL ของเว็บต้นทาง เช่น https://simonvpn.darkx.shop
 }
 
 model VpnServer {
@@ -1089,9 +1091,15 @@ model SiteLicense {
   expiryDate  DateTime                        // วันหมดอายุ
   isActive    Boolean  @default(true)         // เปิด/ปิดใช้งาน
   note        String?                         // หมายเหตุ
+  serverIp    String?                         // IP ของ server ลูกค้า (บันทึกตอน activate)
+  domain      String?                         // Domain ของเว็บลูกค้า (บันทึกตอน activate)
+  activatedAt DateTime?                       // วันที่ activate
+  lastCheckAt DateTime?                       // วันที่เช็คล่าสุด
+  lastCheckIp String?                         // IP ที่เช็คล่าสุด
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([licenseKey])
   @@index([expiryDate])
+  @@index([serverIp])
 }
