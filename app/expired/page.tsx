@@ -1,14 +1,26 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ShieldX, Clock, Mail } from 'lucide-react'
+import { ShieldX, Clock, Mail, KeyRound, Loader2 } from 'lucide-react'
 
 export default function ExpiredPage() {
   const [mounted, setMounted] = useState(false)
+  const [resetting, setResetting] = useState(false)
   
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleResetKey = async () => {
+    setResetting(true)
+    try {
+      await fetch('/api/license/activate', { method: 'DELETE' })
+      window.location.href = '/setup'
+    } catch {
+      // ถ้า API ล้มเหลว ก็ redirect ไปหน้า setup เลย
+      window.location.href = '/setup'
+    }
+  }
 
   return (
     <div className="min-h-dvh bg-black flex items-center justify-center p-6">
@@ -56,16 +68,35 @@ export default function ExpiredPage() {
           </div>
         </div>
 
-        {/* Retry */}
-        <button
-          onClick={() => window.location.href = '/'}
-          className="px-6 py-3 bg-zinc-800/50 border border-white/10 rounded-xl text-sm font-bold text-zinc-400 hover:text-white hover:border-white/20 transition-all active:scale-95"
-        >
-          ลองใหม่อีกครั้ง
-        </button>
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => window.location.href = '/'}
+            className="px-6 py-3 bg-zinc-800/50 border border-white/10 rounded-xl text-sm font-bold text-zinc-400 hover:text-white hover:border-white/20 transition-all active:scale-95"
+          >
+            ลองใหม่อีกครั้ง
+          </button>
+          <button
+            onClick={handleResetKey}
+            disabled={resetting}
+            className="px-6 py-3 bg-violet-600/20 border border-violet-500/30 rounded-xl text-sm font-bold text-violet-400 hover:bg-violet-600/30 hover:border-violet-500/40 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {resetting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                กำลังรีเซ็ต...
+              </>
+            ) : (
+              <>
+                <KeyRound className="w-4 h-4" />
+                ใส่คีย์ใหม่
+              </>
+            )}
+          </button>
+        </div>
 
         <p className="mt-6 text-[11px] text-zinc-700">
-          หากคุณเพิ่งต่ออายุแล้ว กรุณารอ 5 นาที แล้วกด &quot;ลองใหม่อีกครั้ง&quot;
+          หากคุณเพิ่งต่ออายุแล้ว กรุณารอ 1 นาที แล้วกด &quot;ลองใหม่อีกครั้ง&quot;
         </p>
       </div>
     </div>

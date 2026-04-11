@@ -148,3 +148,42 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   }
 }
+
+// DELETE - ล้าง license key (ใช้เมื่อ key หมดอายุ/ถูกปิด ต้องการใส่ key ใหม่)
+export async function DELETE(request: NextRequest) {
+  try {
+    // ลบ license key ออกจาก DB
+    const settings = await prisma.settings.findFirst()
+    if (settings) {
+      await prisma.settings.update({
+        where: { id: settings.id },
+        data: {
+          licenseKey: null,
+          licenseApiUrl: null,
+        }
+      })
+    }
+
+    const res = NextResponse.json({ success: true, message: 'License key cleared' })
+
+    // ลบ cookies
+    res.cookies.set('license_key', '', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+    })
+    res.cookies.set('license_api_url', '', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+    })
+
+    return res
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: 'Internal error' }, { status: 500 })
+  }
+}
