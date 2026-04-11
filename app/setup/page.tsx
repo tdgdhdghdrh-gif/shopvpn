@@ -1,17 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Key, Loader2, CheckCircle2, XCircle, Shield, ArrowRight, Globe } from 'lucide-react'
 
 export default function SetupPage() {
   const [licenseKey, setLicenseKey] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState<{
     siteName: string
     expiryDate: string
     remaining: { text: string }
   } | null>(null)
+
+  // เช็คว่าเว็บนี้ต้อง setup จริงไหม ถ้าไม่ -> redirect ไปหน้าหลัก
+  useEffect(() => {
+    fetch('/api/license/activate')
+      .then(res => res.json())
+      .then(data => {
+        // ถ้ามี key แล้ว (activate แล้ว) หรือ ไม่มี apiUrl (เว็บต้นทาง) -> ไม่ต้อง setup
+        if (data.activated || !data.licenseApiUrl) {
+          window.location.href = '/'
+          return
+        }
+        setChecking(false)
+      })
+      .catch(() => {
+        // ถ้า error ก็ redirect ไปหน้าหลัก
+        window.location.href = '/'
+      })
+  }, [])
 
   const handleActivate = async () => {
     if (!licenseKey.trim()) {
@@ -52,6 +71,14 @@ export default function SetupPage() {
     }
     
     setLoading(false)
+  }
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+      </div>
+    )
   }
 
   if (success) {
