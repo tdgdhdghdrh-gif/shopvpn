@@ -2,6 +2,7 @@ import { getSession } from '@/lib/session'
 import { getVpnServers } from '@/lib/vpn-api'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { getSiteUrl } from '@/lib/server-utils'
 import Navbar from '@/components/Navbar'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 import PromoBannerCarousel from '@/components/PromoBannerCarousel'
@@ -694,10 +695,11 @@ export default async function HomePage() {
   // ดึง template จาก settings
   // =============================================
   const siteSettings = await prisma.settings.findFirst({
-    select: { landingTemplate: true, landingCustomHtml: true, siteName: true }
+    select: { landingTemplate: true, landingCustomHtml: true, siteName: true, siteLogo: true }
   })
   const landingTemplate = siteSettings?.landingTemplate || 'classic'
   const footerSiteName = siteSettings?.siteName || ''
+  const siteUrl = await getSiteUrl()
 
   // Render landing template ตาม setting
   const landingTemplateContent = (() => {
@@ -727,12 +729,12 @@ export default async function HomePage() {
       <PromoPopup />
 
       {/* JSON-LD Structured Data สำหรับ SEO */}
-      <OrganizationJsonLd />
-      <WebSiteJsonLd />
-      <SoftwareApplicationJsonLd />
-      <LocalBusinessJsonLd />
+      <OrganizationJsonLd siteUrl={siteUrl} siteName={footerSiteName} siteLogo={siteSettings?.siteLogo || undefined} />
+      <WebSiteJsonLd siteUrl={siteUrl} siteName={footerSiteName} siteLogo={siteSettings?.siteLogo || undefined} />
+      <SoftwareApplicationJsonLd siteName={footerSiteName} />
+      <LocalBusinessJsonLd siteUrl={siteUrl} siteName={footerSiteName} siteLogo={siteSettings?.siteLogo || undefined} />
       <BreadcrumbJsonLd items={[
-        { name: 'หน้าแรก', url: 'https://simonvpn.darkx.shop' },
+        { name: 'หน้าแรก', url: siteUrl },
       ]} />
       <FAQPageJsonLd faqs={[
         { question: 'VPN คืออะไร?', answer: 'VPN คือบริการ VPN (Virtual Private Network) ที่ช่วยเข้ารหัสการเชื่อมต่อของคุณ ทำให้ท่องเว็บได้ปลอดภัย เล่นเกมได้ลื่นไหล และเข้าถึงเนื้อหาที่ถูกบล็อกได้จากทั่วโลก ใช้โปรโตคอล VLESS + XTLS Reality ที่เร็วและปลอดภัยที่สุดในปัจจุบัน' },

@@ -1,5 +1,5 @@
-// SimonVPN Service Worker - PWA + Push Notifications
-const CACHE_NAME = 'simonvpn-v1'
+// VPN Shop Service Worker - PWA + Push Notifications
+const CACHE_NAME = 'vpnshop-v2'
 const OFFLINE_URL = '/'
 
 // Assets to cache for offline support
@@ -7,7 +7,6 @@ const PRECACHE_URLS = [
   '/',
   '/icon-192x192.png',
   '/icon-512x512.png',
-  '/manifest.json',
 ]
 
 // Install event - cache essential assets
@@ -65,7 +64,7 @@ self.addEventListener('fetch', (event) => {
 
 // Push notification event - this fires when server sends push
 self.addEventListener('push', (event) => {
-  let data = { title: 'SimonVPN', body: 'คุณมีการแจ้งเตือนใหม่', icon: '/icon-192x192.png' }
+  let data = { title: 'VPN Shop', body: 'คุณมีการแจ้งเตือนใหม่', icon: '/icon-192x192.png' }
   
   try {
     if (event.data) {
@@ -82,7 +81,7 @@ self.addEventListener('push', (event) => {
     icon: data.icon || '/icon-192x192.png',
     badge: '/icon-192x192.png',
     image: data.image || undefined,
-    tag: data.tag || 'simonvpn-notification',
+    tag: data.tag || 'vpnshop-notification',
     renotify: true,
     requireInteraction: data.requireInteraction || false,
     data: {
@@ -94,7 +93,7 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'SimonVPN', options)
+    self.registration.showNotification(data.title || 'VPN Shop', options)
   )
 })
 

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { prisma } from "@/lib/prisma";
+import { getSiteUrl } from "@/lib/server-utils";
 import ChunkErrorHandler from "@/components/ChunkErrorHandler";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SettingsProvider } from "@/components/SettingsProvider";
@@ -19,9 +21,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = 'https://simonvpn.darkx.shop'
-const SITE_NAME = ''
-const SITE_DESCRIPTION = 'บริการ VPN ความเร็วสูง เน็ตแรง เสถียร ไม่หลุดง่าย เล่นเกมลื่น ปิงต่ำ ไม่ดีเลย์ ดู YouTube Netflix 4K ไม่กระตุก รองรับ AIS TRUE DTAC ทดลองใช้ฟรี'
+const DEFAULT_DESCRIPTION = 'บริการ VPN ความเร็วสูง เน็ตแรง เสถียร ไม่หลุดง่าย เล่นเกมลื่น ปิงต่ำ ไม่ดีเลย์ ดู YouTube Netflix 4K ไม่กระตุก รองรับ AIS TRUE DTAC ทดลองใช้ฟรี'
 
 export const viewport: Viewport = {
   themeColor: '#000000',
@@ -31,98 +31,118 @@ export const viewport: Viewport = {
   userScalable: true,
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: 'บริการ VPN ความเร็วสูง เน็ตแรง เสถียร เล่นเกมลื่น',
-    template: '%s',
-  },
-  description: SITE_DESCRIPTION,
-  keywords: [
-    'VPN', 'เน็ต VPN', 'VPN ไทย', 'VPN ราคาถูก',
-    'เน็ตแรง', 'เน็ตเสถียร', 'VPN เล่นเกม', 'VPN ดูหนัง', 'VPN Netflix',
-    'VPN YouTube', 'VPN AIS', 'VPN TRUE', 'VPN DTAC', 'X2BOX', 'VLESS',
-    'VPN ความเร็วสูง', 'VPN ปิงต่ำ', 'VPN เกม ROV', 'VPN เกม PUBG',
-    'ทดลองใช้ VPN ฟรี', 'VPN ไม่จำกัด', 'VPN รายเดือน',
-    'VPN v2rayNG', 'VPN V2Box', 'VPN iOS', 'VPN Android',
-    'เน็ตบ้านแรง', 'เน็ตมือถือแรง', 'VPN ไม่หลุด', 'VPN เสถียร',
-    'ซื้อ VPN', 'VPN ราคาถูก 50 บาท', 'VPN 100 บาท',
-  ],
-  authors: [{ name: SITE_NAME, url: SITE_URL }],
-  creator: SITE_NAME,
-  publisher: SITE_NAME,
-  manifest: '/manifest.json',
-  category: 'technology',
-  classification: 'VPN Service',
-  referrer: 'origin-when-cross-origin',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  alternates: {
-    canonical: SITE_URL,
-    languages: {
-      'th-TH': SITE_URL,
+// Helper: ดึง settings จาก DB
+async function getSettings() {
+  try {
+    const settings = await prisma.settings.findFirst({
+      select: { siteName: true, siteLogo: true, appLogo: true },
+    })
+    return settings
+  } catch {
+    return null
+  }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [siteUrl, settings] = await Promise.all([getSiteUrl(), getSettings()])
+
+  const siteName = settings?.siteName || ''
+  const appLogo = settings?.appLogo || ''
+  const defaultTitle = siteName
+    ? `${siteName} - บริการ VPN ความเร็วสูง`
+    : 'บริการ VPN ความเร็วสูง เน็ตแรง เสถียร เล่นเกมลื่น'
+
+  const iconUrl = appLogo || '/icon-192x192.png'
+  const iconUrl512 = appLogo || '/icon-512x512.png'
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: defaultTitle,
+      template: '%s',
     },
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'VPN',
-  },
-  other: {
-    'mobile-web-app-capable': 'yes',
-    'google': 'notranslate',
-  },
-  openGraph: {
-    title: 'บริการ VPN ความเร็วสูง เน็ตแรง เสถียร',
-    description: 'บริการ VPN ความเร็วสูง เน็ตแรง เสถียร เล่นเกมลื่น ปิงต่ำ ดู Netflix YouTube 4K ไม่กระตุก รองรับ AIS TRUE DTAC ทดลองใช้ฟรี',
-    url: SITE_URL,
-    siteName: SITE_NAME,
-    locale: 'th_TH',
-    type: 'website',
-    images: [
-      {
-        url: '/icon-512x512.png',
-        width: 512,
-        height: 512,
-        alt: 'บริการ VPN ความเร็วสูง',
-      },
+    description: DEFAULT_DESCRIPTION,
+    keywords: [
+      'VPN', 'เน็ต VPN', 'VPN ไทย', 'VPN ราคาถูก',
+      'เน็ตแรง', 'เน็ตเสถียร', 'VPN เล่นเกม', 'VPN ดูหนัง', 'VPN Netflix',
+      'VPN YouTube', 'VPN AIS', 'VPN TRUE', 'VPN DTAC', 'X2BOX', 'VLESS',
+      'VPN ความเร็วสูง', 'VPN ปิงต่ำ', 'VPN เกม ROV', 'VPN เกม PUBG',
+      'ทดลองใช้ VPN ฟรี', 'VPN ไม่จำกัด', 'VPN รายเดือน',
+      'VPN v2rayNG', 'VPN V2Box', 'VPN iOS', 'VPN Android',
+      'เน็ตบ้านแรง', 'เน็ตมือถือแรง', 'VPN ไม่หลุด', 'VPN เสถียร',
+      'ซื้อ VPN', 'VPN ราคาถูก 50 บาท', 'VPN 100 บาท',
     ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'บริการ VPN ความเร็วสูง',
-    description: 'เน็ตแรง เสถียร เล่นเกมลื่น ปิงต่ำ ดู Netflix YouTube ไม่กระตุก รองรับ AIS TRUE DTAC ทดลองใช้ฟรี',
-    images: ['/icon-512x512.png'],
-    creator: '',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    authors: [{ name: siteName, url: siteUrl }],
+    creator: siteName,
+    publisher: siteName,
+    category: 'technology',
+    classification: 'VPN Service',
+    referrer: 'origin-when-cross-origin',
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    alternates: {
+      canonical: siteUrl,
+      languages: {
+        'th-TH': siteUrl,
+      },
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: siteName || 'VPN',
+    },
+    other: {
+      'mobile-web-app-capable': 'yes',
+      'google': 'notranslate',
+    },
+    openGraph: {
+      title: defaultTitle,
+      description: 'บริการ VPN ความเร็วสูง เน็ตแรง เสถียร เล่นเกมลื่น ปิงต่ำ ดู Netflix YouTube 4K ไม่กระตุก รองรับ AIS TRUE DTAC ทดลองใช้ฟรี',
+      url: siteUrl,
+      siteName: siteName,
+      locale: 'th_TH',
+      type: 'website',
+      images: [
+        {
+          url: iconUrl512,
+          width: 512,
+          height: 512,
+          alt: defaultTitle,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: defaultTitle,
+      description: 'เน็ตแรง เสถียร เล่นเกมลื่น ปิงต่ำ ดู Netflix YouTube ไม่กระตุก รองรับ AIS TRUE DTAC ทดลองใช้ฟรี',
+      images: [iconUrl512],
+      creator: '',
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-  verification: {
-    // เพิ่ม Google Search Console verification code ที่นี่
-    // google: 'your-google-verification-code',
-  },
-  icons: {
-    icon: [
-      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
-  },
-};
+    icons: {
+      icon: [
+        { url: iconUrl, sizes: '192x192', type: 'image/png' },
+        { url: iconUrl512, sizes: '512x512', type: 'image/png' },
+      ],
+      apple: [
+        { url: appLogo || '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      ],
+    },
+  }
+}
 
 export default function RootLayout({
   children,

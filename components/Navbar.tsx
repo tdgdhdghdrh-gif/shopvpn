@@ -388,7 +388,7 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                 <div className="w-full h-full bg-black rounded-[10px] flex items-center justify-center overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
-                    src={settings.siteLogo || "https://i.postimg.cc/7PC1vHmY/812-removebg-preview.png"} 
+                    src={settings.siteLogo || "/icon-192x192.png"} 
                     alt={settings.siteName || "VPN"} 
                     className="w-full h-full object-contain p-1 scale-125 brightness-110"
                   />
@@ -396,7 +396,7 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-lg lg:text-xl tracking-tighter leading-none group-hover:text-zinc-300 transition-colors italic" style={{ color: 'var(--theme-text, #ffffff)' }}>
-                  {(settings.siteName || 'SIMONVPN').replace(/shop$/i, '').toUpperCase()}<span style={{ color: 'var(--theme-text, #ffffff)' }}>{(settings.siteName || 'SIMONVPN').match(/shop$/i) ? '' : ''}</span>
+                  {(settings.siteName || 'VPN').replace(/shop$/i, '').toUpperCase()}<span style={{ color: 'var(--theme-text, #ffffff)' }}>{(settings.siteName || 'VPN').match(/shop$/i) ? '' : ''}</span>
                 </span>
                 <span className="text-[8px] font-medium tracking-wider uppercase leading-none mt-1" style={{ color: 'var(--theme-text-dim, #71717a)' }}>
                   VPN Service

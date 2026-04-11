@@ -140,7 +140,7 @@ function DesktopFrame({ children, label }: { children: React.ReactNode; label?: 
           <div className="w-2 h-2 rounded-full bg-yellow-500/60" />
           <div className="w-2 h-2 rounded-full bg-green-500/60" />
           <div className="flex-1 mx-4">
-            <div className="bg-zinc-800 rounded px-2 py-0.5 text-[7px] text-zinc-500 text-center truncate">simonvpn.darkx.shop</div>
+            <div className="bg-zinc-800 rounded px-2 py-0.5 text-[7px] text-zinc-500 text-center truncate">yoursite.com</div>
           </div>
         </div>
         {/* Screen */}

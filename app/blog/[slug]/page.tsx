@@ -2,9 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { BreadcrumbJsonLd } from '@/components/JsonLd'
+import { getSiteUrl } from '@/lib/server-utils'
 import BlogPostClient from './BlogPostClient'
-
-const SITE_URL = 'https://simonvpn.darkx.shop'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -13,10 +12,13 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug: rawSlug } = await params
   const slug = decodeURIComponent(rawSlug)
-  const post = await prisma.blogPost.findUnique({
-    where: { slug },
-    select: { title: true, excerpt: true, metaTitle: true, metaDesc: true, coverImage: true, tags: true, category: true, publishedAt: true },
-  })
+  const [post, SITE_URL] = await Promise.all([
+    prisma.blogPost.findUnique({
+      where: { slug },
+      select: { title: true, excerpt: true, metaTitle: true, metaDesc: true, coverImage: true, tags: true, category: true, publishedAt: true },
+    }),
+    getSiteUrl(),
+  ])
 
   if (!post) return { title: 'ไม่พบบทความ' }
 

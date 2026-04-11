@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Get domain from request
-    const host = request.headers.get('host') || 'simonvpn.darkx.shop'
+    const host = request.headers.get('host') || 'localhost:3000'
     const protocol = host.includes('localhost') ? 'http' : 'https'
     const referralUrl = `${protocol}://${host}/register?ref=${user.referralCode}`
 

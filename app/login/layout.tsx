@@ -1,21 +1,23 @@
 import type { Metadata } from 'next'
+import { getSiteUrl } from '@/lib/server-utils'
 
-const SITE_URL = 'https://simonvpn.darkx.shop'
-
-export const metadata: Metadata = {
-  title: 'เข้าสู่ระบบ | บริการ VPN ความเร็วสูง',
-  description: 'เข้าสู่ระบบเพื่อใช้งาน VPN ความเร็วสูง เชื่อมต่อเซิร์ฟเวอร์ เติมเงิน จัดการบัญชี เล่นเกมลื่น ดูหนังไม่กระตุก',
-  alternates: {
-    canonical: `${SITE_URL}/login`,
-  },
-  openGraph: {
+export async function generateMetadata(): Promise<Metadata> {
+  const SITE_URL = await getSiteUrl()
+  return {
     title: 'เข้าสู่ระบบ | บริการ VPN ความเร็วสูง',
-    description: 'เข้าสู่ระบบเพื่อใช้งาน VPN ความเร็วสูง เชื่อมต่อเซิร์ฟเวอร์ เล่นเกมลื่น ดูหนังไม่กระตุก',
-    url: `${SITE_URL}/login`,
-    siteName: '',
-    locale: 'th_TH',
-    type: 'website',
-  },
+    description: 'เข้าสู่ระบบเพื่อใช้งาน VPN ความเร็วสูง เชื่อมต่อเซิร์ฟเวอร์ เติมเงิน จัดการบัญชี เล่นเกมลื่น ดูหนังไม่กระตุก',
+    alternates: {
+      canonical: `${SITE_URL}/login`,
+    },
+    openGraph: {
+      title: 'เข้าสู่ระบบ | บริการ VPN ความเร็วสูง',
+      description: 'เข้าสู่ระบบเพื่อใช้งาน VPN ความเร็วสูง เชื่อมต่อเซิร์ฟเวอร์ เล่นเกมลื่น ดูหนังไม่กระตุก',
+      url: `${SITE_URL}/login`,
+      siteName: '',
+      locale: 'th_TH',
+      type: 'website',
+    },
+  }
 }
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {

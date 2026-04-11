@@ -1422,7 +1422,7 @@ export default function WebEffectsPage() {
             <div className="flex-1 mx-8">
               <div className="bg-zinc-800 rounded-md px-3 py-1 text-[10px] text-zinc-500 text-center max-w-xs mx-auto flex items-center justify-center gap-1.5">
                 <Monitor className="w-3 h-3" />
-                simonvpn.darkx.shop
+                yoursite.com
               </div>
             </div>
           </div>

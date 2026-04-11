@@ -8,14 +8,17 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
 }
 
 // Organization Schema
-export function OrganizationJsonLd() {
+export function OrganizationJsonLd({ siteUrl, siteName, siteLogo }: { siteUrl?: string; siteName?: string; siteLogo?: string }) {
+  const url = siteUrl || ''
+  const name = siteName || ''
+  const logo = siteLogo || (url ? `${url}/icon-512x512.png` : '/icon-512x512.png')
   const data = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: '',
-    alternateName: '',
-    url: 'https://simonvpn.darkx.shop',
-    logo: 'https://simonvpn.darkx.shop/icon-512x512.png',
+    name,
+    alternateName: name,
+    url,
+    logo,
     description: 'บริการ VPN ความเร็วสูงอันดับ 1 ในไทย รองรับ AIS, TRUE, DTAC เล่นเกมลื่น ดูหนังไม่กระตุก ทดลองใช้ฟรี',
     foundingDate: '2024',
     contactPoint: {
@@ -33,21 +36,24 @@ export function OrganizationJsonLd() {
 }
 
 // WebSite Schema (สำหรับ Google Sitelinks Search Box)
-export function WebSiteJsonLd() {
+export function WebSiteJsonLd({ siteUrl, siteName, siteLogo }: { siteUrl?: string; siteName?: string; siteLogo?: string }) {
+  const url = siteUrl || ''
+  const name = siteName || ''
+  const logo = siteLogo || (url ? `${url}/icon-512x512.png` : '/icon-512x512.png')
   const data = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: '',
-    alternateName: [''],
-    url: 'https://simonvpn.darkx.shop',
+    name,
+    alternateName: [name],
+    url,
     inLanguage: 'th-TH',
     description: 'บริการ VPN ความเร็วสูง เน็ตแรง เสถียร เล่นเกมลื่น ดูหนังไม่กระตุก รองรับ AIS TRUE DTAC',
     publisher: {
       '@type': 'Organization',
-      name: '',
+      name,
       logo: {
         '@type': 'ImageObject',
-        url: 'https://simonvpn.darkx.shop/icon-512x512.png',
+        url: logo,
       },
     },
   }
@@ -78,13 +84,16 @@ export function ProductJsonLd({
   price,
   currency = 'THB',
   availability = 'https://schema.org/InStock',
+  siteName,
 }: {
   name: string
   description: string
   price: string
   currency?: string
   availability?: string
+  siteName?: string
 }) {
+  const brandName = siteName || ''
   const data = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -92,7 +101,7 @@ export function ProductJsonLd({
     description,
     brand: {
       '@type': 'Brand',
-      name: '',
+      name: brandName,
     },
     offers: {
       '@type': 'Offer',
@@ -101,7 +110,7 @@ export function ProductJsonLd({
       availability,
       seller: {
         '@type': 'Organization',
-      name: '',
+        name: brandName,
       },
     },
     category: 'VPN Service',
@@ -129,11 +138,11 @@ export function BreadcrumbJsonLd({
 }
 
 // SoftwareApplication Schema (VPN เป็น Software)
-export function SoftwareApplicationJsonLd() {
+export function SoftwareApplicationJsonLd({ siteName }: { siteName?: string } = {}) {
   const data = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'VPN',
+    name: siteName || 'VPN',
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'iOS, Android, Windows, macOS',
     offers: {
@@ -155,15 +164,18 @@ export function SoftwareApplicationJsonLd() {
 }
 
 // LocalBusiness Schema (สำหรับ Local SEO)
-export function LocalBusinessJsonLd() {
+export function LocalBusinessJsonLd({ siteUrl, siteName, siteLogo }: { siteUrl?: string; siteName?: string; siteLogo?: string }) {
+  const url = siteUrl || ''
+  const name = siteName || ''
+  const logo = siteLogo || (url ? `${url}/icon-512x512.png` : '/icon-512x512.png')
   const data = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: '',
+    name,
     description: 'บริการ VPN ความเร็วสูงในประเทศไทย เน็ตแรง เสถียร เล่นเกมลื่น ดูหนังไม่กระตุก',
-    url: 'https://simonvpn.darkx.shop',
-    logo: 'https://simonvpn.darkx.shop/icon-512x512.png',
-    image: 'https://simonvpn.darkx.shop/icon-512x512.png',
+    url,
+    logo,
+    image: logo,
     priceRange: '฿50 - ฿200',
     address: {
       '@type': 'PostalAddress',

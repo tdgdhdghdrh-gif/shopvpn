@@ -940,7 +940,7 @@ export default function HamburgerMenuPage() {
                     <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-800">
                       <div className="flex items-center gap-1.5">
                         <div className="w-5 h-5 rounded-md bg-zinc-800" />
-                        <span className="text-[8px] font-black text-white">SIMONVPN</span>
+                        <span className="text-[8px] font-black text-white">VPN</span>
                       </div>
                       <div className="w-5 h-5 rounded-md bg-white flex items-center justify-center">
                         <MenuIcon className="w-3 h-3 text-black" />
@@ -1187,7 +1187,7 @@ export default function HamburgerMenuPage() {
                     <div className="flex items-center justify-between px-3 py-3 border-b border-zinc-800">
                       <div className="flex items-center gap-1.5">
                         <div className="w-5 h-5 rounded-md bg-zinc-800" />
-                        <span className="text-[8px] font-black text-white">SIMONVPN</span>
+                        <span className="text-[8px] font-black text-white">VPN</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {/* Wallet icon preview */}
@@ -1221,7 +1221,7 @@ export default function HamburgerMenuPage() {
                     <div className="flex items-center justify-between px-3 py-3 border-t border-b border-zinc-800 bg-zinc-900/30">
                       <div className="flex items-center gap-1.5">
                         <div className="w-5 h-5 rounded-md bg-zinc-800" />
-                        <span className="text-[8px] font-black text-white">SIMONVPN</span>
+                        <span className="text-[8px] font-black text-white">VPN</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {/* Wallet icon preview */}
@@ -1455,7 +1455,7 @@ export default function HamburgerMenuPage() {
                   <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-800">
                     <div className="flex items-center gap-1.5">
                       <div className="w-5 h-5 rounded-md bg-zinc-800" />
-                      <span className="text-[8px] font-black text-white">SIMONVPN</span>
+                      <span className="text-[8px] font-black text-white">VPN</span>
                     </div>
                     <div className="w-5 h-5 rounded-md bg-white flex items-center justify-center">
                       <MenuIcon className="w-3 h-3 text-black" />
