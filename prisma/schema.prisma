@@ -1103,3 +1103,20 @@ model SiteLicense {
   @@index([expiryDate])
   @@index([serverIp])
 }
+
+model SiteUpdateLog {
+  id            String   @id @default(cuid())
+  success       Boolean                        // อัพเดทสำเร็จหรือไม่
+  commitBefore  String?                        // commit hash ก่อนอัพเดท
+  commitAfter   String?                        // commit hash หลังอัพเดท
+  changesCount  Int      @default(0)           // จำนวนไฟล์ที่เปลี่ยน
+  changesSummary String?                       // สรุปสิ่งที่เปลี่ยนแปลง (ภาษาไทย)
+  commitMessages String?                       // commit messages ที่ดึงมา
+  error         String?                        // ข้อผิดพลาด (ถ้ามี)
+  logs          String?                        // raw logs (JSON)
+  duration      Int?                           // เวลาที่ใช้ (วินาที)
+  updatedBy     String?                        // user ที่กดอัพเดท
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}

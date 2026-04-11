@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isSuperAdmin: true }
+      select: { isSuperAdmin: true, username: true }
     })
 
     if (!user?.isSuperAdmin) {
@@ -29,6 +29,14 @@ export async function POST(request: NextRequest) {
     const addLog = (step: string, output: string) => {
       logs.push(`[${step}] ${output.trim()}`)
     }
+    const startTime = Date.now()
+
+    // บันทึก commit ก่อนอัพเดท
+    let commitBefore = ''
+    try {
+      const { stdout } = await execAsync('git rev-parse --short HEAD', { cwd: projectDir })
+      commitBefore = stdout.trim()
+    } catch {}
 
     // Step 1: Git pull from codevpnshop
     try {
@@ -39,6 +47,14 @@ export async function POST(request: NextRequest) {
       addLog('GIT PULL', stdout || stderr || 'Done')
     } catch (err: any) {
       addLog('GIT PULL ERROR', err.message || String(err))
+      await saveUpdateLog({
+        success: false,
+        commitBefore,
+        error: 'Git pull failed',
+        logs,
+        startTime,
+        username: user.username,
+      })
       return NextResponse.json({ 
         success: false, 
         error: 'Git pull failed', 
@@ -55,6 +71,14 @@ export async function POST(request: NextRequest) {
       addLog('NPM INSTALL', stdout?.slice(-500) || stderr?.slice(-500) || 'Done')
     } catch (err: any) {
       addLog('NPM INSTALL ERROR', err.message?.slice(-500) || String(err))
+      await saveUpdateLog({
+        success: false,
+        commitBefore,
+        error: 'npm install failed',
+        logs,
+        startTime,
+        username: user.username,
+      })
       return NextResponse.json({ 
         success: false, 
         error: 'npm install failed', 
@@ -71,18 +95,25 @@ export async function POST(request: NextRequest) {
       addLog('PRISMA GENERATE', stdout?.slice(-300) || stderr?.slice(-300) || 'Done')
     } catch (err: any) {
       addLog('PRISMA GENERATE WARNING', err.message?.slice(-300) || String(err))
-      // Don't fail on this - might not have schema changes
     }
 
     // Step 4: Build
     try {
       const { stdout, stderr } = await execAsync('npx next build', {
         cwd: projectDir,
-        timeout: 300000, // 5 min for build
+        timeout: 300000,
       })
       addLog('BUILD', stdout?.slice(-500) || stderr?.slice(-500) || 'Done')
     } catch (err: any) {
       addLog('BUILD ERROR', err.message?.slice(-1000) || String(err))
+      await saveUpdateLog({
+        success: false,
+        commitBefore,
+        error: 'Build failed',
+        logs,
+        startTime,
+        username: user.username,
+      })
       return NextResponse.json({ 
         success: false, 
         error: 'Build failed', 
@@ -99,12 +130,63 @@ export async function POST(request: NextRequest) {
       addLog('PM2 RESTART', stdout || stderr || 'Done')
     } catch (err: any) {
       addLog('PM2 RESTART ERROR', err.message || String(err))
+      await saveUpdateLog({
+        success: false,
+        commitBefore,
+        error: 'PM2 restart failed',
+        logs,
+        startTime,
+        username: user.username,
+      })
       return NextResponse.json({ 
         success: false, 
         error: 'PM2 restart failed (but code is updated & built)', 
         logs 
       }, { status: 500 })
     }
+
+    // สำเร็จ - ดึงข้อมูลหลังอัพเดท
+    let commitAfter = ''
+    let changesCount = 0
+    let commitMessages = ''
+    let changesSummary = ''
+
+    try {
+      const { stdout } = await execAsync('git rev-parse --short HEAD', { cwd: projectDir })
+      commitAfter = stdout.trim()
+    } catch {}
+
+    // ดึง commit messages ระหว่าง commit เก่า -> ใหม่
+    if (commitBefore && commitAfter && commitBefore !== commitAfter) {
+      try {
+        const { stdout } = await execAsync(`git log ${commitBefore}..${commitAfter} --format="%s" --reverse`, { cwd: projectDir })
+        commitMessages = stdout.trim()
+      } catch {}
+
+      // นับไฟล์ที่เปลี่ยน
+      try {
+        const { stdout } = await execAsync(`git diff --stat ${commitBefore}..${commitAfter} --shortstat`, { cwd: projectDir })
+        const match = stdout.match(/(\d+) files? changed/)
+        if (match) changesCount = parseInt(match[1])
+      } catch {}
+
+      // สร้างสรุปภาษาไทย จาก commit messages
+      changesSummary = generateThaiSummary(commitMessages)
+    } else {
+      changesSummary = 'อัพเดทสำเร็จ (ไม่มีการเปลี่ยนแปลงใหม่)'
+    }
+
+    await saveUpdateLog({
+      success: true,
+      commitBefore,
+      commitAfter,
+      changesCount,
+      changesSummary,
+      commitMessages,
+      logs,
+      startTime,
+      username: user.username,
+    })
 
     return NextResponse.json({ 
       success: true, 
@@ -118,7 +200,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET - Check current git status
+// GET - Check current git status + update history
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
@@ -152,7 +234,7 @@ export async function GET(request: NextRequest) {
       currentBranch = branch.trim()
     } catch { currentBranch = 'unknown' }
 
-    // Check for updates (remote URL is hidden for security)
+    // Check for updates
     let hasUpdates = false
     let remoteCommit = ''
     try {
@@ -160,16 +242,96 @@ export async function GET(request: NextRequest) {
       const { stdout: diff } = await execAsync('git log HEAD..codevpnshop/main --oneline', { cwd: projectDir })
       hasUpdates = diff.trim().length > 0
       remoteCommit = diff.trim()
-    } catch { /* ignore fetch errors */ }
+    } catch {}
+
+    // ดึงประวัติการอัพเดท 20 รายการล่าสุด
+    const updateHistory = await prisma.siteUpdateLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    })
 
     return NextResponse.json({
       currentCommit,
       currentBranch,
       hasUpdates,
       remoteCommit: remoteCommit || null,
+      updateHistory,
     })
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal error' }, { status: 500 })
   }
+}
+
+// ── Helper: บันทึกประวัติอัพเดทลง DB ──
+async function saveUpdateLog(params: {
+  success: boolean
+  commitBefore?: string
+  commitAfter?: string
+  changesCount?: number
+  changesSummary?: string
+  commitMessages?: string
+  error?: string
+  logs: string[]
+  startTime: number
+  username?: string
+}) {
+  try {
+    await prisma.siteUpdateLog.create({
+      data: {
+        success: params.success,
+        commitBefore: params.commitBefore || null,
+        commitAfter: params.commitAfter || null,
+        changesCount: params.changesCount || 0,
+        changesSummary: params.changesSummary || null,
+        commitMessages: params.commitMessages || null,
+        error: params.error || null,
+        logs: JSON.stringify(params.logs),
+        duration: Math.round((Date.now() - params.startTime) / 1000),
+        updatedBy: params.username || null,
+      },
+    })
+  } catch (e) {
+    console.error('Failed to save update log:', e)
+  }
+}
+
+// ── Helper: แปลง commit messages เป็นสรุปภาษาไทย ──
+function generateThaiSummary(commitMessages: string): string {
+  if (!commitMessages) return ''
+
+  const lines = commitMessages.split('\n').filter(l => l.trim())
+  const summaries: string[] = []
+
+  for (const line of lines) {
+    const lower = line.toLowerCase().trim()
+
+    // ตรวจ keyword แล้วแปลเป็นไทย
+    if (lower.startsWith('fix:') || lower.startsWith('fix ') || lower.startsWith('bugfix')) {
+      summaries.push('แก้ไขบัค: ' + cleanMsg(line))
+    } else if (lower.startsWith('add:') || lower.startsWith('add ') || lower.startsWith('feat')) {
+      summaries.push('เพิ่มฟีเจอร์: ' + cleanMsg(line))
+    } else if (lower.startsWith('update') || lower.startsWith('improve') || lower.startsWith('enhance')) {
+      summaries.push('ปรับปรุง: ' + cleanMsg(line))
+    } else if (lower.startsWith('remove') || lower.startsWith('delete')) {
+      summaries.push('ลบออก: ' + cleanMsg(line))
+    } else if (lower.startsWith('refactor')) {
+      summaries.push('ปรับโครงสร้าง: ' + cleanMsg(line))
+    } else if (lower.startsWith('style') || lower.startsWith('ui') || lower.startsWith('design')) {
+      summaries.push('ปรับ UI: ' + cleanMsg(line))
+    } else if (lower.startsWith('hide')) {
+      summaries.push('ซ่อน: ' + cleanMsg(line))
+    } else {
+      summaries.push('อัพเดท: ' + cleanMsg(line))
+    }
+  }
+
+  return summaries.join('\n')
+}
+
+function cleanMsg(msg: string): string {
+  // ลบ prefix เช่น "Fix:", "Add:", "feat:" ออก
+  return msg
+    .replace(/^(fix|add|feat|update|improve|enhance|remove|delete|refactor|style|ui|design|hide|bugfix)\s*[:(-]\s*/i, '')
+    .trim()
 }

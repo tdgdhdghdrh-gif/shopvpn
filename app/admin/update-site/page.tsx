@@ -4,15 +4,31 @@ import { useState, useEffect, useRef } from 'react'
 import { 
   RefreshCw, GitBranch, CheckCircle2, XCircle, Loader2, 
   AlertTriangle, ArrowDownCircle, CloudDownload, Clock, 
-  GitCommit, Zap, Terminal, ChevronDown, Shield
+  GitCommit, Zap, Terminal, ChevronDown, Shield,
+  History, FileText, User, ChevronRight
 } from 'lucide-react'
+
+interface UpdateHistoryItem {
+  id: string
+  success: boolean
+  commitBefore: string | null
+  commitAfter: string | null
+  changesCount: number
+  changesSummary: string | null
+  commitMessages: string | null
+  error: string | null
+  logs: string | null
+  duration: number | null
+  updatedBy: string | null
+  createdAt: string
+}
 
 interface GitStatus {
   currentCommit: string
   currentBranch: string
   hasUpdates: boolean
   remoteCommit: string | null
-  lastUpdated: string | null
+  updateHistory?: UpdateHistoryItem[]
 }
 
 const UPDATE_STEPS = [
@@ -30,6 +46,7 @@ export default function UpdateSitePage() {
   const [result, setResult] = useState<{ success: boolean; message?: string; error?: string; logs?: string[] } | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [showLogs, setShowLogs] = useState(false)
+  const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
   const logsEndRef = useRef<HTMLDivElement>(null)
 
   const fetchStatus = async () => {
@@ -338,6 +355,146 @@ export default function UpdateSitePage() {
           })}
         </div>
       </div>
+
+      {/* Update History */}
+      {status?.updateHistory && status.updateHistory.length > 0 && (
+        <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.06] rounded-2xl sm:rounded-3xl overflow-hidden mt-4 sm:mt-5">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/[0.04] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-blue-400" />
+              <span className="font-bold text-sm text-white">ประวัติการอัพเดท</span>
+            </div>
+            <span className="text-[10px] text-zinc-600 font-mono">{status.updateHistory.length} รายการ</span>
+          </div>
+
+          <div className="divide-y divide-white/[0.03]">
+            {status.updateHistory.map((item) => {
+              const isExpanded = expandedHistory === item.id
+              const date = new Date(item.createdAt)
+              const dateStr = date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
+              const timeStr = date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+              const durationStr = item.duration ? (item.duration >= 60 ? `${Math.floor(item.duration / 60)}น. ${item.duration % 60}ว.` : `${item.duration} วินาที`) : '-'
+
+              return (
+                <div key={item.id}>
+                  {/* Row */}
+                  <button
+                    onClick={() => setExpandedHistory(isExpanded ? null : item.id)}
+                    className="w-full px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 hover:bg-white/[0.02] transition-colors text-left"
+                  >
+                    {/* Status icon */}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      item.success ? 'bg-emerald-500/15' : 'bg-red-500/15'
+                    }`}>
+                      {item.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-400" />
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className={`text-xs sm:text-sm font-semibold ${item.success ? 'text-white' : 'text-red-400'}`}>
+                          {item.success ? 'อัพเดทสำเร็จ' : 'อัพเดทล้มเหลว'}
+                        </span>
+                        {item.changesCount > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-md font-mono">
+                            {item.changesCount} ไฟล์
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-[10px] sm:text-[11px] text-zinc-600">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {dateStr} {timeStr}
+                        </span>
+                        {item.updatedBy && (
+                          <span className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {item.updatedBy}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Zap className="w-3 h-3" />
+                          {durationStr}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Arrow */}
+                    <ChevronRight className={`w-4 h-4 text-zinc-600 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <div className="px-4 sm:px-6 pb-4 space-y-3">
+                      {/* Commit info */}
+                      {(item.commitBefore || item.commitAfter) && (
+                        <div className="bg-zinc-800/40 rounded-xl p-3 border border-white/[0.03]">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <GitCommit className="w-3 h-3 text-zinc-500" />
+                            <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Commits</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-mono">
+                            <span className="text-zinc-500">{item.commitBefore || '?'}</span>
+                            <span className="text-zinc-600">→</span>
+                            <span className="text-white">{item.commitAfter || '?'}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Thai summary */}
+                      {item.changesSummary && (
+                        <div className="bg-zinc-800/40 rounded-xl p-3 border border-white/[0.03]">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <FileText className="w-3 h-3 text-zinc-500" />
+                            <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">สิ่งที่เปลี่ยนแปลง</span>
+                          </div>
+                          <div className="space-y-1">
+                            {item.changesSummary.split('\n').map((line, i) => (
+                              <div key={i} className="text-[11px] sm:text-xs text-zinc-400 leading-relaxed">
+                                {line}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Error message */}
+                      {item.error && (
+                        <div className="bg-red-500/[0.06] border border-red-500/10 rounded-xl p-3">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <AlertTriangle className="w-3 h-3 text-red-400" />
+                            <span className="text-[10px] uppercase tracking-wider text-red-400/70 font-bold">ข้อผิดพลาด</span>
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-red-400/80">{item.error}</p>
+                        </div>
+                      )}
+
+                      {/* Commit messages (raw) */}
+                      {item.commitMessages && (
+                        <div className="bg-black/30 rounded-xl border border-white/[0.03] p-3">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Terminal className="w-3 h-3 text-zinc-500" />
+                            <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Commit Messages</span>
+                          </div>
+                          <div className="space-y-0.5">
+                            {item.commitMessages.split('\n').map((msg, i) => (
+                              <div key={i} className="text-[11px] font-mono text-zinc-600 leading-relaxed">{msg}</div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Gradient animation keyframes */}
       <style jsx>{`
