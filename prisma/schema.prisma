@@ -12,23 +12,47 @@ model User {
   email               String               @unique
   name                String
   password            String
+  avatar              String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   isAdmin             Boolean              @default(false)
+  isSuperAdmin        Boolean              @default(false)
+  isRevenueAdmin      Boolean              @default(false)
+  isAgent             Boolean              @default(false)
+  isBanned            Boolean              @default(false)
+  bannedAt            DateTime?
+  banReason           String?
   balance             Float                @default(0)
   discountExpiry      DateTime?
+  promoDiscountPercent Int?              // % ส่วนลดจากโปรลิงก์ (ถาวร)
+  promoLinkCode       String?           // รหัสโปรที่ใช้
   referralCode        String?              @unique
   referralCount       Int                  @default(0)
   referredBy          String?
   referredByIP        String?
   totalReferralEarned Float                @default(0)
+  showOnboarding      Boolean              @default(true)
   chatMessages        ChatMessage[]
   orders              Order[]
+  tickets             Ticket[]
   referralHistory     ReferralHistory[]
   referralIPTracking  ReferralIPTracking[]
   topups              TopUp[]
   vlessPublicOrders   VlessPublicOrder[]
   vpnOrders           VpnOrder[]
+  resellerProfile     ResellerProfile?
+  resellerOrders      ResellerOrder[]      @relation("ResellerOrderBuyer")
+  reviews             Review[]
+  reviewLikes         ReviewLike[]
+  luckyWheelSpins     LuckyWheelSpin[]
+  dailyCheckins       DailyCheckin[]
+  sentGifts           Gift[]          @relation("GiftSender")
+  receivedGifts       Gift[]          @relation("GiftReceiver")
+  couponRedemptions   CouponRedemption[]
+  notifications       Notification[]
+  ads                 Ad[]
+  premiumAppOrders    PremiumAppOrder[]
+  adminMenuAccess     Json?            // JSON array of allowed admin menu hrefs (per-user override), null = use role default
 }
 
 model Product {
@@ -81,11 +105,31 @@ model Settings {
   backgroundImage   String?
   googleApiKey      String?
   siteLogo          String?
-  siteName          String?  @default("SimonVPNShop")
+  siteName          String?  @default("")
   vpnDailyPrice     Float    @default(4)
   vpnMonthlyPrice   Float    @default(100)
   vpnWeeklyPrice    Float    @default(25)
   theme             String   @default("cyber")
+  backgroundOpacity Float    @default(30) // ความทึบแสงพื้นหลัง 0-100%
+  appLogo           String?  // โลโก้แอพ/favicon (URL) สำหรับ PWA icon
+  disabledMenus     Json     @default("[]") // JSON array of disabled admin menu hrefs e.g. ["/admin/vpn", "/admin/users"]
+  disabledUserMenus Json     @default("[]") // JSON array of disabled user menu hrefs e.g. ["/topup", "/tickets"]
+  landingTemplate   String   @default("classic") // Landing page template: classic, minimal, gaming, corporate, customHtml
+  landingCustomHtml String?  @db.Text // Custom HTML/CSS/JS for custom landing page
+  webEffect         String   @default("none") // Web effect: none, snow, rain, fireflies, sakura, bubbles, matrix, stars, hearts, confetti, customHtml
+  webEffectCustomHtml String? @db.Text // Custom HTML/CSS/JS for custom web effect overlay
+  hamburgerMenuConfig Json?   // JSON config for user hamburger menu order, sections, visibility
+  homepageConfig      Json?   // JSON config for homepage builder (hero, stats visibility, section order)
+  themeConfig         Json?   // JSON config for global UI theme customization (border-radius, opacity, colors, etc.)
+  recaptchaEnabled    Boolean  @default(false) // เปิด/ปิด reCAPTCHA
+  recaptchaSecretKey  String?  // reCAPTCHA Secret Key (server-side)
+  defaultHomePage     String   @default("/") // หน้าแรกเริ่มต้นหลังล็อกอิน เช่น /, /vpn, /profile, /topup
+  adminRoleMenus      Json?    // JSON config for role-based admin menu access: { admin: [...hrefs], agent: [...hrefs], revenueAdmin: [...hrefs] }
+  globalAdEnabled     Boolean  @default(false) // เปิด/ปิดโฆษณาแบบกลางสำหรับ Custom Pages ทั้งหมด
+  globalAdImageUrl    String?  // URL รูปโฆษณา global
+  globalAdLinkUrl     String?  // URL ลิงก์โฆษณา global (redirect หลังนับเวลา)
+  globalAdDuration    Int      @default(5) // ระยะเวลาโฆษณา (วินาที)
+  menuClickEffect     String   @default("none") // Menu click effect: none, ripple, glow, bounce, particle, shockwave, neon, slide, morphGlow, electricArc, hologram
 }
 
 model VpnServer {
@@ -115,6 +159,28 @@ model VpnServer {
   clientPort   Int        @default(443)
   category     String     @default("general")
   speed        Int        @default(1000)
+  commissionPercent Float  @default(0)
+  agentId      String?
+  inboundConfigs Json?
+
+  // Per-server pricing
+  pricePerDay    Float    @default(2)
+  priceWeekly    Float?   // null = pricePerDay * 7
+  priceMonthly   Float?   // null = pricePerDay * 30
+
+  // Decoration & display
+  description    String?
+  badge          String?  // e.g. "แนะนำ", "ใหม่", "Hot", "Premium"
+  tags           String[] @default([])
+  themeColor     String?  // hex color for card border/accent
+  themeGradient  String?  // gradient preset name
+  imageUrl       String?  // custom icon/image URL
+  sortOrder      Int      @default(0)
+
+  // Limits
+  maxClients     Int      @default(0) // 0 = unlimited
+  defaultIpLimit Int      @default(0) // default IP limit for new orders
+
   orders       VpnOrder[]
 }
 
@@ -131,6 +197,7 @@ model VpnOrder {
   vlessLink   String
   expiryTime  DateTime
   isActive    Boolean   @default(true)
+  ipLimit     Int       @default(0) // 0 = ไม่จำกัด, >0 = จำกัดจำนวน IP ที่เชื่อมต่อพร้อมกัน
   createdAt   DateTime  @default(now())
   server      VpnServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -186,4 +253,831 @@ model ReferralIPTracking {
   @@index([ipAddress])
   @@index([createdAt])
   @@index([userId])
+}
+
+model Ticket {
+  id        String          @id @default(cuid())
+  userId    String
+  subject   String
+  category  String          @default("general")
+  status    String          @default("open") // open, answered, closed
+  priority  String          @default("normal") // low, normal, high
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  TicketMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  message   String
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+model DiscountEvent {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  marqueeText String   @default("🔥 ลดราคาพิเศษ! 🔥")
+  discountPercent Int  @default(10)
+  minimumDays Int      @default(1)
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+// ==========================================
+// Super Admin - Server Revenue Lock System
+// ==========================================
+
+model ServerRevenueLock {
+  id             String   @id @default(cuid())
+  serverId       String   @unique
+  serverName     String
+  lockedRevenue  Float    @default(0) // รายได้ที่ล็อกไว้ ณ เวลาที่ล็อก
+  lockedOrders   Int      @default(0) // จำนวนออเดอร์ที่ล็อกไว้
+  lockedAt       DateTime @default(now())
+  lockedBy       String   // userId ของ super admin ที่ล็อก
+  isLocked       Boolean  @default(true)
+
+  @@index([serverId])
+  @@index([isLocked])
+}
+
+// ==========================================
+// Reseller System
+// ==========================================
+
+model ResellerProfile {
+  id              String           @id @default(cuid())
+  userId          String           @unique
+  firstName       String           // ชื่อจริง
+  lastName        String           // นามสกุลจริง
+  phone           String           // เบอร์ติดต่อ
+  facebookUrl     String           // ลิ้งเฟส
+  shopName        String           // ชื่อร้าน
+  shopLogo        String?          // โลโก้ร้าน (URL)
+  qrCodeImage     String?          // QR Code รับเงิน
+  walletPhone     String           // เบอร์ TrueMoney Wallet
+  status          String           @default("pending") // pending, approved, rejected
+  resellerBalance Float            @default(0)  // ยอดเงินที่ Reseller ได้รับจากการขาย
+  commissionRate  Float            @default(0)  // ส่วนแบ่งให้แอดมิน (เปอร์เซ็นต์ 0-100)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  servers         ResellerServer[]
+  orders          ResellerOrder[]
+  withdrawals     Withdrawal[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ResellerServer {
+  id             String          @id @default(cuid())
+  resellerId     String
+  name           String
+  flag           String          @default("🌐")
+  host           String
+  port           Int
+  path           String
+  username       String
+  password       String
+  inboundId      Int
+  protocol       String          @default("vless")
+  tlsType        String          @default("Reality")
+  flow           String          @default("xtls-rprx-vision")
+  sni            String          @default("google.co.th")
+  clientPort     Int             @default(443)
+  network        String          @default("ws")
+  supportsAis    Boolean         @default(true)
+  supportsTrue   Boolean         @default(false)
+  supportsDtac   Boolean         @default(false)
+  category       String          @default("general")
+  speed          Int             @default(1000)
+  pricePerDay    Float           @default(2)    // ราคาที่ Reseller ตั้งเอง (ต่อวัน)
+  isActive       Boolean         @default(true)
+  ping           Int             @default(15)
+  load           Int             @default(45)
+  status         String          @default("Online")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  reseller       ResellerProfile @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+  orders         ResellerOrder[]
+
+  @@index([resellerId])
+  @@index([isActive])
+}
+
+model ResellerOrder {
+  id              String          @id @default(cuid())
+  buyerId         String          // ผู้ซื้อ
+  resellerId      String          // เจ้าของร้าน
+  serverId        String          // เซิร์ฟเวอร์ที่ซื้อ
+  days            Int             // จำนวนวัน
+  totalPrice      Float           // ราคาที่ผู้ซื้อจ่าย
+  resellerEarning Float           // Reseller ได้รับ (หลังหักค่าคอม)
+  adminEarning    Float           // แอดมินได้รับ (ค่าคอม)
+  clientUUID      String
+  remark          String
+  subId           String
+  vlessLink       String
+  expiryTime      DateTime
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  buyer           User            @relation("ResellerOrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  reseller        ResellerProfile @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+  server          ResellerServer  @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([buyerId])
+  @@index([resellerId])
+  @@index([createdAt])
+}
+
+model Withdrawal {
+  id          String          @id @default(cuid())
+  resellerId  String
+  amount      Float
+  method      String          @default("wallet") // wallet, bank
+  accountInfo String          // เบอร์วอเล็ท หรือ เลขบัญชี
+  status      String          @default("pending") // pending, approved, rejected
+  note        String?
+  processedAt DateTime?
+  createdAt   DateTime        @default(now())
+  reseller    ResellerProfile @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+
+  @@index([resellerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Promo Link System - ลิงก์ลดราคาพิเศษ
+// ==========================================
+
+model PromoLink {
+  id              String       @id @default(cuid())
+  code            String       @unique // รหัสลิงก์ เช่น "group-special-50"
+  name            String       // ชื่อโปร เช่น "ส่วนลดกลุ่ม VIP"
+  description     String?      // รายละเอียด
+  discountPercent Int          @default(50) // % ลด เช่น 50 = ลด 50%
+  isActive        Boolean      @default(true)
+  usageCount      Int          @default(0) // จำนวนคนที่ใช้แล้ว
+  maxUsage        Int?         // จำกัดจำนวนคนรับ (null = ไม่จำกัด)
+  expiresAt       DateTime?    // วันหมดอายุ (null = ไม่มีวันหมด)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  createdBy       String       // admin userId ที่สร้าง
+  activations     PromoActivation[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([expiresAt])
+}
+
+model PromoActivation {
+  id          String    @id @default(cuid())
+  promoId     String
+  userId      String
+  activatedAt DateTime  @default(now())
+  promo       PromoLink @relation(fields: [promoId], references: [id], onDelete: Cascade)
+
+  @@unique([promoId, userId]) // ผู้ใช้แต่ละคนรับโปรได้ครั้งเดียว
+  @@index([promoId])
+  @@index([userId])
+  @@index([activatedAt])
+}
+
+// ==========================================
+// IP Logging System - บันทึก IP ทุก request
+// ==========================================
+
+model IPLog {
+  id        String   @id @default(cuid())
+  ipAddress String
+  path      String   // URL path ที่เข้าถึง
+  method    String   // GET, POST, etc.
+  userAgent String?  // Browser/device info
+  userId    String?  // ถ้า login อยู่
+  country   String?  // ประเทศ (ถ้ามี)
+  isBlocked Boolean  @default(false) // ถูกบล็อกหรือไม่
+  createdAt DateTime @default(now())
+
+  @@index([ipAddress])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([path])
+  @@index([isBlocked])
+}
+
+// ==========================================
+// Review System - รีวิวจากผู้ใช้
+// ==========================================
+
+model Review {
+  id        String       @id @default(cuid())
+  userId    String
+  rating    Int          // 1-5 ดาว
+  message   String
+  imageUrl  String?      // แนบรูปภาพ (optional)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes     ReviewLike[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([rating])
+}
+
+model ReviewLike {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  createdAt DateTime @default(now())
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId]) // ไลค์ได้ครั้งเดียวต่อรีวิว
+  @@index([reviewId])
+  @@index([userId])
+}
+
+model BlockedIP {
+  id        String   @id @default(cuid())
+  ipAddress String   @unique
+  reason    String?  // เหตุผลที่บล็อก
+  blockedBy String?  // admin userId ที่บล็อก
+  createdAt DateTime @default(now())
+  expiresAt DateTime? // ถ้า null = บล็อกถาวร
+
+  @@index([ipAddress])
+  @@index([expiresAt])
+}
+
+// ==========================================
+// External API Key System - ลิงก์ API สำหรับบอท
+// ==========================================
+
+model ApiKey {
+  id              String       @id @default(cuid())
+  key             String       @unique // API key (uuid-v4 format)
+  name            String       // ชื่อ API key เช่น "บอท Discord"
+  description     String?      // รายละเอียด
+  permissions     String[]     // สิทธิ์: ["user:read", "credit:add", "credit:deduct", "promo:activate"]
+  isActive        Boolean      @default(true)
+  usageCount      Int          @default(0)
+  maxUsage        Int?         // จำกัดจำนวนครั้งเรียก (null = ไม่จำกัด)
+  expiresAt       DateTime?    // วันหมดอายุ (null = ไม่หมด)
+  createdBy       String       // super admin userId ที่สร้าง
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  logs            ApiKeyLog[]
+
+  @@index([key])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model ApiKeyLog {
+  id         String   @id @default(cuid())
+  apiKeyId   String
+  action     String   // เช่น "user:read", "credit:add"
+  targetUser String?  // email ของ user ที่ถูกดำเนินการ
+  detail     String?  // รายละเอียด เช่น "+100 credit"
+  ipAddress  String?
+  success    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  apiKey     ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  @@index([apiKeyId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+// ==========================================
+// Slow Report System - แจ้งปัญหาเน็ตช้า (โหวต)
+// ==========================================
+
+model SlowReport {
+  id        String   @id @default(cuid())
+  userId    String
+  serverId  String
+  reason    String   @default("slow") // slow, unstable, disconnect, high_load
+  createdAt DateTime @default(now())
+
+  @@unique([userId, serverId, reason]) // 1 user = 1 vote per reason per server
+  @@index([serverId])
+  @@index([createdAt])
+}
+
+model AdminContact {
+  id          String   @id @default(cuid())
+  nickname    String   // ชื่อเล่น
+  role        String   @default("แอดมิน") // ตำแหน่ง
+  avatar      String?  // URL รูปโปรไฟล์
+  facebookUrl String   // ลิงก์เฟส
+  availableFrom String @default("09:00") // เวลาเริ่มว่าง
+  availableTo   String @default("22:00") // เวลาหมดว่าง
+  description String?  // รายละเอียดเพิ่มเติม
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==========================================
+// Announcement System - ประกาศข่าวสาร
+// ==========================================
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   // เนื้อหาประกาศ
+  category    String   @default("general") // general, update, maintenance, promo, urgent
+  priority    String   @default("normal") // low, normal, high, urgent
+  isPinned    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  sendPush    Boolean  @default(false) // ส่ง push notification หรือไม่
+  pushSentAt  DateTime? // เวลาที่ส่ง push แล้ว
+  pushCount   Int      @default(0) // จำนวนคนที่ส่ง push ไป
+  createdBy   String   // admin userId ที่สร้าง
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([isPinned])
+  @@index([category])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Push Notification System - Web Push
+// ==========================================
+
+model PushSubscription {
+  id           String   @id @default(cuid())
+  userId       String
+  endpoint     String   @unique
+  p256dh       String   // Public key
+  auth         String   // Auth secret
+  userAgent    String?  // Device info
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([endpoint])
+}
+
+model NotificationLog {
+  id           String   @id @default(cuid())
+  userId       String
+  type         String   // "vpn_expiry_24h", "vpn_expiry_1h", "vpn_expired"
+  orderId      String?  // VPN order that triggered this
+  title        String
+  body         String
+  sent         Boolean  @default(false)
+  error        String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Blog System - บทความ Content Marketing
+// ==========================================
+
+model BlogPost {
+  id            String    @id @default(cuid())
+  slug          String    @unique // URL-friendly slug เช่น "vpn-คืออะไร"
+  title         String    // หัวข้อบทความ
+  excerpt       String    // สรุปสั้นๆ สำหรับ SEO meta description + card preview
+  content       String    // เนื้อหาเต็ม (HTML)
+  coverImage    String?   // URL รูปปก
+  category      String    @default("tips") // tips, guide, review, news, knowledge
+  tags          String[]  // แท็ก เช่น ["VPN", "เกม", "เน็ตช้า"]
+  isPublished   Boolean   @default(false)
+  isFeatured    Boolean   @default(false) // บทความแนะนำ
+  publishedAt   DateTime? // วันที่เผยแพร่
+  views         Int       @default(0) // จำนวนคนอ่าน
+  readTime      Int       @default(5) // เวลาอ่าน (นาที)
+  metaTitle     String?   // SEO title (ถ้าไม่กรอกจะใช้ title)
+  metaDesc      String?   // SEO description (ถ้าไม่กรอกจะใช้ excerpt)
+  createdBy     String    // admin userId ที่เขียน
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isPublished])
+  @@index([isFeatured])
+  @@index([category])
+  @@index([publishedAt])
+  @@index([views])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Promo Banner - แบนเนอร์โปรโมชั่น
+// ==========================================
+
+model PromoBanner {
+  id          String   @id @default(cuid())
+  title       String   // ชื่อแบนเนอร์ (สำหรับ admin ดู)
+  imageUrl    String   // URL รูปแบนเนอร์
+  aspectRatio String   @default("16:9") // อัตราส่วนรูป: 16:9, 3:2, 4:3, 21:9, 1:1
+  linkUrl     String?  // ลิงก์ปลายทางเมื่อกดที่แบนเนอร์
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0) // ลำดับการแสดง (น้อย = แสดงก่อน)
+  createdBy   String   // admin userId
+
+  // Overlay content (ข้อความซ้อนบนรูป)
+  overlayTitle    String?  // หัวข้อใหญ่ซ้อนบนรูป
+  overlaySubtitle String?  // คำอธิบายย่อย
+  buttonText      String?  // ข้อความปุ่ม CTA เช่น "เริ่มใช้งาน"
+  buttonLink      String?  // ลิงก์ปุ่ม CTA (ถ้าไม่กรอกจะใช้ linkUrl)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Promo Popup - ป๊อปอัพโปรโมชั่นเต็มจอ
+// ==========================================
+
+model PromoPopup {
+  id          String    @id @default(cuid())
+  title       String    // ชื่อ popup (สำหรับ admin ดู)
+  imageUrl    String    // URL รูป popup
+  linkUrl     String?   // ลิงก์ปลายทางเมื่อกดที่รูป
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0) // ลำดับแสดง (น้อย = แสดงก่อน)
+  startDate   DateTime? // วันเริ่มแสดง (null = แสดงทันที)
+  endDate     DateTime? // วันหมดอายุ (null = ไม่มีหมดอายุ)
+  createdBy   String    // admin userId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@index([createdAt])
+  @@index([endDate])
+}
+
+// ==========================================
+// Lucky Wheel System - กงล้อนำโชค
+// ==========================================
+
+model LuckyWheelPrize {
+  id          String   @id @default(cuid())
+  label       String   // ชื่อรางวัล เช่น "เครดิต 5 บาท"
+  type        String   // "credit", "vpn_days", "discount", "nothing"
+  value       Float    @default(0) // จำนวน: 5 = 5 บาท หรือ 1 = 1 วัน VPN
+  color       String   @default("#3B82F6") // สี slice ของวงล้อ
+  probability Float    @default(10) // น้ำหนักความน่าจะได้ (0-100) ยิ่งสูงยิ่งมีโอกาสได้เยอะ
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  spins       LuckyWheelSpin[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model LuckyWheelSpin {
+  id          String          @id @default(cuid())
+  userId      String
+  prizeId     String
+  prizeLabel  String          // snapshot ชื่อรางวัลตอนหมุน
+  prizeType   String          // snapshot type
+  prizeValue  Float           // snapshot value
+  createdAt   DateTime        @default(now())
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prize       LuckyWheelPrize @relation(fields: [prizeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Daily Check-in System - เช็คอินรายวัน
+// ==========================================
+
+model DailyCheckin {
+  id          String   @id @default(cuid())
+  userId      String
+  date        String   // format "YYYY-MM-DD" เพื่อป้องกัน timezone issue
+  reward      Float    @default(1) // เครดิตที่ได้รับ
+  streak      Int      @default(1) // เช็คอินติดต่อกันกี่วัน
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date]) // เช็คอินได้วันละ 1 ครั้ง
+  @@index([userId])
+  @@index([date])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Gift System - ส่งของขวัญ
+// ==========================================
+
+model Gift {
+  id            String   @id @default(cuid())
+  senderId      String   // คนส่ง
+  receiverId    String?  // คนรับ (null ถ้ายังไม่ redeem)
+  receiverEmail String?  // email คนรับ (ถ้าส่งตรง)
+  type          String   // "credit", "vpn_days"
+  value         Float    // จำนวนเครดิต หรือ จำนวนวัน
+  message       String?  // ข้อความแนบ
+  giftCode      String   @unique // รหัสของขวัญ
+  isRedeemed    Boolean  @default(false)
+  redeemedAt    DateTime?
+  expiresAt     DateTime // วันหมดอายุ
+  createdAt     DateTime @default(now())
+  sender        User     @relation("GiftSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver      User?    @relation("GiftReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+
+  @@index([giftCode])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([isRedeemed])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Coupon System - ระบบคูปอง
+// ==========================================
+
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String   @unique // รหัสคูปอง เช่น "WELCOME50"
+  name            String   // ชื่อคูปอง
+  description     String?  // รายละเอียด
+  type            String   // "fixed" = ลดเป็นจำนวนเงิน, "percent" = ลดเป็น %
+  value           Float    // จำนวนเงิน หรือ %
+  minPurchase     Float    @default(0) // ยอดขั้นต่ำที่ใช้ได้
+  maxDiscount     Float?   // ส่วนลดสูงสุด (สำหรับ percent)
+  usageLimit      Int?     // จำกัดจำนวนครั้งทั้งหมด (null = ไม่จำกัด)
+  usageCount      Int      @default(0) // ใช้ไปแล้วกี่ครั้ง
+  perUserLimit    Int      @default(1) // จำกัดต่อผู้ใช้ 1 คน
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime? // วันหมดอายุ (null = ไม่หมด)
+  createdBy       String   // admin userId
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  redemptions     CouponRedemption[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model CouponRedemption {
+  id         String   @id @default(cuid())
+  couponId   String
+  userId     String
+  discount   Float    // ส่วนลดที่ได้รับจริง
+  createdAt  DateTime @default(now())
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([couponId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Notification System - แจ้งเตือนส่วนตัว
+// ==========================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "system", "topup", "vpn", "gift", "coupon", "reward", "promo"
+  title     String
+  message   String
+  icon      String?  // icon name เช่น "CreditCard", "Gift", "Shield"
+  linkUrl   String?  // ลิงก์ไปหน้าที่เกี่ยวข้อง
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ระบบลงโฆษณา — ผู้ใช้ฝากลงโฆษณาได้ วันละ 3 บาท (1-30 วัน)
+model Ad {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String                  // หัวข้อโฆษณา
+  description String   @db.Text       // รายละเอียด
+  image       String?                 // รูปภาพโฆษณา (URL)
+  contactInfo String                  // ช่องทางติดต่อ (Line, FB, Tel)
+  category    String   @default("general") // หมวดหมู่: general, service, product, other
+  price       Float                   // ราคาที่จ่าย (วันละ 3 บาท x จำนวนวัน)
+  days        Int                     // จำนวนวัน 1-30
+  status      String   @default("pending") // pending, approved, rejected, expired
+  rejectReason String?                // เหตุผลที่ปฏิเสธ
+  startDate   DateTime?               // วันเริ่มแสดง (หลังอนุมัติ)
+  endDate     DateTime?               // วันหมดอายุ
+  views       Int      @default(0)    // จำนวนคนเห็น
+  isActive    Boolean  @default(true) // ผู้ใช้เปิด/ปิดเอง
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([endDate])
+  @@index([createdAt])
+}
+
+// ===== Homepage Builder =====
+
+// Sections ที่แสดงบน Homepage (แต่ละ row คือ 1 section)
+model HomepageSection {
+  id          String   @id @default(cuid())
+  type        String   // built-in: "hero", "stats", "quick_actions", "banners", "expiry_warning", "recent_orders", "servers" | custom: "custom_text", "custom_image", "custom_html", "custom_link"
+  title       String?  // ชื่อ section (สำหรับ admin reference)
+  isVisible   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  
+  // สำหรับ custom sections
+  content     String?  @db.Text  // เนื้อหา (text/html)
+  imageUrl    String?            // รูปภาพ
+  linkUrl     String?            // ลิงก์ปลายทาง
+  bgColor     String?            // สีพื้นหลัง
+  textColor   String?            // สีข้อความ
+  borderColor String?            // สีขอบ
+  icon        String?            // lucide icon name
+  config      Json?              // JSON config เพิ่มเติม (flexible)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@index([type])
+}
+
+// Quick Action buttons (เพิ่ม/ลบ/แก้ไขได้)
+model HomepageQuickAction {
+  id        String   @id @default(cuid())
+  label     String   // ชื่อปุ่ม
+  href      String   // ลิงก์ปลายทาง
+  icon      String   // lucide icon name
+  color     String   @default("cyan") // tailwind color name: cyan, emerald, amber, pink, blue, violet, etc.
+  isVisible Boolean  @default(true)
+  sortOrder Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+// Stats cards config (ซ่อน/แสดง + เปลี่ยนสี/icon ได้)
+model HomepageStatCard {
+  id        String   @id @default(cuid())
+  type      String   @unique // "active_vpn", "nearest_expiry", "servers", "referrals"
+  label     String   // display label
+  icon      String   // lucide icon name
+  color     String   @default("emerald") // tailwind color name
+  isVisible Boolean  @default(true)
+  sortOrder Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+// ===== Premium App Store =====
+model PremiumApp {
+  id           String   @id @default(cuid())
+  name         String
+  description  String   @db.Text
+  price        Float
+  imageUrl     String
+  category     String   @default("general") // general, streaming, productivity, vpn, game, social, music, education
+  platform     String   @default("all")     // all, ios, android, windows, mac
+  features     String?  @db.Text            // JSON array of feature strings
+  downloadUrl  String?                      // ลิงก์ดาวน์โหลดหรือคำสั่งหลังซื้อ (fallback)
+  instructions String?  @db.Text            // วิธีติดตั้ง / ข้อมูลเพิ่มเติมแสดงหลังซื้อ (fallback)
+  stockCodes   String?  @db.Text            // 1 บรรทัด = 1 รหัส/ลิงก์, ซื้อ = ดึงบรรทัดบนสุด
+  stock        Int      @default(0)         // คำนวณจากจำนวนบรรทัดใน stockCodes
+  sold         Int      @default(0)
+  isActive     Boolean  @default(true)
+  isFeatured   Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       PremiumAppOrder[]
+
+  @@index([isActive, sortOrder])
+  @@index([category])
+}
+
+model PremiumAppOrder {
+  id        String     @id @default(cuid())
+  userId    String
+  appId     String
+  appName   String
+  price         Float
+  status        String     @default("COMPLETED") // COMPLETED, REFUNDED
+  deliveredCode String?    // รหัส/ลิงก์ที่ส่งให้ผู้ซื้อ
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app       PremiumApp @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([appId])
+}
+
+model CustomPage {
+  id               String    @id @default(cuid())
+  title            String
+  slug             String    @unique
+  htmlContent      String    @db.Text
+  isPublished      Boolean   @default(true)
+  views            Int       @default(0)
+  watermarkEnabled Boolean   @default(true)
+  adImageUrl       String?
+  adLinkUrl        String?
+  adDuration       Int       @default(0) // seconds (0 = no ad, max 10)
+  useGlobalAd      Boolean   @default(true) // ใช้โฆษณาจาก Settings แทน (ถ้า globalAdEnabled = true)
+  metaTitle        String?
+  metaDescription  String?
+  ogImage          String?
+  customCss        String?   @db.Text
+  password         String?
+  expiresAt        DateTime?
+  dbEnabled        Boolean   @default(false) // เปิดฐานข้อมูลสำหรับ page นี้
+  subPages         Json?     // [{filename: "login", title: "Login", htmlContent: "..."}, ...] multi-file support
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  submissions      FormSubmission[]
+  dbRecords        PageDatabaseRecord[]
+
+  @@index([slug])
+  @@index([isPublished])
+}
+
+model FormSubmission {
+  id           String     @id @default(cuid())
+  pageId       String
+  data         Json       // เก็บทุก field ที่ฟอร์มส่งมาเป็น JSON
+  ipAddress    String?
+  userAgent    String?    @db.Text
+  createdAt    DateTime   @default(now())
+
+  page         CustomPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([createdAt])
+}
+
+model PageDatabaseRecord {
+  id           String     @id @default(cuid())
+  pageId       String
+  collection   String     @default("default") // ชื่อ collection ย่อย เช่น "users", "orders"
+  data         Json       // ข้อมูล JSON อะไรก็ได้
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  page         CustomPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([pageId, collection])
+  @@index([createdAt])
 }

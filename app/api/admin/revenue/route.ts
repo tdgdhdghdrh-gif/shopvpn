@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true, isRevenueAdmin: true, isAgent: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin && !user?.isAdmin && !user?.isRevenueAdmin && !user?.isAgent) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -37,10 +37,11 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    // ดึงรายชื่อ user ที่เคยเติมเงินจริง (มี TopUp record)
+    // ดึงรายชื่อ user ที่เคยเติมเงินจริง (เฉพาะ WALLET/SLIP เท่านั้น ไม่รวม admin เพิ่มให้ หรือ API)
     const usersWithRealTopup = await prisma.topUp.findMany({
       where: {
-        status: 'SUCCESS'
+        status: 'SUCCESS',
+        method: { in: ['WALLET', 'SLIP'] }
       },
       select: {
         userId: true
@@ -50,22 +51,54 @@ export async function GET(request: NextRequest) {
     
     const realUserIds = new Set(usersWithRealTopup.map(t => t.userId))
 
+    // ดึง lock records เพื่อเช็คว่าเซิร์ฟไหนถูกล็อก
+    const locks = await prisma.serverRevenueLock.findMany({
+      where: { isLocked: true }
+    })
+    const lockMap = new Map(locks.map(l => [l.serverId, l]))
+
     // คำนวณรายได้รวมของแต่ละเซิร์ฟเวอร์ (นับเฉพาะลูกค้าที่เติมเงินจริง)
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
     const serverRevenue = servers.map(server => {
+      const lock = lockMap.get(server.id)
+      
+      // ถ้าเซิร์ฟนี้ถูกล็อก ให้แสดงรายได้ที่ล็อกไว้เท่านั้น
+      if (lock) {
+        return {
+          id: server.id,
+          name: server.name,
+          host: server.host,
+          flag: server.flag,
+          isActive: server.isActive,
+          totalOrders: lock.lockedOrders,
+          totalRevenue: lock.lockedRevenue,
+          todayRevenue: 0,
+          monthRevenue: lock.lockedRevenue
+        }
+      }
+
       // กรองเฉพาะออร์เดอร์ของผู้ใช้ที่เคยเติมเงินจริง
       const realOrders = server.orders.filter(order => realUserIds.has(order.userId))
       
-      const totalRevenue = realOrders.reduce((sum, order) => sum + order.price, 0)
+      // ใช้ commissionPercent จากเซิร์ฟเวอร์ (ค่าฝากขาย)
+      const commissionPct = server.commissionPercent || 0
+      const applyFee = (price: number) => {
+        if (commissionPct > 0) {
+          return price * (1 - commissionPct / 100)
+        }
+        return price
+      }
+
+      const totalRevenue = realOrders.reduce((sum, order) => sum + applyFee(order.price), 0)
       const todayRevenue = realOrders
         .filter(order => new Date(order.createdAt) >= today)
-        .reduce((sum, order) => sum + order.price, 0)
+        .reduce((sum, order) => sum + applyFee(order.price), 0)
       const monthRevenue = realOrders
         .filter(order => new Date(order.createdAt) >= thisMonth)
-        .reduce((sum, order) => sum + order.price, 0)
+        .reduce((sum, order) => sum + applyFee(order.price), 0)
       
       return {
         id: server.id,

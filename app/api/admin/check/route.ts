@@ -12,10 +12,10 @@ export async function GET() {
     
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { id: true, name: true, email: true, isAdmin: true }
+      select: { id: true, name: true, email: true, isAdmin: true, isSuperAdmin: true, isRevenueAdmin: true, isAgent: true }
     })
     
-    if (!user || !user.isAdmin) {
+    if (!user || (!user.isSuperAdmin && !user.isAdmin && !user.isRevenueAdmin && !user.isAgent)) {
       return NextResponse.json({ isAdmin: false, error: 'Not admin' })
     }
     

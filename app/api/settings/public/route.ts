@@ -16,7 +16,7 @@ export async function GET() {
           bankReceiverName: 'พันวิลา',
           bankAccountNumber: '',
           qrCodeImage: '',
-          siteName: 'SimonVPNShop',
+          siteName: '',
           siteLogo: '',
           backgroundImage: '',
           googleApiKey: '',
@@ -37,13 +37,30 @@ export async function GET() {
         // Site Info
         siteName: settings.siteName,
         siteLogo: settings.siteLogo,
+        appLogo: settings.appLogo,
         backgroundImage: settings.backgroundImage,
+        backgroundOpacity: settings.backgroundOpacity,
+        theme: settings.theme,
+        // Landing Template
+        landingTemplate: settings.landingTemplate,
+        landingCustomHtml: settings.landingCustomHtml || null,
+        // Web Effect
+        webEffect: settings.webEffect,
+        webEffectCustomHtml: settings.webEffectCustomHtml || null,
         // VPN Pricing
         vpnDailyPrice: settings.vpnDailyPrice,
         vpnWeeklyPrice: settings.vpnWeeklyPrice,
         vpnMonthlyPrice: settings.vpnMonthlyPrice,
         // Google API (public key only - site key for reCAPTCHA)
-        googleApiKey: settings.googleApiKey
+        googleApiKey: settings.googleApiKey,
+        // reCAPTCHA toggle
+        recaptchaEnabled: settings.recaptchaEnabled ?? false,
+        // Theme Config (UI customization)
+        themeConfig: settings.themeConfig || null,
+        // Default home page after login
+        defaultHomePage: settings.defaultHomePage || '/',
+        // Menu Click Effect
+        menuClickEffect: settings.menuClickEffect || 'none',
       }
     })
   } catch (error) {

@@ -12,10 +12,10 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true, isAgent: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin && !user?.isAdmin && !user?.isAgent) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -24,6 +24,18 @@ export async function POST(request: NextRequest) {
 
     if (!serverId) {
       return NextResponse.json({ error: 'Missing server ID' }, { status: 400 })
+    }
+
+    // ตัวแทนลบได้เฉพาะเซิร์ฟเวอร์ของตัวเอง
+    const isAgentOnly = user.isAgent && !user.isSuperAdmin && !user.isAdmin
+    if (isAgentOnly) {
+      const server = await prisma.vpnServer.findUnique({
+        where: { id: serverId },
+        select: { agentId: true }
+      })
+      if (!server || server.agentId !== session.userId) {
+        return NextResponse.json({ error: 'ไม่มีสิทธิ์ลบเซิร์ฟเวอร์นี้' }, { status: 403 })
+      }
     }
 
     await prisma.vpnServer.delete({

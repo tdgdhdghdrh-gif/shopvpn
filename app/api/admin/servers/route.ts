@@ -15,18 +15,24 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true, isAgent: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin && !user?.isAdmin && !user?.isAgent) {
       return NextResponse.json(
         { error: 'Forbidden - Admin only' },
         { status: 403 }
       )
     }
 
+    // ตัวแทนเห็นเฉพาะเซิร์ฟเวอร์ของตัวเอง
+    const where = user.isAgent && !user.isSuperAdmin && !user.isAdmin
+      ? { agentId: session.userId }
+      : {}
+
     const servers = await prisma.vpnServer.findMany({
-      orderBy: { createdAt: 'desc' }
+      where,
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }]
     })
 
     return NextResponse.json({ servers })

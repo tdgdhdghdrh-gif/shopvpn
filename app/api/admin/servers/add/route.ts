@@ -154,10 +154,10 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true, isAgent: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin && !user?.isAdmin && !user?.isAgent) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -167,11 +167,21 @@ export async function POST(request: NextRequest) {
       name, flag, host, port, path, username, password, inboundId, 
       protocol, tlsType, flow, sni, clientPort,
       supportsAis, supportsTrue, supportsDtac, category, speed,
-      skipConnectionTest
+      skipConnectionTest, inboundConfigs,
+      // Per-server pricing & decoration
+      pricePerDay, priceWeekly, priceMonthly,
+      description, badge, tags, themeColor, themeGradient, imageUrl,
+      sortOrder, maxClients, defaultIpLimit
     } = body
 
-    if (!name || !host || !port || !path || !inboundId) {
-      return NextResponse.json({ error: 'กรุณากรอกข้อมูลที่จำเป็นทั้งหมด (ชื่อ, โฮสต์, พอร์ต, เส้นทาง, Inbound ID)' }, { status: 400 })
+    if (!name || !host || !port || !path) {
+      return NextResponse.json({ error: 'กรุณากรอกข้อมูลที่จำเป็นทั้งหมด (ชื่อ, โฮสต์, พอร์ต, เส้นทาง)' }, { status: 400 })
+    }
+
+    // inboundId is required unless inboundConfigs provides one
+    const effectiveInboundId = inboundId || (inboundConfigs?.[0]?.inboundId) || 0
+    if (!effectiveInboundId) {
+      return NextResponse.json({ error: 'กรุณาระบุ Inbound ID หรือดึง Inbound จาก Panel' }, { status: 400 })
     }
 
     // Test connection before saving (unless skipped)
@@ -187,6 +197,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ถ้าเป็นตัวแทน ให้ผูก agentId
+    const isAgentOnly = user.isAgent && !user.isSuperAdmin && !user.isAdmin
+
     const server = await prisma.vpnServer.create({
       data: {
         name,
@@ -196,7 +209,7 @@ export async function POST(request: NextRequest) {
         path,
         username,
         password,
-        inboundId,
+        inboundId: effectiveInboundId,
         protocol: protocol || 'vless',
         tlsType: tlsType || 'Reality',
         flow: flow || 'xtls-rprx-vision',
@@ -210,7 +223,24 @@ export async function POST(request: NextRequest) {
         isActive: true,
         ping: 0,
         load: 0,
-        status: 'online'
+        status: 'online',
+        inboundConfigs: inboundConfigs || undefined,
+        agentId: isAgentOnly ? session.userId : undefined,
+        // Per-server pricing
+        pricePerDay: pricePerDay ?? 2,
+        priceWeekly: priceWeekly ?? undefined,
+        priceMonthly: priceMonthly ?? undefined,
+        // Decoration
+        description: description || undefined,
+        badge: badge || undefined,
+        tags: tags || [],
+        themeColor: themeColor || undefined,
+        themeGradient: themeGradient || undefined,
+        imageUrl: imageUrl || undefined,
+        sortOrder: sortOrder ?? 0,
+        // Limits
+        maxClients: maxClients ?? 0,
+        defaultIpLimit: defaultIpLimit ?? 0,
       }
     })
 

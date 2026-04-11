@@ -18,10 +18,10 @@ export async function GET(request: NextRequest) {
     // Check if user is admin from database
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin && !user?.isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin only' },
         { status: 403 }
@@ -35,8 +35,15 @@ export async function GET(request: NextRequest) {
         email: true,
         balance: true,
         isAdmin: true,
+        isSuperAdmin: true,
+        isRevenueAdmin: true,
+        isAgent: true,
+        isBanned: true,
+        bannedAt: true,
+        banReason: true,
         discountExpiry: true,
         createdAt: true,
+        avatar: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -68,10 +75,10 @@ export async function POST(request: NextRequest) {
     // Check if user is admin
     const admin = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true }
     })
 
-    if (!admin?.isAdmin) {
+    if (!admin?.isSuperAdmin && !admin?.isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin only' },
         { status: 403 }
@@ -79,7 +86,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, email, password, balance = 0, isAdmin = false } = body
+    const { name, email, password, balance = 0, role = 'user' } = body
+
+    // Only superAdmin can assign admin roles
+    if (role !== 'user' && !admin?.isSuperAdmin) {
+      return NextResponse.json(
+        { error: 'เฉพาะแอดมินสูงสุดเท่านั้นที่สามารถกำหนดยศได้' },
+        { status: 403 }
+      )
+    }
 
     // Validate required fields
     if (!name || !email || !password) {
@@ -88,6 +103,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Convert role string to boolean flags
+    const isSuperAdmin = role === 'superAdmin'
+    const isAdmin = role === 'admin'
+    const isRevenueAdmin = role === 'revenueAdmin'
+    const isAgent = role === 'agent'
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -111,14 +132,20 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         balance,
+        isSuperAdmin,
         isAdmin,
+        isRevenueAdmin,
+        isAgent,
       },
       select: {
         id: true,
         name: true,
         email: true,
         balance: true,
+        isSuperAdmin: true,
         isAdmin: true,
+        isRevenueAdmin: true,
+        isAgent: true,
         createdAt: true,
       }
     })
@@ -152,10 +179,10 @@ export async function PUT(request: NextRequest) {
     // Check if user is admin
     const admin = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true }
     })
 
-    if (!admin?.isAdmin) {
+    if (!admin?.isSuperAdmin && !admin?.isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin only' },
         { status: 403 }
@@ -163,7 +190,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, name, email, password, balance, isAdmin } = body
+    const { id, name, email, password, balance, role } = body
 
     if (!id) {
       return NextResponse.json(
@@ -184,6 +211,23 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    // Only superAdmin can change roles
+    if (role !== undefined && !admin?.isSuperAdmin) {
+      // Determine the current role of the target user
+      const currentRole = existingUser.isSuperAdmin ? 'superAdmin'
+        : existingUser.isAdmin ? 'admin'
+        : existingUser.isAgent ? 'agent'
+        : existingUser.isRevenueAdmin ? 'revenueAdmin'
+        : 'user'
+      
+      if (role !== currentRole) {
+        return NextResponse.json(
+          { error: 'เฉพาะแอดมินสูงสุดเท่านั้นที่สามารถเปลี่ยนยศได้' },
+          { status: 403 }
+        )
+      }
+    }
+
     // Check if email is being changed and if it's already taken
     if (email && email !== existingUser.email) {
       const emailExists = await prisma.user.findUnique({
@@ -202,7 +246,14 @@ export async function PUT(request: NextRequest) {
       name,
       email,
       balance,
-      isAdmin,
+    }
+
+    // Only superAdmin can set role fields
+    if (admin?.isSuperAdmin && role !== undefined) {
+      updateData.isSuperAdmin = role === 'superAdmin'
+      updateData.isAdmin = role === 'admin'
+      updateData.isRevenueAdmin = role === 'revenueAdmin'
+      updateData.isAgent = role === 'agent'
     }
 
     // Only update password if provided
@@ -219,7 +270,10 @@ export async function PUT(request: NextRequest) {
         name: true,
         email: true,
         balance: true,
+        isSuperAdmin: true,
         isAdmin: true,
+        isRevenueAdmin: true,
+        isAgent: true,
         createdAt: true,
       }
     })
@@ -253,10 +307,10 @@ export async function DELETE(request: NextRequest) {
     // Check if user is admin
     const admin = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true }
     })
 
-    if (!admin?.isAdmin) {
+    if (!admin?.isSuperAdmin && !admin?.isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin only' },
         { status: 403 }

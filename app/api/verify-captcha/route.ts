@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if reCAPTCHA is enabled
+    const settings = await prisma.settings.findFirst()
+    if (!settings?.recaptchaEnabled) {
+      return NextResponse.json({ success: true })
+    }
+
     const { token } = await request.json()
 
     if (!token) {
       return NextResponse.json({ success: false, error: 'Missing captcha token' }, { status: 400 })
     }
 
-    const secretKey = process.env.RECAPTCHA_SECRET_KEY
+    // Use secret key from DB first, fallback to env
+    const secretKey = settings.recaptchaSecretKey || process.env.RECAPTCHA_SECRET_KEY
 
     if (!secretKey) {
       return NextResponse.json({ success: false, error: 'Server configuration error' }, { status: 500 })

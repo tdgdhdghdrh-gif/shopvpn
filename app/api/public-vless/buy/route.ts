@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getSession } from '@/lib/session'
+import { getSession, checkImpersonation } from '@/lib/session'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,6 +9,10 @@ export async function POST(request: NextRequest) {
     if (!session?.isLoggedIn || !session?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Block impersonation
+    const impBlock = await checkImpersonation()
+    if (impBlock) return impBlock
 
     const body = await request.json()
     const { vlessLink, country, flag, hostname } = body

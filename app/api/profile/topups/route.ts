@@ -12,6 +12,14 @@ export async function GET(request: NextRequest) {
 
     const topups = await prisma.topUp.findMany({
       where: { userId: session.userId },
+      select: {
+        id: true,
+        amount: true,
+        method: true,
+        status: true,
+        note: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: 'desc' }
     })
 

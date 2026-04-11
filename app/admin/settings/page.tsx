@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { 
-  Save, Key, Phone, Building2, User, 
+import { useEffect, useState, useRef, useMemo } from 'react'
+import {
+  Save, Key, Phone, Building2, User,
   AlertCircle, CheckCircle2, Loader2, Shield, Wallet, ScanLine,
   Upload, X, QrCode, Settings as SettingsIcon, Info, ExternalLink,
-  Globe, Image as ImageIcon, Type, DollarSign, Layout
+  Globe, Image as ImageIcon, Type, DollarSign, Layout, Eye, EyeOff,
+  CheckCircle, XCircle, ChevronDown,
 } from 'lucide-react'
 
 interface Settings {
@@ -15,47 +16,88 @@ interface Settings {
   bankReceiverName: string
   bankAccountNumber: string
   qrCodeImage: string
-  // Site Configuration
   siteName: string
   siteLogo: string
   backgroundImage: string
-  // Google API
   googleApiKey: string
-  // VPN Pricing
   vpnDailyPrice: number
   vpnWeeklyPrice: number
   vpnMonthlyPrice: number
+  landingTemplate: string
+}
+
+const INITIAL_SETTINGS: Settings = {
+  truemoneyPhone: '',
+  truemoneyApiKey: '',
+  slipApiKey: '',
+  bankReceiverName: '',
+  bankAccountNumber: '',
+  qrCodeImage: '',
+  siteName: '',
+  siteLogo: '',
+  backgroundImage: '',
+  googleApiKey: '',
+  vpnDailyPrice: 4,
+  vpnWeeklyPrice: 25,
+  vpnMonthlyPrice: 100,
+  landingTemplate: 'classic',
+}
+
+function StatusDot({ ok }: { ok: boolean }) {
+  return ok ? (
+    <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+  ) : (
+    <XCircle className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
+  )
+}
+
+function StatCard({ label, value, icon: Icon, color }: {
+  label: string
+  value: string | number
+  icon: React.ElementType
+  color: string
+}) {
+  const colorMap: Record<string, string> = {
+    emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    red: 'text-red-400 bg-red-500/10 border-red-500/20',
+    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    purple: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+  }
+  const c = colorMap[color] || colorMap.purple
+  return (
+    <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4">
+      <div className={`w-10 h-10 sm:w-11 sm:h-11 ${c} border rounded-xl flex items-center justify-center shrink-0`}>
+        <Icon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-zinc-500 font-medium truncate">{label}</p>
+        <p className="text-sm sm:text-base font-bold text-white truncate">{value}</p>
+      </div>
+    </div>
+  )
 }
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState<Settings>({
-    truemoneyPhone: '',
-    truemoneyApiKey: '',
-    slipApiKey: '',
-    bankReceiverName: '',
-    bankAccountNumber: '',
-    qrCodeImage: '',
-    siteName: 'SimonVPNShop',
-    siteLogo: '',
-    backgroundImage: '',
-    googleApiKey: '',
-    vpnDailyPrice: 4,
-    vpnWeeklyPrice: 25,
-    vpnMonthlyPrice: 100
-  })
+  const [settings, setSettings] = useState<Settings>(INITIAL_SETTINGS)
+  const [savedSettings, setSavedSettings] = useState<Settings>(INITIAL_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
   const [message, setMessage] = useState({ type: '', text: '' })
+  const [revealFields, setRevealFields] = useState<Record<string, boolean>>({})
+  const [mobileSection, setMobileSection] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
   const bgInputRef = useRef<HTMLInputElement>(null)
+
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(settings) !== JSON.stringify(savedSettings)
+  }, [settings, savedSettings])
 
   useEffect(() => {
     fetchSettings()
   }, [])
 
-  // เคลียร์ข้อความแจ้งเตือนอัตโนมัติใน 3 วินาที
   useEffect(() => {
     if (message.text) {
       const timer = setTimeout(() => setMessage({ type: '', text: '' }), 3000)
@@ -63,54 +105,70 @@ export default function AdminSettingsPage() {
     }
   }, [message])
 
+  const configStatus = useMemo(() => {
+    const checks = [
+      { label: 'ชื่อเว็บ', ok: !!settings.siteName },
+      { label: 'โลโก้', ok: !!settings.siteLogo },
+      { label: 'พื้นหลัง', ok: !!settings.backgroundImage },
+      { label: 'QR Code', ok: !!settings.qrCodeImage },
+      { label: 'TrueMoney', ok: !!settings.truemoneyPhone && !!settings.truemoneyApiKey },
+      { label: 'Slip API', ok: !!settings.slipApiKey },
+      { label: 'Google API', ok: !!settings.googleApiKey },
+      { label: 'ราคา VPN', ok: settings.vpnDailyPrice > 0 && settings.vpnWeeklyPrice > 0 && settings.vpnMonthlyPrice > 0 },
+    ]
+    const done = checks.filter(c => c.ok).length
+    return { checks, done, total: checks.length }
+  }, [settings])
+
   async function fetchSettings() {
     try {
       const res = await fetch('/api/admin/settings')
       const data = await res.json()
       if (data.settings) {
-        setSettings({
+        const s: Settings = {
           truemoneyPhone: data.settings.truemoneyPhone || '',
           truemoneyApiKey: data.settings.truemoneyApiKey || '',
           slipApiKey: data.settings.slipApiKey || '',
           bankReceiverName: data.settings.bankReceiverName || '',
           bankAccountNumber: data.settings.bankAccountNumber || '',
           qrCodeImage: data.settings.qrCodeImage || '',
-          siteName: data.settings.siteName || 'SimonVPNShop',
+          siteName: data.settings.siteName || '',
           siteLogo: data.settings.siteLogo || '',
           backgroundImage: data.settings.backgroundImage || '',
           googleApiKey: data.settings.googleApiKey || '',
           vpnDailyPrice: data.settings.vpnDailyPrice || 4,
           vpnWeeklyPrice: data.settings.vpnWeeklyPrice || 25,
-          vpnMonthlyPrice: data.settings.vpnMonthlyPrice || 100
-        })
+          vpnMonthlyPrice: data.settings.vpnMonthlyPrice || 100,
+          landingTemplate: data.settings.landingTemplate || 'classic',
+        }
+        setSettings(s)
+        setSavedSettings(s)
       }
-    } catch (error) {
-      console.error('Failed to fetch settings')
-      setMessage({ type: 'error', text: 'วิกฤต: ซิงโครไนซ์การตั้งค่าระบบไม่สำเร็จ' })
+    } catch {
+      setMessage({ type: 'error', text: 'ไม่สามารถดึงข้อมูลการตั้งค่าได้' })
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSave(e?: React.FormEvent) {
+    e?.preventDefault()
     setSaving(true)
     setMessage({ type: '', text: '' })
-
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settings),
       })
-
       const data = await res.json()
       if (data.success) {
-        setMessage({ type: 'success', text: 'บันทึกการตั้งค่าระบบเรียบร้อยแล้ว' })
+        setSavedSettings({ ...settings })
+        setMessage({ type: 'success', text: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' })
       } else {
         setMessage({ type: 'error', text: data.error || 'การบันทึกล้มเหลว' })
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'การเชื่อมต่อล้มเหลว' })
     } finally {
       setSaving(false)
@@ -121,18 +179,19 @@ export default function AdminSettingsPage() {
     setSettings(prev => ({ ...prev, [field]: value }))
   }
 
+  function toggleReveal(field: string) {
+    setRevealFields(prev => ({ ...prev, [field]: !prev[field] }))
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>, type: 'qr' | 'logo' | 'background') {
     const file = e.target.files?.[0]
     if (!file) return
-
     if (file.size > 2 * 1024 * 1024) {
       setMessage({ type: 'error', text: 'ขนาดเกินกำหนด: ต้องไม่เกิน 2MB' })
       return
     }
-
     setUploading(type)
     setMessage({ type: '', text: '' })
-
     try {
       const reader = new FileReader()
       reader.onload = async (event) => {
@@ -140,17 +199,13 @@ export default function AdminSettingsPage() {
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: base64, type })
+          body: JSON.stringify({ image: base64, type }),
         })
         const data = await res.json()
         if (data.success) {
-          if (type === 'qr') {
-            updateField('qrCodeImage', data.url)
-          } else if (type === 'logo') {
-            updateField('siteLogo', data.url)
-          } else if (type === 'background') {
-            updateField('backgroundImage', data.url)
-          }
+          if (type === 'qr') updateField('qrCodeImage', data.url)
+          else if (type === 'logo') updateField('siteLogo', data.url)
+          else if (type === 'background') updateField('backgroundImage', data.url)
           setMessage({ type: 'success', text: `อัปโหลด${type === 'qr' ? 'QR Code' : type === 'logo' ? 'โลโก้' : 'พื้นหลัง'}สำเร็จ` })
         } else {
           setMessage({ type: 'error', text: data.error || 'อัปโหลดล้มเหลว' })
@@ -158,7 +213,7 @@ export default function AdminSettingsPage() {
         setUploading(null)
       }
       reader.readAsDataURL(file)
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'เกิดข้อผิดพลาดในการอัปโหลด' })
       setUploading(null)
     }
@@ -177,371 +232,350 @@ export default function AdminSettingsPage() {
     }
   }
 
+  function toggleMobileSection(id: string) {
+    setMobileSection(prev => prev === id ? null : id)
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
         <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
-        <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest text-center">กำลังดึงข้อมูลระบบ...</p>
+        <p className="text-[10px] sm:text-xs font-bold text-zinc-500 uppercase tracking-widest">กำลังโหลดการตั้งค่า...</p>
+      </div>
+    )
+  }
+
+  /* ── Shared input builder ── */
+  function InputField({ label, field, placeholder, icon: Icon, type = 'text', color = 'blue', hint }: {
+    label: string; field: keyof Settings; placeholder: string;
+    icon: React.ElementType; type?: string; color?: string; hint?: string
+  }) {
+    const isSecret = type === 'password'
+    const revealed = revealFields[field]
+    const focusColor: Record<string, string> = {
+      blue: 'focus:border-blue-500/50', red: 'focus:border-red-500/50',
+      emerald: 'focus:border-emerald-500/50', indigo: 'focus:border-indigo-500/50',
+      purple: 'focus:border-purple-500/50',
+    }
+    const iconFocus: Record<string, string> = {
+      blue: 'group-focus-within:text-blue-400', red: 'group-focus-within:text-red-400',
+      emerald: 'group-focus-within:text-emerald-400', indigo: 'group-focus-within:text-indigo-400',
+      purple: 'group-focus-within:text-purple-400',
+    }
+    return (
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">{label}</label>
+        <div className="relative group">
+          <Icon className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 ${iconFocus[color]} transition-colors`} />
+          <input
+            type={isSecret && !revealed ? 'password' : type === 'number' ? 'number' : 'text'}
+            min={type === 'number' ? 0 : undefined}
+            step={type === 'number' ? '0.5' : undefined}
+            value={(settings as any)[field]}
+            onChange={(e) => updateField(field, type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value)}
+            placeholder={placeholder}
+            className={`w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-11 pr-${isSecret ? '11' : '4'} py-3 text-sm text-white ${focusColor[color]} transition-all font-medium placeholder:text-zinc-700`}
+          />
+          {isSecret && (
+            <button
+              type="button"
+              onClick={() => toggleReveal(field)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+            >
+              {revealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          )}
+        </div>
+        {hint && <p className="text-[10px] text-zinc-600 ml-0.5">{hint}</p>}
+      </div>
+    )
+  }
+
+  /* ── Image upload area builder ── */
+  function ImageUploadArea({ type, label, imgSrc, inputRef, maxW = 'max-w-[200px]', maxH = 'max-h-[100px]', areaW = 'w-full', areaH = 'h-[120px]' }: {
+    type: 'qr' | 'logo' | 'background'; label: string; imgSrc: string;
+    inputRef: React.RefObject<HTMLInputElement | null>; maxW?: string; maxH?: string; areaW?: string; areaH?: string
+  }) {
+    return (
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">{label}</label>
+        {imgSrc ? (
+          <div className="relative group inline-block">
+            <div className={`${type === 'qr' ? 'bg-white' : 'bg-zinc-900'} rounded-xl ${type === 'qr' ? 'p-4' : 'p-2'} flex items-center justify-center overflow-hidden border border-white/[0.06] group-hover:border-purple-500/20 transition-all`}>
+              <img src={imgSrc} alt={label} className={`${maxW} ${maxH} object-contain`} />
+            </div>
+            <button
+              onClick={() => removeImage(type)}
+              className="absolute -top-2 -right-2 w-7 h-7 bg-red-600 hover:bg-red-500 rounded-lg flex items-center justify-center text-white shadow-lg active:scale-90 transition-all"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => inputRef.current?.click()}
+            className={`group border-2 border-dashed border-white/[0.06] hover:border-purple-500/30 rounded-xl text-center cursor-pointer transition-all hover:bg-purple-500/[0.03] flex flex-col items-center justify-center gap-2 ${areaW} ${areaH}`}
+          >
+            {uploading === type ? (
+              <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+            ) : (
+              <>
+                <Upload className="w-5 h-5 text-zinc-600 group-hover:text-purple-400 transition-colors" />
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">อัปโหลด</p>
+              </>
+            )}
+          </div>
+        )}
+        <input ref={inputRef} type="file" accept="image/*" onChange={(e) => handleImageUpload(e, type)} className="hidden" />
+      </div>
+    )
+  }
+
+  /* ── Section card wrapper ── */
+  function SectionCard({ id, title, desc, icon: Icon, color, children }: {
+    id: string; title: string; desc: string; icon: React.ElementType; color: string; children: React.ReactNode
+  }) {
+    const colorMap: Record<string, { icon: string; gradient: string }> = {
+      indigo: { icon: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20', gradient: 'from-indigo-500/5' },
+      blue: { icon: 'text-blue-400 bg-blue-500/10 border-blue-500/20', gradient: 'from-blue-500/5' },
+      emerald: { icon: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', gradient: 'from-emerald-500/5' },
+      red: { icon: 'text-red-400 bg-red-500/10 border-red-500/20', gradient: 'from-red-500/5' },
+      purple: { icon: 'text-purple-400 bg-purple-500/10 border-purple-500/20', gradient: 'from-purple-500/5' },
+    }
+    const c = colorMap[color] || colorMap.purple
+    const isOpen = mobileSection === id
+
+    return (
+      <div className="bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden">
+        {/* Header - acts as accordion trigger on mobile */}
+        <button
+          type="button"
+          onClick={() => toggleMobileSection(id)}
+          className="w-full p-5 sm:p-6 border-b border-white/5 bg-gradient-to-r to-transparent flex items-center gap-3 sm:gap-4 text-left sm:cursor-default"
+          style={{ backgroundImage: `linear-gradient(to right, var(--tw-gradient-from), transparent)` }}
+        >
+          <div className={`w-10 h-10 sm:w-11 sm:h-11 ${c.icon} border rounded-xl flex items-center justify-center shrink-0`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">{title}</h3>
+            <p className="text-[11px] sm:text-xs text-zinc-500 font-medium truncate">{desc}</p>
+          </div>
+          <ChevronDown className={`w-4 h-4 text-zinc-600 sm:hidden transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {/* Content - always visible on desktop, accordion on mobile */}
+        <div className={`sm:block ${isOpen ? 'block' : 'hidden'}`}>
+          <div className="p-5 sm:p-6">
+            {children}
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 sm:space-y-10 pb-12">
-      {/* Toast Notification */}
+    <div className="space-y-6 sm:space-y-8 pb-28 sm:pb-12">
+      {/* ── Toast ── */}
       {message.text && (
-        <div className={`fixed bottom-4 sm:bottom-8 right-4 sm:right-8 z-[100] flex items-center gap-3 px-5 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-2xl transition-all animate-in slide-in-from-right-10 ${
-          message.type === 'success' 
-            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
+        <div className={`fixed bottom-20 sm:bottom-8 right-4 sm:right-8 left-4 sm:left-auto z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl transition-all animate-in slide-in-from-right-10 ${
+          message.type === 'success'
+            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
             : 'bg-red-500/10 border border-red-500/20 text-red-400'
         }`}>
-          {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
+          {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
           <span className="font-semibold text-xs sm:text-sm">{message.text}</span>
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-             <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
-               <SettingsIcon className="w-4 h-4 text-purple-400" />
-             </div>
-             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">ตั้งค่าระบบ</h2>
+            <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
+              <SettingsIcon className="w-4 h-4 text-purple-400" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">ตั้งค่าระบบ</h2>
           </div>
-          <p className="text-gray-500 text-sm font-medium">จัดการ API การชำระเงิน พารามิเตอร์เครือข่าย และตั้งค่าเว็บไซต์</p>
+          <p className="text-zinc-500 text-xs sm:text-sm font-medium">จัดการ API ชำระเงิน ราคา และการตั้งค่าเว็บไซต์</p>
         </div>
-        
-        <button 
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 border border-purple-500/20 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold text-white hover:bg-purple-500 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+        {/* Desktop save button */}
+        <button
+          onClick={() => handleSave()}
+          disabled={saving || !hasChanges}
+          className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-purple-600 border border-purple-500/30 rounded-xl text-sm font-bold text-white hover:bg-purple-500 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          <span>{saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}</span>
+          {saving ? 'กำลังบันทึก...' : hasChanges ? 'บันทึกการเปลี่ยนแปลง' : 'ไม่มีการเปลี่ยนแปลง'}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
-        <div className="xl:col-span-2 space-y-6 sm:space-y-8">
-           {/* Site Configuration Section */}
-           <div className="bg-white/5 border border-white/10 rounded-[1.5rem] sm:rounded-3xl overflow-hidden group">
-              <div className="p-6 sm:p-8 border-b border-white/5 bg-gradient-to-r from-indigo-500/5 to-transparent">
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-14 bg-indigo-500/10 border-indigo-500/20 text-indigo-400 border rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-                       <Layout className="w-6 h-6 sm:w-7 sm:h-7" />
-                    </div>
-                    <div>
-                       <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">ตั้งค่าเว็บไซต์</h3>
-                       <p className="text-[11px] sm:text-sm text-gray-500 font-medium">ชื่อเว็บ โลโก้ และพื้นหลัง</p>
-                    </div>
-                 </div>
-              </div>
-              <div className="p-6 sm:p-8 space-y-6">
-                 {/* Site Name */}
-                 <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">ชื่อเว็บไซต์</label>
-                    <div className="relative group">
-                       <Type className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-indigo-400 transition-colors" />
-                       <input
-                         type="text"
-                         value={settings.siteName}
-                         onChange={(e) => updateField('siteName', e.target.value)}
-                         placeholder="ชื่อเว็บไซต์ของคุณ"
-                         className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl pl-11 sm:pl-12 pr-5 py-3 sm:py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
-                       />
-                    </div>
-                 </div>
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard label="สถานะการตั้งค่า" value={`${configStatus.done}/${configStatus.total} รายการ`} icon={CheckCircle} color="emerald" />
+        <StatCard label="ระบบชำระเงิน" value={settings.truemoneyApiKey && settings.slipApiKey ? 'พร้อมใช้งาน' : 'ยังไม่ครบ'} icon={Wallet} color={settings.truemoneyApiKey && settings.slipApiKey ? 'emerald' : 'red'} />
+        <StatCard label="ราคา VPN รายวัน" value={`${settings.vpnDailyPrice} บาท`} icon={DollarSign} color="blue" />
+        <StatCard label="ราคา VPN รายเดือน" value={`${settings.vpnMonthlyPrice} บาท`} icon={DollarSign} color="purple" />
+      </div>
 
-                 {/* Logo Upload */}
-                 <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">โลโก้เว็บไซต์</label>
-                    <div className="relative">
-                       {settings.siteLogo ? (
-                         <div className="relative group inline-block">
-                            <div className="bg-white rounded-xl p-4 flex items-center justify-center shadow-lg overflow-hidden border-2 border-transparent group-hover:border-indigo-500/20 transition-all">
-                               <img src={settings.siteLogo} alt="Site Logo" className="max-w-[200px] max-h-[100px] object-contain" />
-                            </div>
-                            <button
-                              onClick={() => removeImage('logo')}
-                              className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 hover:bg-red-500 rounded-lg flex items-center justify-center text-white shadow-lg active:scale-90 transition-all"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                         </div>
-                       ) : (
-                         <div 
-                           onClick={() => logoInputRef.current?.click()}
-                           className="group border-2 border-dashed border-white/10 hover:border-indigo-500/40 rounded-xl p-6 text-center cursor-pointer transition-all hover:bg-indigo-500/5 space-y-2 inline-flex flex-col items-center justify-center w-[200px] h-[100px]"
-                         >
-                           {uploading === 'logo' ? (
-                             <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-                           ) : (
-                             <>
-                               <ImageIcon className="w-6 h-6 text-gray-500 group-hover:text-indigo-400" />
-                               <p className="text-[10px] font-bold text-gray-500 uppercase">อัปโหลดโลโก้</p>
-                             </>
-                           )}
-                         </div>
-                       )}
-                       <input ref={logoInputRef} type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'logo')} className="hidden" />
-                    </div>
-                 </div>
+      {/* ── Main Grid ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 sm:gap-6">
+        {/* ── Left Column (2/3) ── */}
+        <div className="xl:col-span-2 space-y-5 sm:space-y-6">
 
-                 {/* Background Upload */}
-                 <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">พื้นหลังเว็บไซต์</label>
-                    <div className="relative">
-                       {settings.backgroundImage ? (
-                         <div className="relative group inline-block">
-                            <div className="rounded-xl overflow-hidden border-2 border-transparent group-hover:border-indigo-500/20 transition-all">
-                               <img src={settings.backgroundImage} alt="Background" className="max-w-[300px] max-h-[150px] object-cover" />
-                            </div>
-                            <button
-                              onClick={() => removeImage('background')}
-                              className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 hover:bg-red-500 rounded-lg flex items-center justify-center text-white shadow-lg active:scale-90 transition-all"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                         </div>
-                       ) : (
-                         <div 
-                           onClick={() => bgInputRef.current?.click()}
-                           className="group border-2 border-dashed border-white/10 hover:border-indigo-500/40 rounded-xl p-6 text-center cursor-pointer transition-all hover:bg-indigo-500/5 space-y-2 inline-flex flex-col items-center justify-center w-[300px] h-[100px]"
-                         >
-                           {uploading === 'background' ? (
-                             <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-                           ) : (
-                             <>
-                               <ImageIcon className="w-6 h-6 text-gray-500 group-hover:text-indigo-400" />
-                               <p className="text-[10px] font-bold text-gray-500 uppercase">อัปโหลดพื้นหลัง</p>
-                             </>
-                           )}
-                         </div>
-                       )}
-                       <input ref={bgInputRef} type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'background')} className="hidden" />
-                    </div>
-                 </div>
+          {/* Site Configuration */}
+          <SectionCard id="site" title="ตั้งค่าเว็บไซต์" desc="ชื่อเว็บ โลโก้ และพื้นหลัง" icon={Layout} color="indigo">
+            <div className="space-y-5">
+              <InputField label="ชื่อเว็บไซต์" field="siteName" placeholder="ชื่อเว็บไซต์ของคุณ" icon={Type} color="indigo" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <ImageUploadArea type="logo" label="โลโก้เว็บไซต์" imgSrc={settings.siteLogo} inputRef={logoInputRef} />
+                <ImageUploadArea type="background" label="พื้นหลังเว็บไซต์" imgSrc={settings.backgroundImage} inputRef={bgInputRef} maxW="max-w-[300px]" maxH="max-h-[120px]" />
               </div>
-           </div>
+            </div>
+          </SectionCard>
 
-           {/* Google API Section */}
-           <div className="bg-white/5 border border-white/10 rounded-[1.5rem] sm:rounded-3xl overflow-hidden group">
-              <div className="p-6 sm:p-8 border-b border-white/5 bg-gradient-to-r from-blue-500/5 to-transparent">
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-14 bg-blue-500/10 border-blue-500/20 text-blue-400 border rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-                       <Globe className="w-6 h-6 sm:w-7 sm:h-7" />
-                    </div>
-                    <div>
-                       <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">Google API</h3>
-                       <p className="text-[11px] sm:text-sm text-gray-500 font-medium">reCAPTCHA และบริการ Google อื่นๆ</p>
-                    </div>
-                 </div>
-              </div>
-              <div className="p-6 sm:p-8">
-                 <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Google API Key</label>
-                    <div className="relative group">
-                       <Key className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-blue-400 transition-colors" />
-                       <input
-                         type="password"
-                         value={settings.googleApiKey}
-                         onChange={(e) => updateField('googleApiKey', e.target.value)}
-                         placeholder="ใส่ Google API Key (reCAPTCHA Site Key)"
-                         className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl pl-11 sm:pl-12 pr-5 py-3 sm:py-4 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all font-medium"
-                       />
-                    </div>
-                    <p className="text-[10px] text-gray-600 ml-1">ใช้สำหรับ reCAPTCHA v2 หรือ Google Services</p>
-                 </div>
-              </div>
-           </div>
+          {/* VPN Pricing */}
+          <SectionCard id="pricing" title="ตั้งค่าราคา VPN" desc="กำหนดราคาแพ็คเกจ VPN ได้เอง" icon={DollarSign} color="emerald">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+              <InputField label="รายวัน (บาท)" field="vpnDailyPrice" placeholder="4" icon={DollarSign} type="number" color="emerald" />
+              <InputField label="รายสัปดาห์ (บาท)" field="vpnWeeklyPrice" placeholder="25" icon={DollarSign} type="number" color="emerald" />
+              <InputField label="รายเดือน (บาท)" field="vpnMonthlyPrice" placeholder="100" icon={DollarSign} type="number" color="emerald" />
+            </div>
+          </SectionCard>
 
-           {/* VPN Pricing Section */}
-           <div className="bg-white/5 border border-white/10 rounded-[1.5rem] sm:rounded-3xl overflow-hidden group">
-              <div className="p-6 sm:p-8 border-b border-white/5 bg-gradient-to-r from-emerald-500/5 to-transparent">
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-14 bg-emerald-500/10 border-emerald-500/20 text-emerald-400 border rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-                       <DollarSign className="w-6 h-6 sm:w-7 sm:h-7" />
-                    </div>
-                    <div>
-                       <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">ตั้งค่าราคา VPN</h3>
-                       <p className="text-[11px] sm:text-sm text-gray-500 font-medium">กำหนดราคาแพ็คเกจ VPN ได้เอง</p>
-                    </div>
-                 </div>
-              </div>
-              <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
-                 {/* Daily Price */}
-                 <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">รายวัน (บาท)</label>
-                    <div className="relative group">
-                       <DollarSign className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-emerald-400 transition-colors" />
-                       <input
-                         type="number"
-                         min="0"
-                         step="0.5"
-                         value={settings.vpnDailyPrice}
-                         onChange={(e) => updateField('vpnDailyPrice', parseFloat(e.target.value) || 0)}
-                         placeholder="4"
-                         className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl pl-11 sm:pl-12 pr-5 py-3 sm:py-4 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium"
-                       />
-                    </div>
-                 </div>
-                 {/* Weekly Price */}
-                 <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">รายสัปดาห์ (บาท)</label>
-                    <div className="relative group">
-                       <DollarSign className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-emerald-400 transition-colors" />
-                       <input
-                         type="number"
-                         min="0"
-                         step="0.5"
-                         value={settings.vpnWeeklyPrice}
-                         onChange={(e) => updateField('vpnWeeklyPrice', parseFloat(e.target.value) || 0)}
-                         placeholder="25"
-                         className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl pl-11 sm:pl-12 pr-5 py-3 sm:py-4 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium"
-                       />
-                    </div>
-                 </div>
-                 {/* Monthly Price */}
-                 <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">รายเดือน (บาท)</label>
-                    <div className="relative group">
-                       <DollarSign className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-emerald-400 transition-colors" />
-                       <input
-                         type="number"
-                         min="0"
-                         step="0.5"
-                         value={settings.vpnMonthlyPrice}
-                         onChange={(e) => updateField('vpnMonthlyPrice', parseFloat(e.target.value) || 0)}
-                         placeholder="100"
-                         className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl pl-11 sm:pl-12 pr-5 py-3 sm:py-4 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium"
-                       />
-                    </div>
-                 </div>
-              </div>
-           </div>
+          {/* TrueMoney Wallet */}
+          <SectionCard id="truemoney" title="TrueMoney Wallet" desc="การประมวลผลวอชเชอร์และยอดเงินอัตโนมัติ" icon={Wallet} color="red">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <InputField label="เบอร์รับเงิน" field="truemoneyPhone" placeholder="08X-XXX-XXXX" icon={Phone} color="red" />
+              <InputField label="วอชเชอร์ API Token" field="truemoneyApiKey" placeholder="dx_xxxxxxxx" icon={Key} type="password" color="red" />
+            </div>
+          </SectionCard>
 
-           {/* Payment Settings Sections */}
-           {[
-             {
-               title: 'TrueMoney Wallet Protocol',
-               desc: 'การประมวลผลวอชเชอร์และยอดเงินอัตโนมัติ',
-               icon: Wallet,
-               color: 'red',
-               fields: [
-                 { label: 'เบอร์รับเงิน', field: 'truemoneyPhone', placeholder: '08X-XXX-XXXX', icon: Phone },
-                 { label: 'วอชเชอร์ API Token', field: 'truemoneyApiKey', placeholder: 'dx_xxxxxxxx', icon: Key, type: 'password' }
-               ]
-             },
-             {
-               title: 'ระบบตรวจสอบสลิปธนาคาร',
-               desc: 'การตรวจสอบ OCR และธุรกรรมแบบเรียลไทม์',
-               icon: ScanLine,
-               color: 'blue',
-               fields: [
-                 { label: 'Slip API Key', field: 'slipApiKey', placeholder: 'dx_xxxxxxxx', icon: Key, type: 'password' },
-                 { label: 'ชื่อโปรไฟล์ผู้รับเงิน', field: 'bankReceiverName', placeholder: 'ระบุให้ตรงตามสลิป', icon: User },
-                 { label: 'หมายเลขบัญชีปลายทาง', field: 'bankAccountNumber', placeholder: 'XXX-X-XXXXX-X', icon: Building2, full: true }
-               ]
-             }
-           ].map((section, idx) => (
-             <div key={idx} className="bg-white/5 border border-white/10 rounded-[1.5rem] sm:rounded-3xl overflow-hidden group">
-                <div className={`p-6 sm:p-8 border-b border-white/5 bg-gradient-to-r from-${section.color === 'red' ? 'red' : 'blue'}-500/5 to-transparent`}>
-                   <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 sm:w-14 sm:h-14 ${section.color === 'red' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-blue-500/10 border-blue-500/20 text-blue-400'} border rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg`}>
-                         <section.icon className="w-6 h-6 sm:w-7 sm:h-7" />
-                      </div>
-                      <div>
-                         <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">{section.title}</h3>
-                         <p className="text-[11px] sm:text-sm text-gray-500 font-medium">{section.desc}</p>
-                      </div>
-                   </div>
-                </div>
-                <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
-                   {section.fields.map((f: any, fIdx: number) => (
-                     <div key={fIdx} className={`space-y-2 ${f.full ? 'md:col-span-2' : ''}`}>
-                        <label className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{f.label}</label>
-                        <div className="relative group">
-                           <f.icon className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-blue-400 transition-colors" />
-                           <input
-                             type={f.type || 'text'}
-                             value={(settings as any)[f.field]}
-                             onChange={(e) => updateField(f.field as keyof Settings, e.target.value)}
-                             placeholder={f.placeholder}
-                             className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl pl-11 sm:pl-12 pr-5 py-3 sm:py-4 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all font-medium"
-                           />
-                        </div>
-                     </div>
-                   ))}
-                </div>
-             </div>
-           ))}
+          {/* Bank Slip Verification */}
+          <SectionCard id="slip" title="ระบบตรวจสอบสลิปธนาคาร" desc="การตรวจสอบ OCR และธุรกรรมแบบเรียลไทม์" icon={ScanLine} color="blue">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <InputField label="Slip API Key" field="slipApiKey" placeholder="dx_xxxxxxxx" icon={Key} type="password" color="blue" />
+              <InputField label="ชื่อโปรไฟล์ผู้รับเงิน" field="bankReceiverName" placeholder="ระบุให้ตรงตามสลิป" icon={User} color="blue" />
+              <div className="sm:col-span-2">
+                <InputField label="หมายเลขบัญชีปลายทาง" field="bankAccountNumber" placeholder="XXX-X-XXXXX-X" icon={Building2} color="blue" />
+              </div>
+            </div>
+          </SectionCard>
         </div>
 
-        {/* Sidebar Controls */}
-        <div className="space-y-6 sm:space-y-8">
-           <div className="bg-white/5 border border-white/10 rounded-[1.5rem] sm:rounded-3xl overflow-hidden shadow-sm">
-              <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                 <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2 tracking-tight">
-                    <QrCode className="w-4 h-4 text-emerald-400" /> ไฟล์สื่อรับชำระเงิน
-                 </h3>
-                 <Shield className="w-3.5 h-3.5 text-emerald-500/30" />
-              </div>
-              <div className="p-6">
-                 {settings.qrCodeImage ? (
-                   <div className="relative group">
-                      <div className="bg-white rounded-2xl p-4 sm:p-6 flex items-center justify-center shadow-xl overflow-hidden border-2 border-transparent group-hover:border-blue-500/20 transition-all">
-                         <img src={settings.qrCodeImage} alt="Payment QR" className="max-w-full h-auto object-contain max-h-[250px]" />
-                      </div>
-                      <button
-                        onClick={() => removeImage('qr')}
-                        className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 w-9 h-9 sm:w-10 sm:h-10 bg-red-600 hover:bg-red-500 rounded-xl flex items-center justify-center text-white shadow-lg active:scale-90 transition-all"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                   </div>
-                 ) : (
-                   <div 
-                     onClick={() => fileInputRef.current?.click()}
-                     className="group border-2 border-dashed border-white/10 hover:border-emerald-500/40 rounded-2xl p-10 sm:p-12 text-center cursor-pointer transition-all hover:bg-emerald-500/5 space-y-4"
-                   >
-                     {uploading === 'qr' ? (
-                       <div className="flex flex-col items-center gap-3">
-                         <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400 animate-spin" />
-                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">กำลังอัปโหลด...</p>
-                       </div>
-                     ) : (
-                       <>
-                         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                           <Upload className="w-6 h-6 text-gray-500 group-hover:text-emerald-400" />
-                         </div>
-                         <div className="space-y-1">
-                            <p className="text-xs sm:text-sm font-bold text-gray-300">อัปโหลดไฟล์ QR</p>
-                            <p className="text-[9px] sm:text-[10px] font-black text-gray-600 uppercase tracking-widest">PNG, JPG (MAX 2MB)</p>
-                         </div>
-                       </>
-                     )}
-                   </div>
-                 )}
-                 <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'qr')} className="hidden" />
-              </div>
-           </div>
+        {/* ── Right Sidebar (1/3) ── */}
+        <div className="space-y-5 sm:space-y-6">
 
-           <div className="bg-gradient-to-br from-blue-600/10 to-transparent border border-blue-500/10 rounded-[1.5rem] sm:rounded-3xl p-6 sm:p-8 space-y-5 sm:space-y-6">
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center">
-                    <Info className="w-5 h-5 text-blue-400" />
-                 </div>
-                 <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">ข้อมูลผู้ให้บริการ API</h3>
+          {/* QR Code Upload */}
+          <div className="bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-emerald-400" /> QR Code รับชำระเงิน
+              </h3>
+              <Shield className="w-3.5 h-3.5 text-emerald-500/30" />
+            </div>
+            <div className="p-5">
+              {settings.qrCodeImage ? (
+                <div className="relative group">
+                  <div className="bg-white rounded-xl p-4 flex items-center justify-center overflow-hidden border border-white/10 group-hover:border-purple-500/20 transition-all">
+                    <img src={settings.qrCodeImage} alt="Payment QR" className="max-w-full h-auto object-contain max-h-[220px]" />
+                  </div>
+                  <button
+                    onClick={() => removeImage('qr')}
+                    className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 hover:bg-red-500 rounded-lg flex items-center justify-center text-white shadow-lg active:scale-90 transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group border-2 border-dashed border-white/[0.06] hover:border-emerald-500/30 rounded-xl p-8 sm:p-10 text-center cursor-pointer transition-all hover:bg-emerald-500/[0.03] space-y-3"
+                >
+                  {uploading === 'qr' ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">กำลังอัปโหลด...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 bg-white/[0.03] border border-white/[0.06] rounded-xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                        <Upload className="w-5 h-5 text-zinc-600 group-hover:text-emerald-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-zinc-400">อัปโหลด QR Code</p>
+                        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">PNG, JPG (MAX 2MB)</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'qr')} className="hidden" />
+            </div>
+          </div>
+
+          {/* Config Status Checklist */}
+          <div className="bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-white/5">
+              <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-purple-400" /> สถานะการตั้งค่า
+              </h3>
+            </div>
+            <div className="p-4 sm:p-5 space-y-1">
+              {/* Progress bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">ความสมบูรณ์</span>
+                  <span className="text-xs font-bold text-white">{Math.round((configStatus.done / configStatus.total) * 100)}%</span>
+                </div>
+                <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-purple-500 to-emerald-500 rounded-full transition-all duration-500"
+                    style={{ width: `${(configStatus.done / configStatus.total) * 100}%` }}
+                  />
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-gray-400 font-medium leading-relaxed">
-                ระบบจัดการชำระเงินต้องเชื่อมต่อกับ <span className="text-blue-400 font-bold">DarkX Payment Gateway</span> เพื่อใช้งานโมดูลรับยอดเงินอัตโนมัติ
-              </p>
-              <a href="https://api.darkx.shop" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full p-3.5 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black text-gray-400 hover:text-white transition-all uppercase tracking-widest">
-                <ExternalLink className="w-3.5 h-3.5" /> เว็บไซต์ผู้ให้บริการ
-              </a>
-           </div>
+              {configStatus.checks.map((c, i) => (
+                <div key={i} className="flex items-center gap-2.5 py-1.5">
+                  <StatusDot ok={c.ok} />
+                  <span className={`text-xs font-medium ${c.ok ? 'text-zinc-400' : 'text-zinc-600'}`}>{c.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* API Provider Info */}
+          <div className="bg-gradient-to-br from-blue-600/[0.06] to-transparent border border-blue-500/10 rounded-2xl p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center">
+                <Info className="w-4 h-4 text-blue-400" />
+              </div>
+              <h3 className="text-sm font-bold text-white tracking-tight">ผู้ให้บริการ API</h3>
+            </div>
+            <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+              ระบบชำระเงินเชื่อมต่อกับ <span className="text-blue-400 font-bold">DarkX Payment Gateway</span> สำหรับรับยอดเงินอัตโนมัติ
+            </p>
+            <a
+              href="https://api.darkx.shop"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full p-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-[10px] font-bold text-zinc-500 hover:text-white transition-all uppercase tracking-widest"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> เว็บไซต์ผู้ให้บริการ
+            </a>
+          </div>
         </div>
+      </div>
+
+      {/* ── Mobile Floating Save Bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-50 p-3 bg-black/80 backdrop-blur-xl border-t border-white/5">
+        <button
+          onClick={() => handleSave()}
+          disabled={saving || !hasChanges}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-purple-600 border border-purple-500/30 rounded-xl text-sm font-bold text-white active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saving ? 'กำลังบันทึก...' : hasChanges ? 'บันทึกการเปลี่ยนแปลง' : 'ไม่มีการเปลี่ยนแปลง'}
+        </button>
       </div>
     </div>
   )

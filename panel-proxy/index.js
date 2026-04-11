@@ -216,6 +216,145 @@ app.get('/inbounds', checkApiKey, async (req, res) => {
   }
 });
 
+// Proxy: Get Client IPs by email
+app.get('/clientIps/:email', checkApiKey, async (req, res) => {
+  try {
+    const cookies = req.headers.cookie || '';
+    
+    const response = await axios.post(
+      `${PANEL_URL}${PANEL_PATH}/panel/api/inbounds/clientIps/${encodeURIComponent(req.params.email)}`,
+      {},
+      {
+        httpsAgent,
+        headers: {
+          'Cookie': cookies,
+          'Accept': 'application/json'
+        },
+        validateStatus: () => true
+      }
+    );
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('[Proxy] Get client IPs error:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Proxy error: ' + error.message 
+    });
+  }
+});
+
+// Proxy: Get Client Traffic by email
+app.get('/clientTraffics/:email', checkApiKey, async (req, res) => {
+  try {
+    const cookies = req.headers.cookie || '';
+    
+    const response = await axios.get(
+      `${PANEL_URL}${PANEL_PATH}/panel/api/inbounds/getClientTraffics/${encodeURIComponent(req.params.email)}`,
+      {
+        httpsAgent,
+        headers: {
+          'Cookie': cookies,
+          'Accept': 'application/json'
+        },
+        validateStatus: () => true
+      }
+    );
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('[Proxy] Get client traffics error:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Proxy error: ' + error.message 
+    });
+  }
+});
+
+// Proxy: Get Online Clients
+app.post('/onlines', checkApiKey, async (req, res) => {
+  try {
+    const cookies = req.headers.cookie || '';
+    
+    const response = await axios.post(
+      `${PANEL_URL}${PANEL_PATH}/panel/api/inbounds/onlines`,
+      {},
+      {
+        httpsAgent,
+        headers: {
+          'Cookie': cookies,
+          'Accept': 'application/json'
+        },
+        validateStatus: () => true
+      }
+    );
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('[Proxy] Get onlines error:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Proxy error: ' + error.message 
+    });
+  }
+});
+
+// Proxy: Reset All Client Traffics for an inbound
+app.post('/resetAllClientTraffics/:id', checkApiKey, async (req, res) => {
+  try {
+    const cookies = req.headers.cookie || '';
+    
+    const response = await axios.post(
+      `${PANEL_URL}${PANEL_PATH}/panel/api/inbounds/resetAllClientTraffics/${req.params.id}`,
+      {},
+      {
+        httpsAgent,
+        headers: {
+          'Cookie': cookies,
+          'Accept': 'application/json'
+        },
+        validateStatus: () => true
+      }
+    );
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('[Proxy] Reset all client traffics error:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Proxy error: ' + error.message 
+    });
+  }
+});
+
+// Proxy: Reset All Inbounds Traffics
+app.post('/resetAllTraffics', checkApiKey, async (req, res) => {
+  try {
+    const cookies = req.headers.cookie || '';
+    
+    const response = await axios.post(
+      `${PANEL_URL}${PANEL_PATH}/panel/api/inbounds/resetAllTraffics`,
+      {},
+      {
+        httpsAgent,
+        headers: {
+          'Cookie': cookies,
+          'Accept': 'application/json'
+        },
+        validateStatus: () => true
+      }
+    );
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('[Proxy] Reset all traffics error:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Proxy error: ' + error.message 
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 3X-UI Panel Proxy running on port ${PORT}`);

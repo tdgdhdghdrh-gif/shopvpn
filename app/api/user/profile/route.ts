@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, currentPassword, newPassword } = body
+    const { name, currentPassword, newPassword, avatar } = body
 
     // Validate name
     if (!name || name.trim().length < 2) {
@@ -37,6 +37,11 @@ export async function PUT(request: NextRequest) {
     // Prepare update data
     const updateData: any = {
       name: name.trim()
+    }
+
+    // Handle avatar update
+    if (avatar !== undefined) {
+      updateData.avatar = avatar || null
     }
 
     // Handle password change
@@ -80,7 +85,8 @@ export async function PUT(request: NextRequest) {
         name: true,
         email: true,
         balance: true,
-        isAdmin: true
+        isAdmin: true,
+        avatar: true
       }
     })
 

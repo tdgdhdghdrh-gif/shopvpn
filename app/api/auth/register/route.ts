@@ -40,29 +40,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'กรุณากรอกข้อมูลให้ครบ' })
     }
 
-    // Verify reCAPTCHA
-    if (!captchaToken) {
-      return NextResponse.json({ success: false, error: 'กรุณายืนยัน reCAPTCHA' })
-    }
+    // Check if reCAPTCHA is enabled
+    const settings = await prisma.settings.findFirst()
+    const isRecaptchaEnabled = settings?.recaptchaEnabled ?? false
 
-    const secretKey = process.env.RECAPTCHA_SECRET_KEY
-    if (!secretKey) {
-      console.error('RECAPTCHA_SECRET_KEY is not set')
-      return NextResponse.json({ success: false, error: 'ระบบ reCAPTCHA ไม่พร้อมใช้งาน' })
-    }
+    // Verify reCAPTCHA only if enabled
+    if (isRecaptchaEnabled) {
+      if (!captchaToken) {
+        return NextResponse.json({ success: false, error: 'กรุณายืนยัน reCAPTCHA' })
+      }
 
-    // Verify with Google reCAPTCHA
-    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `secret=${secretKey}&response=${captchaToken}`,
-    })
+      const secretKey = settings?.recaptchaSecretKey || process.env.RECAPTCHA_SECRET_KEY
+      if (!secretKey) {
+        console.error('RECAPTCHA_SECRET_KEY is not set')
+        return NextResponse.json({ success: false, error: 'ระบบ reCAPTCHA ไม่พร้อมใช้งาน' })
+      }
 
-    const captchaData = await response.json()
+      // Verify with Google reCAPTCHA
+      const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `secret=${secretKey}&response=${captchaToken}`,
+      })
 
-    if (!captchaData.success) {
-      console.error('reCAPTCHA verification failed:', captchaData)
-      return NextResponse.json({ success: false, error: 'การยืนยัน reCAPTCHA ล้มเหลว กรุณาลองใหม่' })
+      const captchaData = await response.json()
+
+      if (!captchaData.success) {
+        console.error('reCAPTCHA verification failed:', captchaData)
+        return NextResponse.json({ success: false, error: 'การยืนยัน reCAPTCHA ล้มเหลว กรุณาลองใหม่' })
+      }
     }
 
     // Check existing email

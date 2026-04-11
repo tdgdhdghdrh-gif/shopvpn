@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
     // Check if user is admin
     const admin = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true }
     })
 
-    if (!admin?.isAdmin) {
+    if (!admin?.isSuperAdmin && !admin?.isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin only' },
         { status: 403 }
@@ -95,10 +95,10 @@ export async function DELETE(request: NextRequest) {
     // Check if user is admin
     const admin = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true }
     })
 
-    if (!admin?.isAdmin) {
+    if (!admin?.isSuperAdmin && !admin?.isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin only' },
         { status: 403 }

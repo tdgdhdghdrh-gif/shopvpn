@@ -71,7 +71,29 @@ export async function loginAction(formData: FormData): Promise<void> {
 
 // Logout
 export async function logoutAction(): Promise<void> {
-  const { logout } = await import('./session')
+  const { getSession, logout } = await import('./session')
+  const session = await getSession()
+  
+  // If impersonating, exit impersonation instead of logging out
+  if (session.isImpersonating && session.realAdminId) {
+    const { prisma: db } = await import('./prisma')
+    const admin = await db.user.findUnique({
+      where: { id: session.realAdminId },
+      select: { id: true, email: true, name: true, balance: true }
+    })
+    if (admin) {
+      session.userId = admin.id
+      session.email = admin.email
+      session.name = admin.name
+      session.balance = admin.balance
+      session.isImpersonating = undefined
+      session.realAdminId = undefined
+      session.realAdminEmail = undefined
+      await session.save()
+      redirect('/admin/users')
+    }
+  }
+  
   await logout()
   redirect('/login')
 }

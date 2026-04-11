@@ -12,14 +12,18 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { id: true, name: true, email: true, balance: true, isAdmin: true }
+      select: { id: true, name: true, email: true, balance: true, isAdmin: true, showOnboarding: true, avatar: true }
     })
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ user })
+    return NextResponse.json({ 
+      user,
+      isImpersonating: session.isImpersonating || false,
+      realAdminEmail: session.isImpersonating ? session.realAdminEmail : undefined,
+    })
   } catch (error) {
     console.error('Failed to fetch user:', error)
     return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 })

@@ -10,7 +10,7 @@ import { updateBalance } from './session'
 // Panel Proxy Configuration
 const USE_PROXY = process.env.USE_PANEL_PROXY === 'true'
 const PROXY_URL = process.env.PANEL_PROXY_URL || 'http://103.253.72.93:3001'
-const PROXY_API_KEY = process.env.PANEL_PROXY_API_KEY || 'your-secret-key-here'
+const PROXY_API_KEY = process.env.PANEL_PROXY_API_KEY || ''
 
 // ===== Helper Functions =====
 function generateUUID() {
@@ -96,6 +96,7 @@ class VpnPanelAPI {
   private cookies: string[] = []
   private isLoggedIn: boolean = false
   private useProxy: boolean
+  private loginPromise: Promise<boolean> | null = null
 
   constructor(host: string, port: number, path: string, username: string, password: string, useHttp: boolean = false) {
     this.host = host
@@ -304,6 +305,18 @@ class VpnPanelAPI {
   async login(): Promise<boolean> {
     if (this.isLoggedIn) return true
 
+    // Prevent concurrent login attempts (race condition from Promise.all)
+    if (this.loginPromise) return this.loginPromise
+
+    this.loginPromise = this._doLogin()
+    try {
+      return await this.loginPromise
+    } finally {
+      this.loginPromise = null
+    }
+  }
+
+  private async _doLogin(): Promise<boolean> {
     // Clear old cookies before login
     this.cookies = []
 
@@ -443,6 +456,170 @@ class VpnPanelAPI {
     // Use clientPort from database (could be 443, 8443, 2053, etc.)
     return `vless://${uuid}@${this.host}:${clientPort}?type=ws&encryption=none&path=%2F&host=speedtest.net&security=none#${remark}`
   }
+
+  // Get all inbounds list
+  async listInbounds(): Promise<any> {
+    if (!this.isLoggedIn) await this.login()
+
+    if (this.useProxy) {
+      const response = await proxyRequest('/inbounds', 'GET', null, this.getCookieHeader())
+      return response
+    }
+
+    return this.makeRequest('/panel/api/inbounds/list', 'GET')
+  }
+
+  // Get client IPs by email (remark)
+  async getClientIps(email: string): Promise<any> {
+    if (!this.isLoggedIn) {
+      const loggedIn = await this.login()
+      console.log(`[getClientIps] Login result for ${this.host}: ${loggedIn}`)
+    }
+
+    if (this.useProxy) {
+      const response = await proxyRequest(`/clientIps/${encodeURIComponent(email)}`, 'GET', null, this.getCookieHeader())
+      console.log(`[getClientIps] Proxy response for ${email}:`, JSON.stringify(response))
+      return response
+    }
+
+    const result = await this.makeRequest(`/panel/api/inbounds/clientIps/${encodeURIComponent(email)}`, 'POST')
+    console.log(`[getClientIps] Direct response for ${email}:`, JSON.stringify(result))
+    return result
+  }
+
+  // Get client traffic by email
+  async getClientTraffics(email: string): Promise<any> {
+    if (!this.isLoggedIn) {
+      const loggedIn = await this.login()
+      console.log(`[getClientTraffics] Login result for ${this.host}: ${loggedIn}`)
+    }
+
+    if (this.useProxy) {
+      const response = await proxyRequest(`/clientTraffics/${encodeURIComponent(email)}`, 'GET', null, this.getCookieHeader())
+      console.log(`[getClientTraffics] Proxy response for ${email}:`, JSON.stringify(response))
+      return response
+    }
+
+    const result = await this.makeRequest(`/panel/api/inbounds/getClientTraffics/${encodeURIComponent(email)}`, 'GET')
+    console.log(`[getClientTraffics] Direct response for ${email}:`, JSON.stringify(result))
+    return result
+  }
+
+  // Get online clients
+  async getOnlineClients(): Promise<any> {
+    if (!this.isLoggedIn) {
+      const loggedIn = await this.login()
+      console.log(`[getOnlineClients] Login result for ${this.host}: ${loggedIn}`)
+    }
+
+    if (this.useProxy) {
+      const response = await proxyRequest('/onlines', 'POST', {}, this.getCookieHeader())
+      console.log(`[getOnlineClients] Proxy response:`, JSON.stringify(response))
+      return response
+    }
+
+    const result = await this.makeRequest('/panel/api/inbounds/onlines', 'POST')
+    console.log(`[getOnlineClients] Direct response:`, JSON.stringify(result))
+    return result
+  }
+
+  // Update client (enable/disable, change settings) - does NOT change expiryTime
+  async updateClient(inboundId: number, clientUUID: string, clientData: any): Promise<{ success: boolean; error?: string }> {
+    if (!this.isLoggedIn) {
+      const loggedIn = await this.login()
+      if (!loggedIn) return { success: false, error: 'Login failed' }
+    }
+
+    const payload = {
+      id: inboundId,
+      settings: JSON.stringify({ clients: [clientData] })
+    }
+
+    if (this.useProxy) {
+      const response = await proxyRequest(`/updateClient/${clientUUID}`, 'POST', payload, this.getCookieHeader())
+      if (response?.success) {
+        return { success: true }
+      }
+      return { success: false, error: response?.msg || 'Failed to update client via proxy' }
+    }
+
+    const response = await this.makeRequest(`/panel/api/inbounds/updateClient/${clientUUID}`, 'POST', payload)
+    if (response && response.success) {
+      return { success: true }
+    }
+    return { success: false, error: response?.msg || 'Failed to update client' }
+  }
+
+  // Delete client
+  async deleteClient(inboundId: number, clientUUID: string): Promise<{ success: boolean; error?: string }> {
+    if (!this.isLoggedIn) {
+      const loggedIn = await this.login()
+      if (!loggedIn) return { success: false, error: 'Login failed' }
+    }
+
+    const payload = {
+      id: inboundId,
+      clientId: clientUUID,
+    }
+
+    if (this.useProxy) {
+      const response = await proxyRequest(`/delClient`, 'POST', payload, this.getCookieHeader())
+      if (response?.success) {
+        return { success: true }
+      }
+      return { success: false, error: response?.msg || 'Failed to delete client via proxy' }
+    }
+
+    const response = await this.makeRequest(`/panel/api/inbounds/${inboundId}/delClient/${clientUUID}`, 'POST', payload)
+    if (response && response.success) {
+      return { success: true }
+    }
+    return { success: false, error: response?.msg || 'Failed to delete client' }
+  }
+
+  // Reset all client traffics for a specific inbound
+  async resetAllClientTraffics(inboundId: number): Promise<{ success: boolean; error?: string }> {
+    if (!this.isLoggedIn) {
+      const loggedIn = await this.login()
+      if (!loggedIn) return { success: false, error: 'Login failed' }
+    }
+
+    if (this.useProxy) {
+      const response = await proxyRequest(`/resetAllClientTraffics/${inboundId}`, 'POST', {}, this.getCookieHeader())
+      if (response?.success) {
+        return { success: true }
+      }
+      return { success: false, error: response?.msg || 'Failed to reset traffics via proxy' }
+    }
+
+    const response = await this.makeRequest(`/panel/api/inbounds/resetAllClientTraffics/${inboundId}`, 'POST')
+    if (response && response.success) {
+      return { success: true }
+    }
+    return { success: false, error: response?.msg || 'Failed to reset traffics' }
+  }
+
+  // Reset all inbound traffics
+  async resetAllTraffics(): Promise<{ success: boolean; error?: string }> {
+    if (!this.isLoggedIn) {
+      const loggedIn = await this.login()
+      if (!loggedIn) return { success: false, error: 'Login failed' }
+    }
+
+    if (this.useProxy) {
+      const response = await proxyRequest(`/resetAllTraffics`, 'POST', {}, this.getCookieHeader())
+      if (response?.success) {
+        return { success: true }
+      }
+      return { success: false, error: response?.msg || 'Failed to reset all traffics via proxy' }
+    }
+
+    const response = await this.makeRequest(`/panel/api/inbounds/resetAllTraffics`, 'POST')
+    if (response && response.success) {
+      return { success: true }
+    }
+    return { success: false, error: response?.msg || 'Failed to reset all traffics' }
+  }
 }
 
 // ===== Server Actions =====
@@ -451,17 +628,13 @@ class VpnPanelAPI {
 export async function getVpnServers() {
   return prisma.vpnServer.findMany({
     where: { isActive: true },
-    orderBy: { ping: 'asc' },
+    orderBy: [{ sortOrder: 'asc' }, { ping: 'asc' }],
     select: {
       id: true,
       name: true,
       flag: true,
-      host: true,
-      port: true,
-      path: true,
-      username: true,
-      password: true,
-      inboundId: true,
+      // Sensitive fields (host, port, path, username, password) are NOT exposed here.
+      // API routes fetch them directly from the database when needed.
       protocol: true,
       tlsType: true,
       flow: true,
@@ -477,8 +650,31 @@ export async function getVpnServers() {
       category: true,
       speed: true,
       clientPort: true,
+      inboundConfigs: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
+      // Per-server pricing
+      pricePerDay: true,
+      priceWeekly: true,
+      priceMonthly: true,
+      // Decoration
+      description: true,
+      badge: true,
+      tags: true,
+      themeColor: true,
+      themeGradient: true,
+      imageUrl: true,
+      sortOrder: true,
+      // Limits
+      maxClients: true,
+      defaultIpLimit: true,
+      _count: {
+        select: {
+          orders: {
+            where: { isActive: true }
+          }
+        }
+      }
     }
   })
 }
@@ -561,6 +757,7 @@ export async function createVpnOrder(serverId: string, packageType: string, user
       const existingTrialToday = await prisma.vpnOrder.findFirst({
         where: {
           userId,
+          serverId,
           packageType: 'TRIAL',
           createdAt: {
             gte: today
@@ -569,7 +766,7 @@ export async function createVpnOrder(serverId: string, packageType: string, user
       })
       
       if (existingTrialToday) {
-        return { success: false, error: 'คุณใช้สิทธิ์ทดลองฟรีวันนี้ไปแล้ว กรุณารอรีเซ็ตเที่ยงคืนหรือเลือกแพ็คเกจอื่น' }
+        return { success: false, error: 'คุณใช้สิทธิ์ทดลองฟรีเซิร์ฟเวอร์นี้วันนี้ไปแล้ว กรุณารอรีเซ็ตเที่ยงคืนหรือลองเซิร์ฟเวอร์อื่น' }
       }
     }
     
@@ -740,4 +937,301 @@ export async function getAllVpnServers() {
       updatedAt: true
     }
   })
+}
+
+// ===== Panel Management Actions =====
+
+// Create a panel API instance for a given server
+export async function createPanelApi(serverId: string) {
+  const server = await prisma.vpnServer.findUnique({ where: { id: serverId } })
+  if (!server) return null
+  
+  const useHttp = await VpnPanelAPI.detectProtocol(server.host, server.port, server.path)
+  const panel = new VpnPanelAPI(
+    server.host, server.port, server.path,
+    server.username, server.password, useHttp
+  )
+  return { panel, server }
+}
+
+// Admin: List inbounds for a server
+export async function adminListInbounds(serverId: string) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  const result = await ctx.panel.listInbounds()
+  if (result && result.success) {
+    return { success: true, data: result.obj }
+  }
+  return { success: false, error: result?.msg || 'Failed to list inbounds' }
+}
+
+// Admin: Get inbound details 
+export async function adminGetInbound(serverId: string, inboundId: number) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  const data = await ctx.panel.getInboundDetails(inboundId)
+  if (data) {
+    return { success: true, data }
+  }
+  return { success: false, error: 'Failed to get inbound' }
+}
+
+// Admin: Get client IPs
+export async function adminGetClientIps(serverId: string, email: string) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  const result = await ctx.panel.getClientIps(email)
+  if (result && result.success) {
+    return { success: true, data: result.obj }
+  }
+  return { success: false, error: result?.msg || 'Failed to get client IPs', data: null }
+}
+
+// Admin: Get client traffic
+export async function adminGetClientTraffic(serverId: string, email: string) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  const result = await ctx.panel.getClientTraffics(email)
+  if (result && result.success) {
+    return { success: true, data: result.obj }
+  }
+  return { success: false, error: result?.msg || 'Failed to get client traffic', data: null }
+}
+
+// Admin: Get online clients
+export async function adminGetOnlineClients(serverId: string) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  const result = await ctx.panel.getOnlineClients()
+  if (result && result.success) {
+    return { success: true, data: result.obj }
+  }
+  return { success: false, error: result?.msg || 'Failed to get online clients', data: null }
+}
+
+// Admin: Toggle client enable/disable (preserves expiryTime)
+export async function adminToggleClient(serverId: string, inboundId: number, clientData: any, enable: boolean) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  const updatedClient = { ...clientData, enable }
+  return ctx.panel.updateClient(inboundId, clientData.id, updatedClient)
+}
+
+// Admin: Update client settings
+export async function adminUpdateClient(serverId: string, inboundId: number, clientUUID: string, clientData: any) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  return ctx.panel.updateClient(inboundId, clientUUID, clientData)
+}
+
+// Admin: Delete client
+export async function adminDeleteClient(serverId: string, inboundId: number, clientUUID: string) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  return ctx.panel.deleteClient(inboundId, clientUUID)
+}
+
+// Admin: Reset all client traffics for an inbound
+export async function adminResetInboundTraffics(serverId: string, inboundId: number) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  return ctx.panel.resetAllClientTraffics(inboundId)
+}
+
+// Admin: Reset all traffics
+export async function adminResetAllTraffics(serverId: string) {
+  const ctx = await createPanelApi(serverId)
+  if (!ctx) return { success: false, error: 'Server not found' }
+  
+  return ctx.panel.resetAllTraffics()
+}
+
+// ===== User Connection Info =====
+
+// Get user connection info: IPs, traffic, online status for all their VPN orders
+export async function getUserConnectionInfo(userId: string) {
+  console.log(`[getUserConnectionInfo] Fetching for userId: ${userId}`)
+  console.log(`[getUserConnectionInfo] USE_PROXY=${USE_PROXY}, PROXY_URL=${PROXY_URL}`)
+  
+  const orders = await prisma.vpnOrder.findMany({
+    where: { userId },
+    include: { server: true },
+    orderBy: { createdAt: 'desc' }
+  })
+
+  console.log(`[getUserConnectionInfo] Found ${orders.length} orders`)
+
+  const results = []
+
+  for (const order of orders) {
+    console.log(`[getUserConnectionInfo] Processing order ${order.id}: remark=${order.remark}, server=${order.server.name} (${order.server.host}:${order.server.port})`)
+    
+    try {
+      const useHttp = await VpnPanelAPI.detectProtocol(order.server.host, order.server.port, order.server.path)
+      console.log(`[getUserConnectionInfo] Protocol detection: useHttp=${useHttp} for ${order.server.host}:${order.server.port}`)
+      
+      const panel = new VpnPanelAPI(
+        order.server.host, order.server.port, order.server.path,
+        order.server.username, order.server.password, useHttp
+      )
+
+      // Login first and log the result
+      const loginSuccess = await panel.login()
+      console.log(`[getUserConnectionInfo] Login result for ${order.server.host}: ${loginSuccess}`)
+
+      if (!loginSuccess) {
+        console.error(`[getUserConnectionInfo] LOGIN FAILED for server ${order.server.host}:${order.server.port}${order.server.path}`)
+        results.push({
+          orderId: order.id,
+          serverId: order.serverId,
+          serverName: order.server.name,
+          serverFlag: order.server.flag,
+          remark: order.remark,
+          clientUUID: order.clientUUID,
+          inboundId: order.server.inboundId,
+          packageType: order.packageType,
+          vlessLink: order.vlessLink,
+          expiryTime: order.expiryTime,
+          isActive: order.isActive,
+          createdAt: order.createdAt,
+          ips: [],
+          traffic: null,
+          isOnline: false,
+          clientEnabled: true,
+          error: `Login failed to panel ${order.server.host}`
+        })
+        continue
+      }
+
+      // Get IPs, traffic, and online status in parallel
+      const [ipsResult, trafficResult, onlineResult] = await Promise.all([
+        panel.getClientIps(order.remark).catch((e) => { console.error(`[getUserConnectionInfo] getClientIps error:`, e); return null }),
+        panel.getClientTraffics(order.remark).catch((e) => { console.error(`[getUserConnectionInfo] getClientTraffics error:`, e); return null }),
+        panel.getOnlineClients().catch((e) => { console.error(`[getUserConnectionInfo] getOnlineClients error:`, e); return null }),
+      ])
+
+      console.log(`[getUserConnectionInfo] Raw ipsResult for ${order.remark}:`, JSON.stringify(ipsResult))
+      console.log(`[getUserConnectionInfo] Raw trafficResult for ${order.remark}:`, JSON.stringify(trafficResult))
+      console.log(`[getUserConnectionInfo] Raw onlineResult for ${order.remark}:`, JSON.stringify(onlineResult))
+
+      // Parse IPs (filter out 3X-UI's "No IP Record" response when no client has connected)
+      let ips: string[] = []
+      if (ipsResult?.success && ipsResult.obj && ipsResult.obj !== 'No IP Record') {
+        if (typeof ipsResult.obj === 'string') {
+          try { ips = JSON.parse(ipsResult.obj) } catch { ips = ipsResult.obj.split(',').map((s: string) => s.trim()).filter(Boolean) }
+        } else if (Array.isArray(ipsResult.obj)) {
+          ips = ipsResult.obj
+        }
+      }
+      console.log(`[getUserConnectionInfo] Parsed IPs for ${order.remark}: [${ips.join(', ')}] (count: ${ips.length})`)
+
+      // Parse traffic
+      const traffic = trafficResult?.success ? trafficResult.obj : null
+
+      // Check online status (3x-ui returns a flat array of email strings)
+      let isOnline = false
+      if (onlineResult?.success && Array.isArray(onlineResult.obj)) {
+        isOnline = onlineResult.obj.includes(order.remark)
+      }
+      console.log(`[getUserConnectionInfo] Online status for ${order.remark}: ${isOnline}`)
+
+      // Get full inbound details to find the client's current state
+      let clientState = null
+      try {
+        const inboundData = await panel.getInboundDetails(order.server.inboundId)
+        if (inboundData?.settings) {
+          const settings = typeof inboundData.settings === 'string' ? JSON.parse(inboundData.settings) : inboundData.settings
+          clientState = settings.clients?.find((c: any) => c.id === order.clientUUID || c.email === order.remark)
+        }
+        console.log(`[getUserConnectionInfo] Client state for ${order.remark}: enabled=${clientState?.enable}`)
+      } catch (e) {
+        console.error(`[getUserConnectionInfo] getInboundDetails error for ${order.remark}:`, e)
+      }
+
+      results.push({
+        orderId: order.id,
+        serverId: order.serverId,
+        serverName: order.server.name,
+        serverFlag: order.server.flag,
+        remark: order.remark,
+        clientUUID: order.clientUUID,
+        inboundId: order.server.inboundId,
+        packageType: order.packageType,
+        vlessLink: order.vlessLink,
+        expiryTime: order.expiryTime,
+        isActive: order.isActive,
+        createdAt: order.createdAt,
+        ips,
+        traffic,
+        isOnline,
+        clientEnabled: clientState?.enable ?? true,
+      })
+    } catch (error) {
+      console.error(`[getUserConnectionInfo] EXCEPTION for order ${order.id} (${order.remark}):`, error)
+      results.push({
+        orderId: order.id,
+        serverId: order.serverId,
+        serverName: order.server.name,
+        serverFlag: order.server.flag,
+        remark: order.remark,
+        clientUUID: order.clientUUID,
+        inboundId: order.server.inboundId,
+        packageType: order.packageType,
+        vlessLink: order.vlessLink,
+        expiryTime: order.expiryTime,
+        isActive: order.isActive,
+        createdAt: order.createdAt,
+        ips: [],
+        traffic: null,
+        isOnline: false,
+        clientEnabled: true,
+        error: 'Failed to fetch data from panel'
+      })
+    }
+  }
+
+  console.log(`[getUserConnectionInfo] Done. Returning ${results.length} results`)
+  return results
+}
+
+// User: Toggle their own client enable/disable (preserves expiryTime)
+export async function userToggleClient(userId: string, orderId: string, enable: boolean) {
+  const order = await prisma.vpnOrder.findFirst({
+    where: { id: orderId, userId },
+    include: { server: true }
+  })
+
+  if (!order) return { success: false, error: 'Order not found' }
+
+  const useHttp = await VpnPanelAPI.detectProtocol(order.server.host, order.server.port, order.server.path)
+  const panel = new VpnPanelAPI(
+    order.server.host, order.server.port, order.server.path,
+    order.server.username, order.server.password, useHttp
+  )
+
+  // First get current client state from the panel to preserve expiryTime
+  const inboundData = await panel.getInboundDetails(order.server.inboundId)
+  if (!inboundData?.settings) {
+    return { success: false, error: 'Cannot read inbound settings' }
+  }
+
+  const settings = typeof inboundData.settings === 'string' ? JSON.parse(inboundData.settings) : inboundData.settings
+  const client = settings.clients?.find((c: any) => c.id === order.clientUUID || c.email === order.remark)
+
+  if (!client) {
+    return { success: false, error: 'Client not found on panel' }
+  }
+
+  // Toggle enable but keep everything else (especially expiryTime)
+  const updatedClient = { ...client, enable }
+  return panel.updateClient(order.server.inboundId, order.clientUUID, updatedClient)
 }

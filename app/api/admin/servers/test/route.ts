@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
+import { prisma } from '@/lib/prisma'
 import https from 'https'
 import http from 'http'
 
@@ -10,6 +11,15 @@ export async function POST(request: NextRequest) {
     
     if (!session?.isLoggedIn || !session?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { isSuperAdmin: true, isAdmin: true, isAgent: true }
+    })
+
+    if (!user?.isSuperAdmin && !user?.isAdmin && !user?.isAgent) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()

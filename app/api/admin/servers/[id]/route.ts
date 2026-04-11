@@ -16,25 +16,46 @@ export async function PUT(
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true, isAgent: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin && !user?.isAdmin && !user?.isAgent) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { id } = await params
+
+    // ตัวแทนแก้ไขได้เฉพาะเซิร์ฟเวอร์ของตัวเอง
+    const isAgentOnly = user.isAgent && !user.isSuperAdmin && !user.isAdmin
+    if (isAgentOnly) {
+      const server = await prisma.vpnServer.findUnique({
+        where: { id },
+        select: { agentId: true }
+      })
+      if (!server || server.agentId !== session.userId) {
+        return NextResponse.json({ error: 'ไม่มีสิทธิ์แก้ไขเซิร์ฟเวอร์นี้' }, { status: 403 })
+      }
+    }
+
     const body = await request.json()
     
     const { 
       name, flag, host, port, path, username, password, inboundId, 
       protocol, tlsType, flow, sni, clientPort,
-      supportsAis, supportsTrue, supportsDtac, category, speed
+      supportsAis, supportsTrue, supportsDtac, category, speed,
+      inboundConfigs,
+      // Per-server pricing & decoration
+      pricePerDay, priceWeekly, priceMonthly,
+      description, badge, tags, themeColor, themeGradient, imageUrl,
+      sortOrder, maxClients, defaultIpLimit
     } = body
 
-    if (!name || !host || !port || !path || !username || !inboundId) {
+    if (!name || !host || !port || !path || !username) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
+
+    // inboundId is required unless inboundConfigs provides one
+    const effectiveInboundId = inboundId || (inboundConfigs?.[0]?.inboundId) || 0
 
     // Prepare update data
     const updateData: any = {
@@ -44,7 +65,7 @@ export async function PUT(
       port,
       path,
       username,
-      inboundId,
+      inboundId: effectiveInboundId,
       protocol: protocol || 'vless',
       tlsType: tlsType || 'Reality',
       flow: flow || 'xtls-rprx-vision',
@@ -54,7 +75,23 @@ export async function PUT(
       supportsTrue: supportsTrue ?? false,
       supportsDtac: supportsDtac ?? false,
       category: category || 'general',
-      speed: speed || 1000
+      speed: speed || 1000,
+      inboundConfigs: inboundConfigs || undefined,
+      // Per-server pricing
+      pricePerDay: pricePerDay ?? 2,
+      priceWeekly: priceWeekly !== undefined ? priceWeekly : null,
+      priceMonthly: priceMonthly !== undefined ? priceMonthly : null,
+      // Decoration
+      description: description || null,
+      badge: badge || null,
+      tags: tags || [],
+      themeColor: themeColor || null,
+      themeGradient: themeGradient || null,
+      imageUrl: imageUrl || null,
+      sortOrder: sortOrder ?? 0,
+      // Limits
+      maxClients: maxClients ?? 0,
+      defaultIpLimit: defaultIpLimit ?? 0,
     }
 
     // Only update password if provided
@@ -88,14 +125,26 @@ export async function DELETE(
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true, isAgent: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin && !user?.isAdmin && !user?.isAgent) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { id } = await params
+
+    // ตัวแทนลบได้เฉพาะเซิร์ฟเวอร์ของตัวเอง
+    const isAgentOnly = user.isAgent && !user.isSuperAdmin && !user.isAdmin
+    if (isAgentOnly) {
+      const server = await prisma.vpnServer.findUnique({
+        where: { id },
+        select: { agentId: true }
+      })
+      if (!server || server.agentId !== session.userId) {
+        return NextResponse.json({ error: 'ไม่มีสิทธิ์ลบเซิร์ฟเวอร์นี้' }, { status: 403 })
+      }
+    }
 
     await prisma.vpnServer.delete({
       where: { id }

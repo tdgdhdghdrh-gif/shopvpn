@@ -1,23 +1,45 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { User, Lock, AlertCircle, ArrowLeft, Menu, X, Wifi, ChevronRight } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { User, Lock, AlertCircle, Shield, Zap, Globe, ChevronRight, Eye, EyeOff, Sparkles, Wifi, CheckCircle2, LogIn } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
-// Dynamic import for ReCAPTCHA to avoid SSR issues
 const ReCAPTCHA = dynamic(() => import('react-google-recaptcha'), { ssr: false })
 
-const RECAPTCHA_SITE_KEY = '6LfLFHgsAAAAAHv1RrfFcJmPBG_srvd-kMtXt6oY'
-
-export default function LoginPage() {
+// Main login form
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get('redirect')
+
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [captchaKey, setCaptchaKey] = useState(Date.now())
+  const [showPassword, setShowPassword] = useState(false)
+  const [focusField, setFocusField] = useState<string | null>(null)
+  const [recaptchaEnabled, setRecaptchaEnabled] = useState(false)
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState('')
+  const [defaultHomePage, setDefaultHomePage] = useState('/')
+  const [siteName, setSiteName] = useState('')
+  const [siteLogo, setSiteLogo] = useState('')
+
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings) {
+          setRecaptchaEnabled(data.settings.recaptchaEnabled ?? false)
+          setRecaptchaSiteKey(data.settings.googleApiKey || '')
+          setDefaultHomePage(data.settings.defaultHomePage || '/')
+          setSiteName(data.settings.siteName || '')
+          setSiteLogo(data.settings.siteLogo || '')
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const resetCaptcha = () => {
     setCaptchaToken(null)
@@ -29,8 +51,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    // Check if captcha is verified
-    if (!captchaToken) {
+    if (recaptchaEnabled && !captchaToken) {
       setError('กรุณายืนยันว่าคุณไม่ใช่บอท')
       setLoading(false)
       return
@@ -39,23 +60,23 @@ export default function LoginPage() {
     const formData = new FormData(e.currentTarget)
     
     try {
-      // First verify captcha
-      const captchaRes = await fetch('/api/verify-captcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: captchaToken })
-      })
+      if (recaptchaEnabled && captchaToken) {
+        const captchaRes = await fetch('/api/verify-captcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: captchaToken })
+        })
 
-      const captchaData = await captchaRes.json()
+        const captchaData = await captchaRes.json()
 
-      if (!captchaData.success) {
-        setError(captchaData.error || 'ตรวจพบพฤติกรรมบอท')
-        setLoading(false)
-        resetCaptcha()
-        return
+        if (!captchaData.success) {
+          setError(captchaData.error || 'ตรวจพบพฤติกรรมบอท')
+          setLoading(false)
+          resetCaptcha()
+          return
+        }
       }
 
-      // Then proceed with login
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         body: formData
@@ -64,10 +85,12 @@ export default function LoginPage() {
       const data = await res.json()
       
       if (data.success) {
-        if (data.isAdmin) {
+        if (redirectUrl) {
+          router.push(redirectUrl)
+        } else if (data.isAdmin || data.isSuperAdmin || data.isRevenueAdmin || data.isAgent) {
           router.push('/admin')
         } else {
-          router.push('/')
+          router.push(defaultHomePage)
         }
         router.refresh()
       } else {
@@ -82,153 +105,284 @@ export default function LoginPage() {
     }
   }
 
-  function onCaptchaChange(token: string | null) {
-    setCaptchaToken(token)
-  }
-
   return (
-    <div className="min-h-screen bg-black text-white font-sans">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-800">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden bg-transparent">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src="https://i.postimg.cc/7PC1vHmY/812-removebg-preview.png" 
-                alt="simonvpnshop" 
-                className="w-full h-full object-contain"
-              />
+    <div className="min-h-screen bg-transparent text-white font-sans">
+      <div className="min-h-screen flex flex-col lg:flex-row">
+
+        {/* ============ LEFT PANEL - Branding (desktop only) ============ */}
+        <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] relative flex-col justify-between p-10 xl:p-14 overflow-hidden">
+          {/* Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(34,211,238,0.08),transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(99,102,241,0.06),transparent_60%)]" />
+          <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.06] to-transparent" />
+
+           {/* Top: Logo */}
+           <div className="relative z-10">
+             <Link href="/" className="flex items-center gap-3 group">
+               {siteLogo && (
+                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 p-[1.5px]">
+                   <div className="w-full h-full bg-black rounded-[10px] flex items-center justify-center overflow-hidden">
+                     {/* eslint-disable-next-line @next/next/no-img-element */}
+                     <img 
+                       src={siteLogo} 
+                       alt={siteName || 'Logo'} 
+                       className="w-full h-full object-contain p-1 scale-125 brightness-110"
+                     />
+                   </div>
+                 </div>
+               )}
+               {siteName && (
+                 <span className="text-white font-black text-lg tracking-tight">
+                   {siteName}
+                 </span>
+               )}
+             </Link>
+           </div>
+
+          {/* Middle: Hero text */}
+          <div className="relative z-10 -mt-8">
+            <h1 className="text-4xl xl:text-5xl font-black leading-tight mb-6">
+              <span className="text-white">ยินดีต้อนรับกลับ</span>
+              <br />
+              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+                เข้าสู่ระบบของคุณ
+              </span>
+            </h1>
+            <p className="text-zinc-500 text-base leading-relaxed max-w-sm mb-10">
+              เข้าสู่ระบบเพื่อจัดการเซิร์ฟเวอร์ VPN และเริ่มท่องอินเทอร์เน็ตอย่างปลอดภัย
+            </p>
+
+            {/* Feature list */}
+            <div className="space-y-4">
+              {[
+                { icon: Shield, text: "เข้ารหัส AES-256 ระดับทหาร", color: "text-emerald-400", bg: "from-emerald-500 to-teal-500" },
+                { icon: Zap, text: "ความเร็วสูงสุด 10Gbps ไม่จำกัด", color: "text-amber-400", bg: "from-amber-500 to-orange-500" },
+                { icon: Globe, text: "เซิร์ฟเวอร์ 20+ แห่งทั่วโลก", color: "text-blue-400", bg: "from-blue-500 to-indigo-500" },
+                { icon: Wifi, text: "Uptime 99.9% เสถียร 24/7", color: "text-cyan-400", bg: "from-cyan-500 to-blue-500" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3.5 group">
+                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${item.bg} p-[1.5px] flex-shrink-0`}>
+                    <div className="w-full h-full bg-black rounded-[6px] flex items-center justify-center">
+                      <item.icon className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                  <span className="text-sm text-zinc-400">{item.text}</span>
+                </div>
+              ))}
             </div>
-            <span className="font-semibold text-lg tracking-tight">simonvpnshop</span>
-          </Link>
-          
-          {/* Hamburger Menu Button */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800/50"
-          >
-            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          </div>
+
+          {/* Bottom: Stats */}
+          <div className="relative z-10">
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { value: "1,000+", label: "ผู้ใช้งาน" },
+                { value: "20+", label: "เซิร์ฟเวอร์" },
+                { value: "99.9%", label: "Uptime" },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-xl font-black text-white">{stat.value}</div>
+                  <div className="text-[11px] text-zinc-600">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Dropdown Menu */}
-        {menuOpen && (
-          <div className="border-t border-gray-800 bg-black/95 backdrop-blur-md">
-            <div className="max-w-lg mx-auto px-4 py-3 space-y-1">
-              <Link
-                href="/"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-xl transition-colors"
-              >
-                <Wifi className="w-5 h-5" />
-                หน้าแรก
+        {/* ============ RIGHT PANEL - Form ============ */}
+        <div className="flex-1 flex flex-col min-h-screen lg:min-h-0">
+          
+          {/* Mobile top bar */}
+          <nav className="lg:hidden border-b border-white/[0.06] bg-black/80 backdrop-blur-xl sticky top-0 z-50">
+            <div className="px-4 py-3.5 flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-2.5">
+                {siteLogo && (
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 p-[1.5px]">
+                    <div className="w-full h-full bg-black rounded-[6px] flex items-center justify-center overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={siteLogo} 
+                        alt={siteName || 'Logo'} 
+                        className="w-full h-full object-contain p-0.5 scale-125 brightness-110"
+                      />
+                    </div>
+                  </div>
+                )}
+                {siteName && (
+                  <span className="text-white font-black text-base tracking-tight">
+                    {siteName}
+                  </span>
+                )}
               </Link>
-              
-              <div className="border-t border-gray-800 my-2"></div>
-              
-              <Link
+              <Link 
                 href="/register"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-xl transition-colors"
+                className="px-4 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-cyan-500/20 transition-all"
               >
-                <User className="w-5 h-5" />
                 สมัครสมาชิก
-                <ChevronRight className="w-4 h-4 ml-auto" />
               </Link>
             </div>
-          </div>
-        )}
-      </nav>
+          </nav>
 
-      {/* Main Content */}
-      <main className="max-w-lg mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-400 text-sm mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          กลับหน้าแรก
-        </Link>
+          {/* Form area */}
+          <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 lg:py-12">
+            <div className="w-full max-w-[440px]">
 
-        {/* Card */}
-        <div className="bg-gray-950 border border-gray-800 rounded-2xl p-6">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-6 h-6 text-blue-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-white">เข้าสู่ระบบ</h1>
-            <p className="text-gray-500 text-sm mt-1">เข้าสู่ระบบเพื่อใช้งาน</p>
-          </div>
-          
-          {/* Error */}
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl mb-4 text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              {error}
-            </div>
-          )}
-          
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">อีเมลหรือชื่อผู้ใช้</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
-                <input
-                  type="text"
-                  name="username"
-                  required
-                  className="w-full bg-gray-900 border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                  placeholder="อีเมลหรือชื่อผู้ใช้"
-                />
+              {/* Header */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[1.5px]">
+                    <div className="w-full h-full bg-black rounded-[10px] flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black text-white">ยินดีต้อนรับกลับ</h1>
+                    <p className="text-zinc-500 text-xs">เข้าสู่ระบบเพื่อใช้งาน{siteName ? ` ${siteName}` : ''}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Benefits - mobile */}
+              <div className="lg:hidden mb-6 flex flex-wrap items-center gap-2">
+                {[
+                  { icon: Shield, text: "AES-256", color: "text-emerald-400" },
+                  { icon: Zap, text: "10Gbps", color: "text-amber-400" },
+                  { icon: Globe, text: "20+ Server", color: "text-blue-400" },
+                ].map((item, i) => (
+                  <div key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs">
+                    <item.icon className={`w-3 h-3 ${item.color}`} />
+                    <span className="text-zinc-400">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Error */}
+              {error && (
+                <div className="bg-red-500/[0.08] border border-red-500/15 text-red-400 px-4 py-3 rounded-xl mb-5 text-sm flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+              
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Username */}
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-2">อีเมลหรือชื่อผู้ใช้</label>
+                  <div className={`relative rounded-xl border transition-all duration-200 ${
+                    focusField === 'username' 
+                      ? 'border-cyan-500/40 bg-white/[0.03]' 
+                      : 'border-white/[0.06] hover:border-white/[0.1]'
+                  }`}>
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
+                      <User className={`w-4 h-4 transition-colors ${focusField === 'username' ? 'text-cyan-400' : 'text-zinc-600'}`} />
+                    </div>
+                    <input
+                      type="text"
+                      name="username"
+                      required
+                      onFocus={() => setFocusField('username')}
+                      onBlur={() => setFocusField(null)}
+                      className="w-full bg-transparent rounded-xl pl-11 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none text-sm"
+                      placeholder="อีเมลหรือชื่อผู้ใช้"
+                    />
+                  </div>
+                </div>
+                
+                {/* Password */}
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-2">รหัสผ่าน</label>
+                  <div className={`relative rounded-xl border transition-all duration-200 ${
+                    focusField === 'password' 
+                      ? 'border-cyan-500/40 bg-white/[0.03]' 
+                      : 'border-white/[0.06] hover:border-white/[0.1]'
+                  }`}>
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
+                      <Lock className={`w-4 h-4 transition-colors ${focusField === 'password' ? 'text-cyan-400' : 'text-zinc-600'}`} />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      required
+                      onFocus={() => setFocusField('password')}
+                      onBlur={() => setFocusField(null)}
+                      className="w-full bg-transparent rounded-xl pl-11 pr-11 py-3 text-white placeholder-zinc-600 focus:outline-none text-sm"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* reCAPTCHA */}
+                {recaptchaEnabled && recaptchaSiteKey && (
+                  <div className="flex justify-center py-1">
+                    <ReCAPTCHA
+                      key={captchaKey}
+                      sitekey={recaptchaSiteKey}
+                      onChange={(token: string | null) => setCaptchaToken(token)}
+                      onExpired={resetCaptcha}
+                      theme="dark"
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || (recaptchaEnabled && !captchaToken)}
+                  className="group w-full relative bg-gradient-to-r from-cyan-500 to-blue-600 disabled:from-zinc-800 disabled:to-zinc-800 text-white disabled:text-zinc-600 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-cyan-500/20 active:scale-[0.98] overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span className="relative z-10 text-sm">กำลังเข้าสู่ระบบ...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="w-4 h-4 relative z-10" />
+                      <span className="relative z-10 text-sm">เข้าสู่ระบบ</span>
+                      <ChevronRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+              
+              {/* Register link */}
+              <div className="mt-8 pt-6 border-t border-white/[0.04] text-center">
+                <p className="text-zinc-600 text-sm mb-3">ยังไม่มีบัญชี?</p>
+                <Link 
+                  href="/register" 
+                  className="group inline-flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-cyan-400 transition-colors"
+                >
+                  สมัครสมาชิกใหม่
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
             </div>
-            
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">รหัสผ่าน</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  className="w-full bg-gray-900 border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            {/* reCAPTCHA */}
-            <div className="flex justify-center">
-              <ReCAPTCHA
-                key={captchaKey}
-                sitekey={RECAPTCHA_SITE_KEY}
-                onChange={onCaptchaChange}
-                theme="dark"
-              />
-            </div>
-            
-            <button
-              type="submit"
-              disabled={loading || !captchaToken}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
-            >
-              {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-            </button>
-          </form>
-          
-          {/* Footer */}
-          <p className="text-center text-gray-500 text-sm mt-6">
-            ยังไม่มีบัญชี?{' '}
-            <Link href="/register" className="text-blue-400 hover:text-blue-300 font-medium">
-              สมัครสมาชิก
-            </Link>
-          </p>
+          </div>
         </div>
-      </main>
+
+      </div>
     </div>
+  )
+}
+
+// Main page with Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

@@ -1,12 +1,23 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
-  --background: #030303;
+  --background: #000000;
   --foreground: #ffffff;
   --primary: #22d3ee; /* cyan-400 */
   --secondary: #ec4899; /* pink-500 */
   --accent: #a855f7; /* purple-500 */
   --neon-glow: 0 0 15px rgba(34, 211, 238, 0.5), 0 0 30px rgba(34, 211, 238, 0.2);
+
+  /* UI Theme Config defaults (overridden by SettingsProvider at runtime) */
+  --ui-border-radius: 16px;
+  --ui-border-width: 1px;
+  --ui-card-opacity: 1;
+  --ui-backdrop-blur: 0px;
+  --ui-text-brightness: 1;
+  --ui-color-intensity: 1;
+  --ui-navbar-blur: 12px;
+  --ui-navbar-opacity: 0.9;
 }
 
 @theme inline {
@@ -23,6 +34,92 @@ html {
   color-scheme: dark;
 }
 
+/* ============================================
+   Light Theme Overrides
+   ============================================ */
+html.light {
+  color-scheme: light;
+}
+
+html.light body {
+  background: var(--theme-bg, #f8fafc);
+  color: var(--theme-text, #0f172a);
+}
+
+/* Override dark hardcoded classes for light themes */
+html.light .bg-black { background-color: var(--theme-bg) !important; }
+html.light .bg-zinc-900 { background-color: var(--theme-card) !important; }
+html.light .bg-zinc-900\/50 { background-color: color-mix(in srgb, var(--theme-card) 50%, transparent) !important; }
+html.light .bg-zinc-900\/80 { background-color: color-mix(in srgb, var(--theme-card) 80%, transparent) !important; }
+html.light .bg-zinc-900\/30 { background-color: color-mix(in srgb, var(--theme-card) 30%, transparent) !important; }
+html.light .bg-zinc-800 { background-color: var(--theme-card-hover) !important; }
+html.light .bg-zinc-800\/50 { background-color: color-mix(in srgb, var(--theme-card-hover) 50%, transparent) !important; }
+html.light .bg-zinc-800\/80 { background-color: color-mix(in srgb, var(--theme-card-hover) 80%, transparent) !important; }
+html.light .bg-zinc-700 { background-color: var(--theme-border) !important; }
+
+html.light .text-white { color: var(--theme-text) !important; }
+html.light .text-zinc-100 { color: var(--theme-text) !important; }
+html.light .text-zinc-200 { color: var(--theme-text) !important; }
+html.light .text-zinc-300 { color: var(--theme-text-muted) !important; }
+html.light .text-zinc-400 { color: var(--theme-text-muted) !important; }
+html.light .text-zinc-500 { color: var(--theme-text-dim) !important; }
+html.light .text-zinc-600 { color: var(--theme-text-dim) !important; }
+html.light .text-zinc-700 { color: var(--theme-text-dim) !important; }
+
+html.light .border-white\/5 { border-color: var(--theme-border) !important; }
+html.light .border-white\/10 { border-color: var(--theme-border) !important; }
+html.light .border-white\/\[0\.05\] { border-color: var(--theme-border) !important; }
+html.light .border-white\/\[0\.06\] { border-color: var(--theme-border) !important; }
+html.light .border-zinc-800 { border-color: var(--theme-border) !important; }
+html.light .border-zinc-700 { border-color: var(--theme-border) !important; }
+
+html.light .bg-black\/40 { background-color: rgba(255,255,255,0.6) !important; }
+html.light .bg-black\/50 { background-color: rgba(255,255,255,0.7) !important; }
+html.light .bg-black\/60 { background-color: rgba(255,255,255,0.8) !important; }
+html.light .bg-black\/80 { background-color: rgba(255,255,255,0.9) !important; }
+
+html.light .bg-transparent { background-color: transparent !important; }
+
+/* Gradient overrides for light */
+html.light .from-zinc-900 { --tw-gradient-from: var(--theme-card) !important; }
+html.light .via-zinc-900 { --tw-gradient-via: var(--theme-card) !important; }
+html.light .to-zinc-800 { --tw-gradient-to: var(--theme-card-hover) !important; }
+html.light .to-zinc-900 { --tw-gradient-to: var(--theme-card) !important; }
+
+/* Placeholder text */
+html.light .placeholder\:text-zinc-600::placeholder { color: var(--theme-text-dim) !important; }
+html.light .placeholder\:text-zinc-500::placeholder { color: var(--theme-text-dim) !important; }
+
+/* Selection color for light theme */
+html.light ::selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: #0f172a;
+}
+
+/* Scrollbar for light theme */
+html.light ::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--theme-accent), var(--theme-accent-hover));
+}
+
+/* ui-card for light theme */
+html.light .ui-card {
+  border-color: var(--theme-border);
+  background-color: color-mix(in srgb, var(--theme-card) 80%, transparent);
+}
+html.light .ui-card:hover {
+  border-color: color-mix(in srgb, var(--theme-border) 80%, #000);
+}
+
+/* glass overrides */
+html.light .glass {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: var(--theme-border);
+}
+html.light .glass-vivid {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--theme-border);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -30,7 +127,7 @@ body {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'/%3E%3C/svg%3E"), auto;
 }
 
-/* Scrollbar styling - Kawaii/Cyber version */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -49,15 +146,49 @@ body {
   background: var(--secondary);
 }
 
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
-
 /* Selection color */
 ::selection {
   background: rgba(34, 211, 238, 0.3);
   color: #ffffff;
+}
+
+/* ============================================
+   UI Theme Config - Global card/element styling
+   Uses --ui-* CSS custom properties from SettingsProvider
+   Overrides Tailwind rounded-* classes globally
+   ============================================ */
+
+/* Global border-radius override via CSS variable
+   rounded-2xl (16px default) → main cards, modals, sections
+   rounded-xl (12px default) → inner elements, buttons, inputs */
+.rounded-2xl {
+  border-radius: var(--ui-border-radius, 16px) !important;
+}
+
+.rounded-xl {
+  border-radius: calc(var(--ui-border-radius, 16px) * 0.75) !important;
+}
+
+.rounded-lg {
+  border-radius: calc(var(--ui-border-radius, 16px) * 0.5) !important;
+}
+
+.ui-card {
+  border-radius: var(--ui-border-radius, 16px);
+  border-width: var(--ui-border-width, 1px);
+  border-style: solid;
+  border-color: rgba(255, 255, 255, calc(0.05 * var(--ui-color-intensity, 1)));
+  background-color: rgba(255, 255, 255, calc(0.02 * var(--ui-card-opacity, 1)));
+  backdrop-filter: blur(var(--ui-backdrop-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--ui-backdrop-blur, 0px));
+}
+
+.ui-card:hover {
+  border-color: rgba(255, 255, 255, calc(0.12 * var(--ui-color-intensity, 1)));
+}
+
+.ui-text {
+  filter: brightness(var(--ui-text-brightness, 1));
 }
 
 /* Glassmorphism Utility */
@@ -74,7 +205,222 @@ html {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Custom animations */
+/* ============================================
+   HERO ANIMATIONS - GPU accelerated (opacity + transform only)
+   ============================================ */
+
+/* Twinkling stars */
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes twinkle-bright {
+  0%, 100% { opacity: 0.1; transform: scale(0.8); }
+  25% { opacity: 1; transform: scale(1.2); }
+  75% { opacity: 0.3; transform: scale(0.9); }
+}
+
+/* Shooting star */
+@keyframes shooting-star {
+  0% { 
+    transform: translateX(0) translateY(0) rotate(-45deg); 
+    opacity: 1; 
+  }
+  70% {
+    opacity: 1;
+  }
+  100% { 
+    transform: translateX(400px) translateY(400px) rotate(-45deg); 
+    opacity: 0; 
+  }
+}
+
+@keyframes shooting-star-2 {
+  0% { 
+    transform: translateX(0) translateY(0) rotate(-35deg); 
+    opacity: 1; 
+  }
+  70% {
+    opacity: 1;
+  }
+  100% { 
+    transform: translateX(350px) translateY(250px) rotate(-35deg); 
+    opacity: 0; 
+  }
+}
+
+/* Aurora gradient shift */
+@keyframes aurora {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Gradient text flow */
+@keyframes gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Gentle float */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Glow pulse for orbs */
+@keyframes orb-pulse {
+  0%, 100% { opacity: 0.07; transform: scale(1); }
+  50% { opacity: 0.15; transform: scale(1.08); }
+}
+
+@keyframes orb-pulse-alt {
+  0%, 100% { opacity: 0.05; transform: scale(1.05); }
+  50% { opacity: 0.12; transform: scale(0.95); }
+}
+
+/* Star with cross shape glow */
+@keyframes star-cross {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(90deg); }
+}
+
+/* Hero star classes */
+.hero-star {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.hero-star--sm {
+  width: 2px;
+  height: 2px;
+  background: white;
+  box-shadow: 0 0 3px rgba(255,255,255,0.5);
+}
+
+.hero-star--md {
+  width: 3px;
+  height: 3px;
+  background: white;
+  box-shadow: 0 0 6px rgba(255,255,255,0.6), 0 0 12px rgba(34,211,238,0.3);
+}
+
+.hero-star--lg {
+  width: 4px;
+  height: 4px;
+  background: white;
+  box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 20px rgba(168,85,247,0.4);
+}
+
+/* Cross-shaped bright star */
+.hero-star--cross {
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 
+    0 0 10px rgba(255,255,255,0.9),
+    0 0 20px rgba(34,211,238,0.5),
+    0 0 40px rgba(34,211,238,0.2),
+    10px 0 8px -4px rgba(255,255,255,0.3),
+    -10px 0 8px -4px rgba(255,255,255,0.3),
+    0 10px 8px -4px rgba(255,255,255,0.3),
+    0 -10px 8px -4px rgba(255,255,255,0.3);
+  animation: star-cross 4s ease-in-out infinite;
+}
+
+.hero-shooting-star {
+  position: absolute;
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.hero-shooting-star::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: 4px;
+  height: 3px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 6px white, 0 0 12px rgba(34,211,238,0.6);
+}
+
+/* Aurora background */
+.hero-aurora {
+  background: linear-gradient(
+    135deg,
+    rgba(34,211,238,0.08) 0%,
+    rgba(120,119,198,0.1) 25%,
+    rgba(168,85,247,0.08) 50%,
+    rgba(34,211,238,0.06) 75%,
+    rgba(59,130,246,0.08) 100%
+  );
+  background-size: 300% 300%;
+  animation: aurora 15s ease-in-out infinite;
+  will-change: background-position;
+}
+
+/* Animated gradient text */
+.hero-gradient-text {
+  background: linear-gradient(
+    90deg,
+    #22d3ee,
+    #3b82f6,
+    #a855f7,
+    #ec4899,
+    #22d3ee
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 4s linear infinite;
+}
+
+.hero-gradient-text-alt {
+  background: linear-gradient(
+    90deg,
+    #a855f7,
+    #ec4899,
+    #f59e0b,
+    #22d3ee,
+    #a855f7
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 5s linear infinite;
+  animation-delay: -2s;
+}
+
+/* Orb classes */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+/* Scroll indicator */
+@keyframes scroll-hint {
+  0%, 100% { transform: translateY(0); opacity: 0.3; }
+  50% { transform: translateY(6px); opacity: 0.8; }
+}
+
+/* ============================================
+   LEGACY ANIMATIONS
+   ============================================ */
+
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(0); }
   33% { transform: translateY(-10px) rotate(2deg); }
@@ -106,7 +452,6 @@ html {
 .animate-pulse-vivid { animation: pulse-vivid 3s ease-in-out infinite; }
 .animate-border-glow { animation: border-glow 4s ease-in-out infinite; }
 
-/* Sparkle particles */
 .sparkle {
   position: absolute;
   width: 4px;
@@ -118,11 +463,246 @@ html {
   pointer-events: none;
 }
 
-/* Text glow */
 .text-glow-primary {
   text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
 }
 
 .text-glow-secondary {
   text-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+}
+
+@keyframes fade-overlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-overlay {
+  animation: fade-overlay 0.2s ease-out forwards;
+}
+
+/* ============================================
+   HAMBURGER MENU ANIMATIONS
+   ============================================ */
+
+/* Slide Right (default) */
+@keyframes hb-slide-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-hb-slide-right {
+  animation: hb-slide-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Slide Left */
+@keyframes hb-slide-left {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-hb-slide-left {
+  animation: hb-slide-left 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Slide Bottom (up from bottom) */
+@keyframes hb-slide-bottom {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-hb-slide-bottom {
+  animation: hb-slide-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Slide Top (down from top) */
+@keyframes hb-slide-top {
+  from { transform: translateY(-40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-hb-slide-top {
+  animation: hb-slide-top 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Fade */
+@keyframes hb-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-hb-fade {
+  animation: hb-fade 0.3s ease-out forwards;
+}
+
+/* Scale */
+@keyframes hb-scale {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.animate-hb-scale {
+  animation: hb-scale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Flip */
+@keyframes hb-flip {
+  from { transform: perspective(800px) rotateY(-15deg) translateX(60px); opacity: 0; }
+  to { transform: perspective(800px) rotateY(0) translateX(0); opacity: 1; }
+}
+.animate-hb-flip {
+  animation: hb-flip 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Blur */
+@keyframes hb-blur {
+  from { opacity: 0; filter: blur(12px); transform: scale(1.02); }
+  to { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+.animate-hb-blur {
+  animation: hb-blur 0.35s ease-out forwards;
+}
+
+/* Bounce */
+@keyframes hb-bounce {
+  0% { transform: translateX(100%); opacity: 0; }
+  60% { transform: translateX(-8px); opacity: 1; }
+  80% { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+.animate-hb-bounce {
+  animation: hb-bounce 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* No animation */
+.animate-hb-none {
+  /* instant, no animation */
+}
+
+/* ============================================
+   BLOG ARTICLE - Prose & Table Styling
+   ============================================ */
+
+/* Table wrapper for horizontal scroll on mobile */
+.blog-content table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 14px;
+  margin: 1.5rem 0;
+}
+
+.blog-content thead {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(139, 92, 246, 0.12));
+}
+
+.blog-content thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 13px;
+  color: #e4e4e7;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.blog-content tbody tr {
+  transition: background 0.15s ease;
+}
+
+.blog-content tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.blog-content tbody tr:not(:last-child) td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.blog-content tbody td {
+  padding: 10px 16px;
+  color: #a1a1aa;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Alternating row stripe */
+.blog-content tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+/* Mobile responsive: wrap in scrollable container */
+.blog-content-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Improve prose headings for blog */
+.blog-content h2 {
+  position: relative;
+  padding-left: 14px;
+}
+
+.blog-content h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #22d3ee, #8b5cf6);
+}
+
+/* Lists - better spacing */
+.blog-content ul,
+.blog-content ol {
+  padding-left: 1.5em;
+}
+
+.blog-content li {
+  padding: 2px 0;
+}
+
+.blog-content li strong {
+  color: #e4e4e7;
+}
+
+/* Better link styling in content */
+.blog-content a {
+  color: #22d3ee;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+  transition: border-color 0.2s ease;
+}
+
+.blog-content a:hover {
+  border-bottom-color: #22d3ee;
+}
+
+/* Emphasis styling */
+.blog-content em {
+  color: #a1a1aa;
+  font-style: italic;
+}
+
+/* Better paragraph spacing on mobile */
+@media (max-width: 640px) {
+  .blog-content table {
+    font-size: 13px;
+  }
+
+  .blog-content thead th {
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+
+  .blog-content tbody td {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .blog-content h2 {
+    font-size: 1.3rem;
+  }
+
+  .blog-content h3 {
+    font-size: 1.1rem;
+  }
 }

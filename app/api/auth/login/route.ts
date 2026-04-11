@@ -44,12 +44,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'รหัสผ่านไม่ถูกต้อง' })
     }
 
+    // Check if user is banned
+    if (user.isBanned) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `บัญชีของคุณถูกระงับ${user.banReason ? ': ' + user.banReason : ''}` 
+      })
+    }
+
     // Login
     await login(user.id, user.email, user.name, user.balance)
 
     return NextResponse.json({ 
       success: true, 
-      isAdmin: user.isAdmin 
+      isAdmin: user.isAdmin,
+      isSuperAdmin: user.isSuperAdmin,
+      isRevenueAdmin: user.isRevenueAdmin,
+      isAgent: user.isAgent
     })
   } catch (error) {
     console.error('Login error:', error)

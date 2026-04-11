@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true, isRevenueAdmin: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin && !user?.isAdmin && !user?.isRevenueAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

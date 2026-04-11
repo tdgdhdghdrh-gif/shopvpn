@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getSession, updateBalance } from '@/lib/session'
+import { getSession, updateBalance, checkImpersonation } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 
 // Check and give referral reward
@@ -62,6 +62,10 @@ export async function POST(req: NextRequest) {
       return Response.json({ success: false, error: 'กรุณาเข้าสู่ระบบ' })
     }
 
+    // Block impersonation
+    const impBlock = await checkImpersonation()
+    if (impBlock) return impBlock
+
     const body = await req.json()
     const { type, url, imageUrl } = body
 
@@ -97,14 +101,33 @@ export async function POST(req: NextRequest) {
       }
 
       const apiData = await apiRes.json()
+      console.log('TrueMoney API Response:', JSON.stringify(apiData, null, 2))
 
-      if (!apiData.status || apiData.code !== 'SUCCESS') {
+      // API response format: { status: true/false, msg: "...", amount: "60.00", raw_data: { voucher: { amount_baht: "60.00" } } }
+      // Also support legacy format: { status: true, code: "SUCCESS", amount: { amount_baht: "60.00" } }
+      if (!apiData.status) {
+        console.log('Topup failed:', apiData.msg || 'Unknown error')
         return Response.json({ success: false, error: apiData.msg || 'ซองเล็ทหมดอายุหรือถูกใช้งานแล้ว' })
       }
 
-      const amount = parseFloat(apiData.amount?.amount_baht || 0)
+      // Support both new format (amount as string) and legacy format (amount as object with amount_baht)
+      let amount = 0
+      if (typeof apiData.amount === 'string') {
+        amount = parseFloat(apiData.amount)
+      } else if (typeof apiData.amount === 'number') {
+        amount = apiData.amount
+      } else if (apiData.amount?.amount_baht) {
+        amount = parseFloat(apiData.amount.amount_baht)
+      } else if (apiData.raw_data?.voucher?.amount_baht) {
+        amount = parseFloat(apiData.raw_data.voucher.amount_baht)
+      }
+
       if (!amount || amount <= 0) {
         return Response.json({ success: false, error: 'ไม่พบยอดเงินในซองเล็ท' })
+      }
+
+      if (amount < 50) {
+        return Response.json({ success: false, error: 'เติมเงินขั้นต่ำ 50 บาท' })
       }
 
       // Create topup record and update balance
@@ -180,6 +203,10 @@ export async function POST(req: NextRequest) {
 
       if (!amount || amount <= 0) {
         return Response.json({ success: false, error: 'ไม่พบยอดเงินในสลิป' })
+      }
+
+      if (amount < 50) {
+        return Response.json({ success: false, error: 'เติมเงินขั้นต่ำ 50 บาท' })
       }
 
       // Validate slip date - must be today
@@ -262,6 +289,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('Topup error:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
     return Response.json({ success: false, error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' })
   }
 }

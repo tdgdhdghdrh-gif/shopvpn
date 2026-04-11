@@ -5,15 +5,17 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft, User, Mail, Lock, Save, AlertCircle, 
-  CheckCircle2, Eye, EyeOff, Loader2, Shield
+  CheckCircle2, Eye, EyeOff, Loader2, Shield, Camera
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
+import { NotificationToggle } from '@/components/PushNotificationPrompt'
 
 interface UserData {
   id: string
   name: string
   email: string
   balance: number
+  avatar?: string | null
 }
 
 export default function ProfileClient({ userId }: { userId: string }) {
@@ -31,6 +33,7 @@ export default function ProfileClient({ userId }: { userId: string }) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   useEffect(() => {
     fetchUser()
@@ -52,6 +55,67 @@ export default function ProfileClient({ userId }: { userId: string }) {
       setError('ไม่สามารถโหลดข้อมูลผู้ใช้ได้')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      setError('กรุณาเลือกไฟล์รูปภาพเท่านั้น')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('ขนาดไฟล์ต้องไม่เกิน 5MB')
+      return
+    }
+
+    setAvatarUploading(true)
+    setError('')
+
+    try {
+      // Convert to base64
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = reader.result as string
+
+        // Upload image
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64, type: 'avatar' })
+        })
+        const uploadData = await uploadRes.json()
+
+        if (!uploadData.success) {
+          setError('อัพโหลดรูปไม่สำเร็จ กรุณาลองใหม่')
+          setAvatarUploading(false)
+          return
+        }
+
+        // Save avatar URL to profile
+        const profileRes = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: user?.name || name, avatar: uploadData.url })
+        })
+        const profileData = await profileRes.json()
+
+        if (profileData.success) {
+          setUser(prev => prev ? { ...prev, avatar: uploadData.url } : prev)
+          setSuccess('เปลี่ยนรูปโปรไฟล์สำเร็จ')
+          router.refresh()
+        } else {
+          setError('บันทึกรูปโปรไฟล์ไม่สำเร็จ')
+        }
+        setAvatarUploading(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (err) {
+      setError('เกิดข้อผิดพลาดในการอัพโหลด')
+      setAvatarUploading(false)
     }
   }
 
@@ -126,7 +190,7 @@ export default function ProfileClient({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-transparent text-white">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-black/80 backdrop-blur border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -163,8 +227,37 @@ export default function ProfileClient({ userId }: { userId: string }) {
         <div className="bg-gray-900/50 border border-white/10 rounded-2xl overflow-hidden mb-6">
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl font-semibold">
-                {user?.name.charAt(0).toUpperCase()}
+              <div className="relative group">
+                <label className="cursor-pointer block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                    disabled={avatarUploading}
+                  />
+                  {user?.avatar ? (
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden ring-2 ring-blue-500/30 group-hover:ring-blue-500/60 transition-all">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={user.avatar} 
+                        alt={user.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl font-semibold ring-2 ring-blue-500/30 group-hover:ring-blue-500/60 transition-all">
+                      {user?.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    {avatarUploading ? (
+                      <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Camera className="w-5 h-5 text-white" />
+                    )}
+                  </div>
+                </label>
               </div>
               <div>
                 <h2 className="text-lg font-semibold">{user?.name}</h2>
@@ -174,6 +267,8 @@ export default function ProfileClient({ userId }: { userId: string }) {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     ออนไลน์
                   </span>
+                  <span className="text-[10px] text-gray-600">|</span>
+                  <span className="text-[10px] text-gray-500">คลิกรูปเพื่อเปลี่ยน</span>
                 </div>
               </div>
             </div>
@@ -317,6 +412,10 @@ export default function ProfileClient({ userId }: { userId: string }) {
             </button>
           </div>
         </form>
+
+        <div className="mt-6">
+          <NotificationToggle />
+        </div>
 
         <div className="mt-8 pt-8 border-t border-white/10">
           <form action={logoutAction}>

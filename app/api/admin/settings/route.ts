@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
           bankAccountNumber: '',
           promptpayNumber: '0825658423',
           qrCodeImage: '',
-          siteName: 'SimonVPNShop',
+          siteName: '',
           siteLogo: '',
           backgroundImage: '',
           googleApiKey: '',
@@ -62,10 +62,10 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { isAdmin: true }
+      select: { isSuperAdmin: true, isAdmin: true }
     })
 
-    if (!user?.isAdmin) {
+    if (!user?.isSuperAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -82,15 +82,32 @@ export async function POST(request: NextRequest) {
       bankAccountNumber: body.bankAccountNumber || settings?.bankAccountNumber || '',
       qrCodeImage: body.qrCodeImage !== undefined ? body.qrCodeImage : (settings?.qrCodeImage || ''),
       // Site Configuration
-      siteName: body.siteName !== undefined ? body.siteName : (settings?.siteName || 'SimonVPNShop'),
+      siteName: body.siteName !== undefined ? body.siteName : (settings?.siteName || ''),
       siteLogo: body.siteLogo !== undefined ? body.siteLogo : (settings?.siteLogo || ''),
+      appLogo: body.appLogo !== undefined ? body.appLogo : (settings?.appLogo || ''),
       backgroundImage: body.backgroundImage !== undefined ? body.backgroundImage : (settings?.backgroundImage || ''),
-      // Google API
+      theme: body.theme !== undefined ? body.theme : (settings?.theme || 'cyber'),
+      backgroundOpacity: body.backgroundOpacity !== undefined ? parseFloat(body.backgroundOpacity) : (settings?.backgroundOpacity ?? 30),
+      // Google API / reCAPTCHA
       googleApiKey: body.googleApiKey !== undefined ? body.googleApiKey : (settings?.googleApiKey || ''),
+      recaptchaEnabled: body.recaptchaEnabled !== undefined ? Boolean(body.recaptchaEnabled) : (settings?.recaptchaEnabled ?? false),
+      recaptchaSecretKey: body.recaptchaSecretKey !== undefined ? body.recaptchaSecretKey : (settings?.recaptchaSecretKey || ''),
       // VPN Pricing
       vpnDailyPrice: body.vpnDailyPrice !== undefined ? parseFloat(body.vpnDailyPrice) : (settings?.vpnDailyPrice || 4),
       vpnWeeklyPrice: body.vpnWeeklyPrice !== undefined ? parseFloat(body.vpnWeeklyPrice) : (settings?.vpnWeeklyPrice || 25),
       vpnMonthlyPrice: body.vpnMonthlyPrice !== undefined ? parseFloat(body.vpnMonthlyPrice) : (settings?.vpnMonthlyPrice || 100),
+      // Landing Template
+      landingTemplate: body.landingTemplate !== undefined ? body.landingTemplate : (settings?.landingTemplate || 'classic'),
+      // Custom HTML Landing Page
+      landingCustomHtml: body.landingCustomHtml !== undefined ? body.landingCustomHtml : (settings?.landingCustomHtml || null),
+      // Web Effect
+      webEffect: body.webEffect !== undefined ? body.webEffect : (settings?.webEffect || 'none'),
+      // Custom HTML Effect
+      webEffectCustomHtml: body.webEffectCustomHtml !== undefined ? body.webEffectCustomHtml : (settings?.webEffectCustomHtml || null),
+      // Default Home Page
+      defaultHomePage: body.defaultHomePage !== undefined ? body.defaultHomePage : (settings?.defaultHomePage || '/'),
+      // Menu Click Effect
+      menuClickEffect: body.menuClickEffect !== undefined ? body.menuClickEffect : (settings?.menuClickEffect || 'none'),
       updatedAt: new Date()
     }
     

@@ -1,46 +1,58 @@
-import { requireAdmin } from '@/lib/session'
+import type { Metadata } from 'next'
+import { requireAnyAdmin } from '@/lib/session'
 import Sidebar from '@/components/admin/Sidebar'
 import Header from '@/components/admin/Header'
+import MaintenanceGuard from '@/components/admin/MaintenanceGuard'
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
+}
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const admin = await requireAdmin()
+  const admin = await requireAnyAdmin()
 
   return (
-    <div className="min-h-screen bg-black text-zinc-400 selection:bg-blue-500/30 font-sans antialiased">
-      {/* Background Dynamics */}
+    <div className="min-h-dvh bg-black text-zinc-400 selection:bg-blue-500/30 font-sans antialiased">
+      {/* Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[100%] sm:w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[150px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[100%] sm:w-[50%] h-[50%] bg-cyan-600/5 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[-10%] left-[-10%] w-[80%] sm:w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[80%] sm:w-[40%] h-[40%] bg-cyan-600/5 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      <Sidebar />
+      <Sidebar isSuperAdmin={admin.isSuperAdmin || false} isAdmin={admin.isAdmin || false} isRevenueAdmin={admin.isRevenueAdmin || false} isAgent={admin.isAgent || false} userMenuAccess={(admin as any).adminMenuAccess as string[] | null} />
       
-      <div className="lg:ml-[var(--sidebar-width)] transition-all duration-500 min-h-screen flex flex-col relative" style={{ '--sidebar-width': '280px' } as any}>
+      <div className="lg:ml-[var(--sidebar-width)] transition-all duration-300 min-h-dvh flex flex-col relative" style={{ '--sidebar-width': '240px' } as any}>
         <Header adminName={admin.name || 'Admin'} />
         
-        <main className="flex-1 p-4 sm:p-6 lg:p-12 pt-20 lg:pt-8 overflow-x-hidden">
-          <div className="max-w-7xl mx-auto space-y-8 sm:y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
-            {children}
+        <main className="flex-1 px-3 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6 overflow-x-hidden">
+          <div className="max-w-7xl mx-auto">
+            <MaintenanceGuard isSuperAdmin={admin.isSuperAdmin || false}>
+              {children}
+            </MaintenanceGuard>
           </div>
         </main>
         
-        <footer className="p-8 sm:p-12 pt-0 text-center">
-          <div className="max-w-7xl mx-auto border-t border-white/5 pt-8">
-            <p className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.3em]">
-              โครงสร้างพื้นฐานควอนตัม &bull; ปกป้องโดย Nexus Shield &bull; {new Date().getFullYear()}
+        <footer className="py-3 px-3 text-center">
+          <div className="max-w-7xl mx-auto border-t border-white/5 pt-3">
+            <p className="text-[9px] text-zinc-700 font-medium uppercase tracking-[0.2em]">
+              Nexus Shield &bull; {new Date().getFullYear()}
             </p>
           </div>
         </footer>
       </div>
 
-      {/* Global CSS for Sidebar width management */}
+      {/* Sidebar width management */}
       <style dangerouslySetInnerHTML={{ __html: `
-        :root { --sidebar-width: 280px; }
-        aside:has(button svg.lucide-chevron-right) + div { --sidebar-width: 100px; }
+        :root { --sidebar-width: 240px; }
+        aside:has(button svg.lucide-chevron-right) + div { --sidebar-width: 72px; }
         @media (max-width: 1024px) {
           :root { --sidebar-width: 0px !important; }
           div { --sidebar-width: 0px !important; }

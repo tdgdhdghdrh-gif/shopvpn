@@ -5,7 +5,7 @@ import { Wifi, ArrowLeft, Home } from 'lucide-react'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-transparent text-white flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         {/* Logo */}
         <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -44,7 +44,7 @@ export default function NotFound() {
         {/* VPN Info */}
         <div className="mt-10 pt-8 border-t border-gray-800">
           <p className="text-sm text-gray-500">
-            SimonVPNShop - บริการเน็ต VPN ความเร็วสูง
+            บริการเน็ต VPN ความเร็วสูง
           </p>
         </div>
       </div>

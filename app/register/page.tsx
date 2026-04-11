@@ -3,15 +3,12 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { User, Mail, Lock, AlertCircle, ArrowLeft, Menu, X, Wifi, LogIn, ChevronRight, Gift } from 'lucide-react'
+import { User, Mail, Lock, AlertCircle, Shield, Zap, Globe, ChevronRight, Eye, EyeOff, Gift, CheckCircle2, Rocket, Star, Wifi, Server } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
-// Dynamic import for ReCAPTCHA to avoid SSR issues
 const ReCAPTCHA = dynamic(() => import('react-google-recaptcha'), { ssr: false })
 
-const RECAPTCHA_SITE_KEY = '6LfLFHgsAAAAAHv1RrfFcJmPBG_srvd-kMtXt6oY'
-
-// Separate component for referral logic
+// Referral info component
 function ReferralInfo({ referralCode }: { referralCode: string }) {
   const [referrerName, setReferrerName] = useState('')
   
@@ -29,25 +26,25 @@ function ReferralInfo({ referralCode }: { referralCode: string }) {
   }, [referralCode])
 
   return (
-    <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="bg-gradient-to-r from-pink-500/[0.06] to-violet-500/[0.06] border border-pink-500/10 rounded-xl p-3.5">
+      <div className="flex items-center gap-2 mb-1.5">
         <Gift className="w-4 h-4 text-pink-400" />
-        <span className="text-pink-400 text-sm font-medium">มีรหัสเชิญ</span>
+        <span className="text-pink-400 text-xs font-bold">มีรหัสเชิญ</span>
       </div>
       {referrerName ? (
         <p className="text-white text-sm">
-          คุณได้รับเชิญจาก <span className="font-semibold text-pink-400">{referrerName}</span>
+          คุณได้รับเชิญจาก <span className="font-bold text-pink-400">{referrerName}</span>
         </p>
       ) : (
-        <p className="text-white text-sm">รหัสเชิญ: {referralCode}</p>
+        <p className="text-white text-sm">รหัสเชิญ: <span className="font-mono text-cyan-400">{referralCode}</span></p>
       )}
-      <p className="text-zinc-500 text-xs mt-1">คุณจะได้รับ 0.50 เครดิตเมื่อสมัครสำเร็จ!</p>
+      <p className="text-zinc-600 text-xs mt-1">คุณจะได้รับ 0.50 เครดิตเมื่อสมัครสำเร็จ!</p>
       <input type="hidden" name="referralCode" value={referralCode} />
     </div>
   )
 }
 
-// Main form component
+// Main register form
 function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -55,9 +52,28 @@ function RegisterForm() {
   
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [captchaKey, setCaptchaKey] = useState(Date.now())
+  const [showPassword, setShowPassword] = useState(false)
+  const [focusField, setFocusField] = useState<string | null>(null)
+  const [recaptchaEnabled, setRecaptchaEnabled] = useState(false)
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState('')
+  const [siteName, setSiteName] = useState('')
+  const [siteLogo, setSiteLogo] = useState('')
+
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings) {
+          setRecaptchaEnabled(data.settings.recaptchaEnabled ?? false)
+          setRecaptchaSiteKey(data.settings.googleApiKey || '')
+          setSiteName(data.settings.siteName || '')
+          setSiteLogo(data.settings.siteLogo || '')
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const resetCaptcha = () => {
     setCaptchaToken(null)
@@ -69,14 +85,16 @@ function RegisterForm() {
     setLoading(true)
     setError('')
 
-    if (!captchaToken) {
+    if (recaptchaEnabled && !captchaToken) {
       setError('กรุณายืนยันว่าคุณไม่ใช่หุ่นยนต์')
       setLoading(false)
       return
     }
 
     const formData = new FormData(e.currentTarget)
-    formData.append('captchaToken', captchaToken)
+    if (recaptchaEnabled && captchaToken) {
+      formData.append('captchaToken', captchaToken)
+    }
     if (referralCode) {
       formData.append('referralCode', referralCode)
     }
@@ -94,201 +112,339 @@ function RegisterForm() {
         router.refresh()
       } else {
         setError(data.error || 'สมัครสมาชิกไม่สำเร็จ')
+        resetCaptcha()
       }
     } catch (err) {
       setError('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      resetCaptcha()
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-800">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden bg-transparent">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src="https://i.postimg.cc/7PC1vHmY/812-removebg-preview.png" 
-                alt="simonvpnshop" 
-                className="w-full h-full object-contain"
-              />
+    <div className="min-h-screen bg-transparent text-white font-sans">
+      <div className="min-h-screen flex flex-col lg:flex-row">
+
+        {/* ============ LEFT PANEL - Branding (desktop only) ============ */}
+        <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] relative flex-col justify-between p-10 xl:p-14 overflow-hidden">
+          {/* Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(34,211,238,0.08),transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(168,85,247,0.06),transparent_60%)]" />
+          <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.06] to-transparent" />
+
+           {/* Top: Logo */}
+           <div className="relative z-10">
+             <Link href="/" className="flex items-center gap-3 group">
+               {siteLogo && (
+                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 p-[1.5px]">
+                   <div className="w-full h-full bg-black rounded-[10px] flex items-center justify-center overflow-hidden">
+                     {/* eslint-disable-next-line @next/next/no-img-element */}
+                     <img 
+                       src={siteLogo} 
+                       alt={siteName || 'Logo'} 
+                       className="w-full h-full object-contain p-1 scale-125 brightness-110"
+                     />
+                   </div>
+                 </div>
+               )}
+               {siteName && (
+                 <span className="text-white font-black text-lg tracking-tight">
+                   {siteName}
+                 </span>
+               )}
+             </Link>
+           </div>
+
+          {/* Middle: Hero text */}
+          <div className="relative z-10 -mt-8">
+            <h1 className="text-4xl xl:text-5xl font-black leading-tight mb-6">
+              <span className="text-white">เริ่มต้นใช้งาน</span>
+              <br />
+              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+                อินเทอร์เน็ตที่ดีกว่า
+              </span>
+            </h1>
+            <p className="text-zinc-500 text-base leading-relaxed max-w-sm mb-10">
+              สมัครสมาชิกฟรี เข้าถึงเซิร์ฟเวอร์ 20+ แห่งทั่วโลก ด้วยความเร็วสูงสุด 10Gbps
+            </p>
+
+            {/* Feature list */}
+            <div className="space-y-4">
+              {[
+                { icon: Shield, text: "เข้ารหัส AES-256 ระดับทหาร", color: "text-emerald-400", bg: "from-emerald-500 to-teal-500" },
+                { icon: Zap, text: "ความเร็วสูงสุด 10Gbps ไม่จำกัด", color: "text-amber-400", bg: "from-amber-500 to-orange-500" },
+                { icon: Globe, text: "เซิร์ฟเวอร์ 20+ แห่งทั่วโลก", color: "text-blue-400", bg: "from-blue-500 to-indigo-500" },
+                { icon: Wifi, text: "Uptime 99.9% เสถียร 24/7", color: "text-cyan-400", bg: "from-cyan-500 to-blue-500" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3.5 group">
+                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${item.bg} p-[1.5px] flex-shrink-0`}>
+                    <div className="w-full h-full bg-black rounded-[6px] flex items-center justify-center">
+                      <item.icon className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                  <span className="text-sm text-zinc-400">{item.text}</span>
+                </div>
+              ))}
             </div>
-            <span className="font-semibold text-lg tracking-tight">simonvpnshop</span>
-          </Link>
-          
-          {/* Hamburger Menu Button */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800/50"
-          >
-            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          </div>
+
+          {/* Bottom: Stats */}
+          <div className="relative z-10">
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { value: "1,000+", label: "ผู้ใช้งาน" },
+                { value: "20+", label: "เซิร์ฟเวอร์" },
+                { value: "99.9%", label: "Uptime" },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-xl font-black text-white">{stat.value}</div>
+                  <div className="text-[11px] text-zinc-600">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Dropdown Menu */}
-        {menuOpen && (
-          <div className="border-t border-gray-800 bg-black/95 backdrop-blur-md">
-            <div className="max-w-lg mx-auto px-4 py-3 space-y-1">
-              <Link
-                href="/"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-xl transition-colors"
-              >
-                <Wifi className="w-5 h-5" />
-                หน้าแรก
+        {/* ============ RIGHT PANEL - Form ============ */}
+        <div className="flex-1 flex flex-col min-h-screen lg:min-h-0">
+          
+          {/* Mobile top bar */}
+          <nav className="lg:hidden border-b border-white/[0.06] bg-black/80 backdrop-blur-xl sticky top-0 z-50">
+            <div className="px-4 py-3.5 flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-2.5">
+                {siteLogo && (
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 p-[1.5px]">
+                    <div className="w-full h-full bg-black rounded-[6px] flex items-center justify-center overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={siteLogo} 
+                        alt={siteName || 'Logo'} 
+                        className="w-full h-full object-contain p-0.5 scale-125 brightness-110"
+                      />
+                    </div>
+                  </div>
+                )}
+                {siteName && (
+                  <span className="text-white font-black text-base tracking-tight">
+                    {siteName}
+                  </span>
+                )}
               </Link>
-              
-              <div className="border-t border-gray-800 my-2"></div>
-              
-              <Link
+              <Link 
                 href="/login"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-xl transition-colors"
+                className="px-4 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white rounded-lg text-sm font-semibold transition-all"
               >
-                <LogIn className="w-5 h-5" />
                 เข้าสู่ระบบ
-                <ChevronRight className="w-4 h-4 ml-auto" />
               </Link>
             </div>
-          </div>
-        )}
-      </nav>
+          </nav>
 
-      {/* Main Content */}
-      <main className="max-w-lg mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-400 text-sm mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          กลับหน้าแรก
-        </Link>
+          {/* Form area */}
+          <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 lg:py-12">
+            <div className="w-full max-w-[440px]">
 
-        {/* Card */}
-        <div className="bg-gray-950 border border-gray-800 rounded-2xl p-6">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-green-600/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <User className="w-6 h-6 text-green-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-white">สมัครสมาชิก</h1>
-            <p className="text-gray-500 text-sm mt-1">สร้างบัญชีใหม่เพื่อใช้งาน</p>
-          </div>
-          
-          {/* Error */}
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl mb-4 text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              {error}
-            </div>
-          )}
-          
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">ชื่อ</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  className="w-full bg-gray-900 border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
-                  placeholder="ชื่อของคุณ"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">อีเมล</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  className="w-full bg-gray-900 border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
-                  placeholder="your@email.com"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">รหัสผ่าน</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  minLength={6}
-                  className="w-full bg-gray-900 border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
-                  placeholder="••••••••"
-                />
-              </div>
-              <p className="text-gray-600 text-xs mt-1">ต้องมีอย่างน้อย 6 ตัวอักษร</p>
-            </div>
-
-            {/* Referral Code Display */}
-            {referralCode && (
-              <Suspense fallback={
-                <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-4 animate-pulse">
-                  <div className="h-4 bg-pink-500/20 rounded w-3/4"></div>
-                </div>
-              }>
-                <ReferralInfo referralCode={referralCode} />
-              </Suspense>
-            )}
-
-            {/* Manual Referral Code Input (if not from URL) */}
-            {!referralCode && (
-              <div>
-                <label className="block text-gray-400 text-sm mb-2">รหัสเชิญ (ถ้ามี)</label>
-                <div className="relative">
-                  <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
-                  <input
-                    type="text"
-                    name="referralCode"
-                    className="w-full bg-gray-900 border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
-                    placeholder="เช่น ABC123"
-                  />
+              {/* Header */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 p-[1.5px]">
+                    <div className="w-full h-full bg-black rounded-[10px] flex items-center justify-center">
+                      <Rocket className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black text-white">สมัครสมาชิก</h1>
+                    <p className="text-zinc-500 text-xs">สร้างบัญชีใหม่เพื่อเริ่มใช้งาน</p>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* reCAPTCHA */}
-            <div className="flex justify-center">
-              <ReCAPTCHA
-                key={captchaKey}
-                sitekey={RECAPTCHA_SITE_KEY}
-                onChange={(token) => setCaptchaToken(token)}
-                onExpired={resetCaptcha}
-                theme="dark"
-              />
+              {/* Benefits - mobile */}
+              <div className="lg:hidden mb-6 flex flex-wrap items-center gap-2">
+                {[
+                  { icon: CheckCircle2, text: "สมัครฟรี", color: "text-emerald-400" },
+                  { icon: Zap, text: "เริ่มต้น 50 ฿/เดือน", color: "text-amber-400" },
+                  { icon: Gift, text: "ทดลองใช้ฟรี", color: "text-pink-400" },
+                ].map((item, i) => (
+                  <div key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs">
+                    <item.icon className={`w-3 h-3 ${item.color}`} />
+                    <span className="text-zinc-400">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Error */}
+              {error && (
+                <div className="bg-red-500/[0.08] border border-red-500/15 text-red-400 px-4 py-3 rounded-xl mb-5 text-sm flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+              
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-2">ชื่อผู้ใช้</label>
+                  <div className={`relative rounded-xl border transition-all duration-200 ${
+                    focusField === 'name' 
+                      ? 'border-cyan-500/40 bg-white/[0.03]' 
+                      : 'border-white/[0.06] hover:border-white/[0.1]'
+                  }`}>
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
+                      <User className={`w-4 h-4 transition-colors ${focusField === 'name' ? 'text-cyan-400' : 'text-zinc-600'}`} />
+                    </div>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      onFocus={() => setFocusField('name')}
+                      onBlur={() => setFocusField(null)}
+                      className="w-full bg-transparent rounded-xl pl-11 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none text-sm"
+                      placeholder="ชื่อที่ต้องการแสดง"
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-2">อีเมล</label>
+                  <div className={`relative rounded-xl border transition-all duration-200 ${
+                    focusField === 'email' 
+                      ? 'border-cyan-500/40 bg-white/[0.03]' 
+                      : 'border-white/[0.06] hover:border-white/[0.1]'
+                  }`}>
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
+                      <Mail className={`w-4 h-4 transition-colors ${focusField === 'email' ? 'text-cyan-400' : 'text-zinc-600'}`} />
+                    </div>
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      onFocus={() => setFocusField('email')}
+                      onBlur={() => setFocusField(null)}
+                      className="w-full bg-transparent rounded-xl pl-11 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none text-sm"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                </div>
+                
+                {/* Password */}
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-2">รหัสผ่าน</label>
+                  <div className={`relative rounded-xl border transition-all duration-200 ${
+                    focusField === 'password' 
+                      ? 'border-cyan-500/40 bg-white/[0.03]' 
+                      : 'border-white/[0.06] hover:border-white/[0.1]'
+                  }`}>
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
+                      <Lock className={`w-4 h-4 transition-colors ${focusField === 'password' ? 'text-cyan-400' : 'text-zinc-600'}`} />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      required
+                      minLength={6}
+                      onFocus={() => setFocusField('password')}
+                      onBlur={() => setFocusField(null)}
+                      className="w-full bg-transparent rounded-xl pl-11 pr-11 py-3 text-white placeholder-zinc-600 focus:outline-none text-sm"
+                      placeholder="อย่างน้อย 6 ตัวอักษร"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Referral Code */}
+                {referralCode ? (
+                  <Suspense fallback={
+                    <div className="bg-pink-500/[0.06] border border-pink-500/10 rounded-xl p-4 animate-pulse">
+                      <div className="h-4 bg-pink-500/20 rounded w-3/4"></div>
+                    </div>
+                  }>
+                    <ReferralInfo referralCode={referralCode} />
+                  </Suspense>
+                ) : (
+                  <div>
+                    <label className="block text-zinc-400 text-xs font-semibold mb-2">
+                      รหัสเชิญ <span className="text-zinc-600 font-normal">(ถ้ามี)</span>
+                    </label>
+                    <div className={`relative rounded-xl border transition-all duration-200 ${
+                      focusField === 'referral' 
+                        ? 'border-pink-500/40 bg-white/[0.03]' 
+                        : 'border-white/[0.06] hover:border-white/[0.1]'
+                    }`}>
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
+                        <Gift className={`w-4 h-4 transition-colors ${focusField === 'referral' ? 'text-pink-400' : 'text-zinc-600'}`} />
+                      </div>
+                      <input
+                        type="text"
+                        name="referralCode"
+                        onFocus={() => setFocusField('referral')}
+                        onBlur={() => setFocusField(null)}
+                        className="w-full bg-transparent rounded-xl pl-11 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none text-sm"
+                        placeholder="เช่น ABC123"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* reCAPTCHA */}
+                {recaptchaEnabled && recaptchaSiteKey && (
+                  <div className="flex justify-center py-1">
+                    <ReCAPTCHA
+                      key={captchaKey}
+                      sitekey={recaptchaSiteKey}
+                      onChange={(token) => setCaptchaToken(token)}
+                      onExpired={resetCaptcha}
+                      theme="dark"
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || (recaptchaEnabled && !captchaToken)}
+                  className="group w-full relative bg-gradient-to-r from-emerald-500 to-cyan-500 disabled:from-zinc-800 disabled:to-zinc-800 text-white disabled:text-zinc-600 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98] overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span className="relative z-10 text-sm">กำลังสมัคร...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="w-4 h-4 relative z-10" />
+                      <span className="relative z-10 text-sm">สมัครสมาชิก</span>
+                      <ChevronRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+              
+              {/* Login link */}
+              <div className="mt-8 pt-6 border-t border-white/[0.04] text-center">
+                <p className="text-zinc-600 text-sm mb-3">มีบัญชีอยู่แล้ว?</p>
+                <Link 
+                  href="/login" 
+                  className="group inline-flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-cyan-400 transition-colors"
+                >
+                  เข้าสู่ระบบ
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading || !captchaToken}
-              className="w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
-            >
-              {loading ? 'กำลังสมัคร...' : 'สมัครสมาชิก'}
-            </button>
-          </form>
-          
-          {/* Footer */}
-          <p className="text-center text-gray-500 text-sm mt-6">
-            มีบัญชีแล้ว?{' '}
-            <Link href="/login" className="text-green-400 hover:text-green-300 font-medium">
-              เข้าสู่ระบบ
-            </Link>
-          </p>
+          </div>
         </div>
-      </main>
+
+      </div>
     </div>
   )
 }
@@ -298,7 +454,7 @@ export default function RegisterPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
       </div>
     }>
       <RegisterForm />

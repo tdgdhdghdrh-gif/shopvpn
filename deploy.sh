@@ -8,6 +8,10 @@ pkill -9 -f "next" 2>/dev/null || true
 pm2 delete shop 2>/dev/null || true
 sleep 2
 
+# Clean previous build to prevent stale chunk errors
+echo "🧹 Cleaning previous build..."
+rm -rf .next
+
 # Build
 echo "🔨 Building application..."
 npm run build

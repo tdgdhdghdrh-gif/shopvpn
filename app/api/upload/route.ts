@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server'
 import { getSession } from '@/lib/session'
 
+// Allow up to 10MB request body for image uploads
+export const maxBodySize = '10mb'
+
 // ImgBB API - free image hosting
 const IMGBB_API_KEY = process.env.IMGBB_API_KEY || ''
 
@@ -11,7 +14,18 @@ export async function POST(req: NextRequest) {
       return Response.json({ success: false, error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 })
     }
 
-    const { image, type } = await req.json()
+    let body: { image?: string; type?: string }
+    try {
+      body = await req.json()
+    } catch (parseError) {
+      console.error('Upload: JSON parse error (body too large or malformed):', parseError)
+      return Response.json({ 
+        success: false, 
+        error: 'รูปภาพมีขนาดใหญ่เกินไป กรุณาลดขนาดหรือใช้ลิงก์รูปภาพแทน' 
+      }, { status: 413 })
+    }
+
+    const { image, type } = body
     
     if (!image) {
       return Response.json({ success: false, error: 'ไม่พบรูปภาพ' }, { status: 400 })
@@ -44,7 +58,7 @@ export async function POST(req: NextRequest) {
           })
         }
       } catch (e) {
-        console.log('ImgBB upload failed, falling back to base64')
+        console.error('ImgBB upload failed:', e)
       }
     }
 
@@ -79,9 +93,11 @@ export async function POST(req: NextRequest) {
           success: true, 
           url: data.image.url
         })
+      } else {
+        console.error('Freeimage response not OK:', JSON.stringify(data).substring(0, 500))
       }
     } catch (e) {
-      console.log('Freeimage upload failed')
+      console.error('Freeimage upload failed:', e)
     }
 
     // Last resort: try to upload to a temporary service or return error
