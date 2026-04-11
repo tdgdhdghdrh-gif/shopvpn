@@ -1081,3 +1081,17 @@ model PageDatabaseRecord {
   @@index([pageId, collection])
   @@index([createdAt])
 }
+
+model SiteLicense {
+  id          String   @id @default(cuid())
+  siteName    String                          // ชื่อเว็บลูกค้า
+  licenseKey  String   @unique                // key สำหรับเรียก API เช็ค
+  expiryDate  DateTime                        // วันหมดอายุ
+  isActive    Boolean  @default(true)         // เปิด/ปิดใช้งาน
+  note        String?                         // หมายเหตุ
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([licenseKey])
+  @@index([expiryDate])
+}

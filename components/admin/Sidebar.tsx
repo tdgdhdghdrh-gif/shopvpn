@@ -43,6 +43,8 @@ import {
   Home,
   Code2,
   Wand2,
+  Download,
+  CalendarClock,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -87,6 +89,8 @@ const superAdminMenuItems = [
   { name: 'reCAPTCHA', href: '/admin/recaptcha', icon: ShieldCheck },
   { name: 'ตั้งค่าระบบ', href: '/admin/settings', icon: Settings },
   { name: 'จัดการเมนู', href: '/admin/menu-settings', icon: Construction },
+  { name: 'อัพเดทเว็บ', href: '/admin/update-site', icon: Download },
+  { name: 'ต่ออายุเว็บ', href: '/admin/site-license', icon: CalendarClock },
 ]
 
 interface SidebarProps {

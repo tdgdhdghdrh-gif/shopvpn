@@ -13,6 +13,47 @@ function getClientIP(request: NextRequest): string {
   return 'unknown'
 }
 
+// Cache license check result (check every 5 minutes, not every request)
+let licenseCache: { valid: boolean; checkedAt: number; siteName?: string } | null = null
+const LICENSE_CHECK_INTERVAL = 5 * 60 * 1000 // 5 minutes
+
+async function checkLicense(request: NextRequest): Promise<{ valid: boolean; siteName?: string }> {
+  const licenseKey = process.env.LICENSE_KEY
+  
+  // ถ้าไม่ได้ตั้ง LICENSE_KEY = ไม่เช็ค (เว็บต้นทาง/dev)
+  if (!licenseKey) return { valid: true }
+
+  // ใช้ cache ถ้ายังไม่หมดเวลา
+  const now = Date.now()
+  if (licenseCache && (now - licenseCache.checkedAt) < LICENSE_CHECK_INTERVAL) {
+    return { valid: licenseCache.valid, siteName: licenseCache.siteName }
+  }
+
+  try {
+    const licenseApiUrl = process.env.LICENSE_API_URL || request.nextUrl.origin
+    const res = await fetch(`${licenseApiUrl}/api/license/check?key=${licenseKey}`, {
+      next: { revalidate: 0 },
+      signal: AbortSignal.timeout(5000),
+    })
+    
+    if (res.ok) {
+      const data = await res.json()
+      licenseCache = { valid: data.valid === true, checkedAt: now, siteName: data.siteName }
+      return { valid: data.valid === true, siteName: data.siteName }
+    }
+    
+    // API error แต่มี cache เก่า -> ใช้ cache เก่า (graceful)
+    if (licenseCache) return { valid: licenseCache.valid, siteName: licenseCache.siteName }
+    
+    // ไม่มี cache เลย + API error -> ปล่อยผ่าน (ไม่บล็อกถ้า API ล่ม)
+    return { valid: true }
+  } catch {
+    // Network error -> ใช้ cache เก่า หรือปล่อยผ่าน
+    if (licenseCache) return { valid: licenseCache.valid, siteName: licenseCache.siteName }
+    return { valid: true }
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -23,9 +64,22 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/images') ||
     pathname.startsWith('/uploads') ||
     pathname.startsWith('/api/ip-log') ||
+    pathname.startsWith('/api/license') ||
+    pathname === '/expired' ||
     pathname.match(/\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot)$/)
   ) {
     return NextResponse.next()
+  }
+
+  // === License Check ===
+  const license = await checkLicense(request)
+  if (!license.valid) {
+    // ถ้า license หมดอายุ -> redirect ไปหน้า /expired
+    if (pathname !== '/expired') {
+      const expiredUrl = request.nextUrl.clone()
+      expiredUrl.pathname = '/expired'
+      return NextResponse.redirect(expiredUrl)
+    }
   }
 
   const ip = getClientIP(request)
