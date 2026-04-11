@@ -126,8 +126,8 @@ export async function POST(req: NextRequest) {
         return Response.json({ success: false, error: 'ไม่พบยอดเงินในซองเล็ท' })
       }
 
-      if (amount < 50) {
-        return Response.json({ success: false, error: 'เติมเงินขั้นต่ำ 50 บาท' })
+      if (amount < (settings.minTopupAmount ?? 60)) {
+        return Response.json({ success: false, error: `เติมเงินขั้นต่ำ ${settings.minTopupAmount ?? 60} บาท` })
       }
 
       // Create topup record and update balance
@@ -205,8 +205,8 @@ export async function POST(req: NextRequest) {
         return Response.json({ success: false, error: 'ไม่พบยอดเงินในสลิป' })
       }
 
-      if (amount < 50) {
-        return Response.json({ success: false, error: 'เติมเงินขั้นต่ำ 50 บาท' })
+      if (amount < (settings.minTopupAmount ?? 60)) {
+        return Response.json({ success: false, error: `เติมเงินขั้นต่ำ ${settings.minTopupAmount ?? 60} บาท` })
       }
 
       // Validate slip date - must be today

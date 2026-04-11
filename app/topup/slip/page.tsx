@@ -12,6 +12,7 @@ interface Settings {
   bankReceiverName: string
   bankAccountNumber: string
   qrCodeImage: string
+  minTopupAmount: number
 }
 
 export default function SlipTopupPage() {
@@ -25,7 +26,8 @@ export default function SlipTopupPage() {
   const [settings, setSettings] = useState<Settings>({
     bankReceiverName: 'พันวิลา',
     bankAccountNumber: '',
-    qrCodeImage: ''
+    qrCodeImage: '',
+    minTopupAmount: 60
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -41,7 +43,8 @@ export default function SlipTopupPage() {
         setSettings({
           bankReceiverName: data.settings.bankReceiverName || 'พันวิลา',
           bankAccountNumber: data.settings.bankAccountNumber || '',
-          qrCodeImage: data.settings.qrCodeImage || ''
+          qrCodeImage: data.settings.qrCodeImage || '',
+          minTopupAmount: data.settings.minTopupAmount ?? 60
         })
       }
     } catch (error) {
@@ -358,7 +361,7 @@ export default function SlipTopupPage() {
             <div className="p-3 bg-amber-500/8 border border-amber-500/15 rounded-xl flex items-start gap-2.5">
               <Info className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
               <p className="text-[11px] text-amber-400/80 leading-relaxed">
-                ระบบ AI จะตรวจสอบสลิปอัตโนมัติ ยอดเงินจะเข้าทันทีหลังตรวจสอบสำเร็จ เติมขั้นต่ำ <span className="font-bold text-amber-400">60 บาท</span>
+                ระบบ AI จะตรวจสอบสลิปอัตโนมัติ ยอดเงินจะเข้าทันทีหลังตรวจสอบสำเร็จ เติมขั้นต่ำ <span className="font-bold text-amber-400">{settings.minTopupAmount} บาท</span>
               </p>
             </div>
           </div>
@@ -422,7 +425,7 @@ export default function SlipTopupPage() {
             <div className="space-y-2.5 mb-5">
               <div className="p-3 bg-zinc-800/50 border border-white/5 rounded-xl flex items-center justify-between">
                 <span className="text-xs text-zinc-400">เติมเงินขั้นต่ำ</span>
-                <span className="text-sm font-bold text-white">60 บาท</span>
+                <span className="text-sm font-bold text-white">{settings.minTopupAmount} บาท</span>
               </div>
               <div className="p-3 bg-red-500/8 border border-red-500/15 rounded-xl">
                 <div className="flex items-start gap-2">

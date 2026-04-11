@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   ArrowLeft, Gift, Wallet, AlertCircle, CheckCircle2, Loader2, 
@@ -13,6 +13,16 @@ export default function WalletTopupPage() {
   const [loading, setLoading] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
+  const [minTopup, setMinTopup] = useState(60)
+
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings?.minTopupAmount) setMinTopup(data.settings.minTopupAmount)
+      })
+      .catch(() => {})
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -179,7 +189,7 @@ export default function WalletTopupPage() {
             <div className="p-3 bg-amber-500/8 border border-amber-500/15 rounded-xl flex items-start gap-2.5">
               <Info className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
               <p className="text-[11px] text-amber-400/80 leading-relaxed">
-                ระบบจะตรวจสอบและเติมเงินอัตโนมัติ ยอดเงินจะเข้าทันทีหลังตรวจสอบสำเร็จ เติมขั้นต่ำ <span className="font-bold text-amber-400">60 บาท</span>
+                ระบบจะตรวจสอบและเติมเงินอัตโนมัติ ยอดเงินจะเข้าทันทีหลังตรวจสอบสำเร็จ เติมขั้นต่ำ <span className="font-bold text-amber-400">{minTopup} บาท</span>
               </p>
             </div>
           </div>
@@ -234,7 +244,7 @@ export default function WalletTopupPage() {
             <div className="space-y-2.5 mb-5">
               <div className="p-3 bg-zinc-800/50 border border-white/5 rounded-xl flex items-center justify-between">
                 <span className="text-xs text-zinc-400">เติมเงินขั้นต่ำ</span>
-                <span className="text-sm font-bold text-white">60 บาท</span>
+                <span className="text-sm font-bold text-white">{minTopup} บาท</span>
               </div>
               <div className="p-3 bg-red-500/8 border border-red-500/15 rounded-xl">
                 <div className="flex items-start gap-2">

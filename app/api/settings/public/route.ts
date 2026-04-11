@@ -51,6 +51,8 @@ export async function GET() {
         vpnDailyPrice: settings.vpnDailyPrice,
         vpnWeeklyPrice: settings.vpnWeeklyPrice,
         vpnMonthlyPrice: settings.vpnMonthlyPrice,
+        // Topup
+        minTopupAmount: settings.minTopupAmount ?? 60,
         // Google API (public key only - site key for reCAPTCHA)
         googleApiKey: settings.googleApiKey,
         // reCAPTCHA toggle

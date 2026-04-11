@@ -23,6 +23,7 @@ interface Settings {
   vpnDailyPrice: number
   vpnWeeklyPrice: number
   vpnMonthlyPrice: number
+  minTopupAmount: number
   landingTemplate: string
 }
 
@@ -40,6 +41,7 @@ const INITIAL_SETTINGS: Settings = {
   vpnDailyPrice: 4,
   vpnWeeklyPrice: 25,
   vpnMonthlyPrice: 100,
+  minTopupAmount: 60,
   landingTemplate: 'classic',
 }
 
@@ -268,6 +270,7 @@ export default function AdminSettingsPage() {
           vpnDailyPrice: data.settings.vpnDailyPrice || 4,
           vpnWeeklyPrice: data.settings.vpnWeeklyPrice || 25,
           vpnMonthlyPrice: data.settings.vpnMonthlyPrice || 100,
+          minTopupAmount: data.settings.minTopupAmount ?? 60,
           landingTemplate: data.settings.landingTemplate || 'classic',
         }
         setSettings(s)
@@ -435,11 +438,16 @@ export default function AdminSettingsPage() {
           </SectionCard>
 
           {/* VPN Pricing */}
-          <SectionCard id="pricing" title="ตั้งค่าราคา VPN" desc="กำหนดราคาแพ็คเกจ VPN ได้เอง" icon={DollarSign} color="emerald" mobileSection={mobileSection} onToggle={toggleMobileSection}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-              <InputField label="รายวัน (บาท)" value={settings.vpnDailyPrice} onChange={(v) => updateField('vpnDailyPrice', v)} placeholder="4" icon={DollarSign} type="number" color="emerald" />
-              <InputField label="รายสัปดาห์ (บาท)" value={settings.vpnWeeklyPrice} onChange={(v) => updateField('vpnWeeklyPrice', v)} placeholder="25" icon={DollarSign} type="number" color="emerald" />
-              <InputField label="รายเดือน (บาท)" value={settings.vpnMonthlyPrice} onChange={(v) => updateField('vpnMonthlyPrice', v)} placeholder="100" icon={DollarSign} type="number" color="emerald" />
+          <SectionCard id="pricing" title="ตั้งค่าราคา VPN" desc="กำหนดราคาแพ็คเกจ VPN และเติมเงินขั้นต่ำ" icon={DollarSign} color="emerald" mobileSection={mobileSection} onToggle={toggleMobileSection}>
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+                <InputField label="รายวัน (บาท)" value={settings.vpnDailyPrice} onChange={(v) => updateField('vpnDailyPrice', v)} placeholder="4" icon={DollarSign} type="number" color="emerald" />
+                <InputField label="รายสัปดาห์ (บาท)" value={settings.vpnWeeklyPrice} onChange={(v) => updateField('vpnWeeklyPrice', v)} placeholder="25" icon={DollarSign} type="number" color="emerald" />
+                <InputField label="รายเดือน (บาท)" value={settings.vpnMonthlyPrice} onChange={(v) => updateField('vpnMonthlyPrice', v)} placeholder="100" icon={DollarSign} type="number" color="emerald" />
+              </div>
+              <div className="border-t border-white/5 pt-5">
+                <InputField label="เติมเงินขั้นต่ำ (บาท)" value={settings.minTopupAmount} onChange={(v) => updateField('minTopupAmount', v)} placeholder="60" icon={Wallet} type="number" color="emerald" hint="จำนวนเงินขั้นต่ำที่ลูกค้าต้องเติมต่อครั้ง (ซองเล็ท / สลิป)" />
+              </div>
             </div>
           </SectionCard>
 

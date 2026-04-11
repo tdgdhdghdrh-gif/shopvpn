@@ -37,9 +37,10 @@ export async function GET(request: NextRequest) {
           siteLogo: '',
           backgroundImage: '',
           googleApiKey: '',
-          vpnDailyPrice: 4,
-          vpnWeeklyPrice: 25,
-          vpnMonthlyPrice: 100
+      vpnDailyPrice: 4,
+      vpnWeeklyPrice: 25,
+      vpnMonthlyPrice: 100,
+      minTopupAmount: 60
         }
       })
     }
@@ -96,6 +97,8 @@ export async function POST(request: NextRequest) {
       vpnDailyPrice: body.vpnDailyPrice !== undefined ? parseFloat(body.vpnDailyPrice) : (settings?.vpnDailyPrice || 4),
       vpnWeeklyPrice: body.vpnWeeklyPrice !== undefined ? parseFloat(body.vpnWeeklyPrice) : (settings?.vpnWeeklyPrice || 25),
       vpnMonthlyPrice: body.vpnMonthlyPrice !== undefined ? parseFloat(body.vpnMonthlyPrice) : (settings?.vpnMonthlyPrice || 100),
+      // Topup
+      minTopupAmount: body.minTopupAmount !== undefined ? parseFloat(body.minTopupAmount) : (settings?.minTopupAmount ?? 60),
       // Landing Template
       landingTemplate: body.landingTemplate !== undefined ? body.landingTemplate : (settings?.landingTemplate || 'classic'),
       // Custom HTML Landing Page

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   ArrowLeft, Gift, ScanLine, ChevronRight, AlertCircle, 
@@ -7,6 +8,16 @@ import {
 } from 'lucide-react'
 
 export default function TopupSelectPage() {
+  const [minTopup, setMinTopup] = useState(60)
+
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings?.minTopupAmount) setMinTopup(data.settings.minTopupAmount)
+      })
+      .catch(() => {})
+  }, [])
   return (
     <div className="min-h-screen bg-transparent text-white font-sans">
       {/* Header */}
@@ -76,7 +87,7 @@ export default function TopupSelectPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Coins className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="text-xs font-bold text-white">เติมเงินขั้นต่ำ <span className="text-amber-400">60 บาท</span></span>
+                    <span className="text-xs font-bold text-white">เติมเงินขั้นต่ำ <span className="text-amber-400">{minTopup} บาท</span></span>
                   </div>
                   <p className="text-[11px] text-zinc-400 leading-relaxed">
                     ยอดเงินจะเข้าระบบทันทีหลังตรวจสอบสำเร็จ ไม่สามารถคืนเงินได้หากโอนผิดหรือยืนยันผิด

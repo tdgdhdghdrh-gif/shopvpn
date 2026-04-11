@@ -109,6 +109,7 @@ model Settings {
   vpnDailyPrice     Float    @default(4)
   vpnMonthlyPrice   Float    @default(100)
   vpnWeeklyPrice    Float    @default(25)
+  minTopupAmount    Float    @default(60) // เติมเงินขั้นต่ำ (บาท)
   theme             String   @default("cyber")
   backgroundOpacity Float    @default(30) // ความทึบแสงพื้นหลัง 0-100%
   appLogo           String?  // โลโก้แอพ/favicon (URL) สำหรับ PWA icon
