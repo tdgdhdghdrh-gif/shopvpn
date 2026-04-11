@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { id: true, name: true, balance: true, discountExpiry: true }
+      select: { id: true, name: true, balance: true, discountExpiry: true, promoDiscountPercent: true }
     })
 
     if (!user) {
@@ -228,14 +228,17 @@ export async function GET(request: NextRequest) {
       where: { userId: session.userId },
       include: {
         server: {
-          select: { id: true, name: true, flag: true, isActive: true }
+          select: { 
+            id: true, name: true, flag: true, isActive: true,
+            pricePerDay: true, priceWeekly: true, priceMonthly: true
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
     })
 
     const hasDiscount = user.discountExpiry ? new Date(user.discountExpiry) > new Date() : false
-    const pricePerDay = hasDiscount ? 1 : 2
+    const promoPercent = user.promoDiscountPercent || 0
 
     return NextResponse.json({
       user: {
@@ -243,7 +246,7 @@ export async function GET(request: NextRequest) {
         name: user.name,
         balance: user.balance,
         hasDiscount,
-        pricePerDay
+        promoPercent
       },
       vpnOrders
     })
@@ -292,10 +295,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ไม่พบเซิร์ฟเวอร์' }, { status: 404 })
     }
 
-    // Calculate price (same as buy)
+    // Calculate price using server pricing (same logic as buy flow)
     const hasDiscount = order.user.discountExpiry ? new Date(order.user.discountExpiry) > new Date() : false
-    const pricePerDay = hasDiscount ? 1 : 2
-    const totalPrice = days * pricePerDay
+    
+    // Use per-server pricing
+    let pricePerDay = order.server.pricePerDay ?? 2
+    if (hasDiscount) {
+      pricePerDay = Math.max(0.5, pricePerDay * 0.5) // 50% discount
+    }
+
+    // Apply promo discount if user has one
+    const promoPercent = order.user.promoDiscountPercent || 0
+    if (promoPercent > 0) {
+      pricePerDay = Math.max(0.5, Math.round(pricePerDay * (100 - promoPercent) / 100 * 100) / 100)
+    }
+
+    // Calculate total price using server package pricing or per-day calculation
+    let totalPrice = 0
+    if (days === 7 && order.server.priceWeekly != null) {
+      totalPrice = hasDiscount ? order.server.priceWeekly * 0.5 : order.server.priceWeekly
+      if (promoPercent > 0) {
+        totalPrice = Math.max(0.5, Math.round(totalPrice * (100 - promoPercent) / 100 * 100) / 100)
+      }
+    } else if (days === 30 && order.server.priceMonthly != null) {
+      totalPrice = hasDiscount ? order.server.priceMonthly * 0.5 : order.server.priceMonthly
+      if (promoPercent > 0) {
+        totalPrice = Math.max(0.5, Math.round(totalPrice * (100 - promoPercent) / 100 * 100) / 100)
+      }
+    } else {
+      totalPrice = days * pricePerDay
+    }
 
     // Check balance
     if (order.user.balance < totalPrice) {

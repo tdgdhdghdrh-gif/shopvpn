@@ -19,12 +19,16 @@ interface VpnOrder {
   duration: number
   expiryTime: string
   isActive: boolean
+  ipLimit: number
   createdAt: string
   server: {
     id: string
     name: string
     flag: string
     isActive: boolean
+    pricePerDay: number
+    priceWeekly: number | null
+    priceMonthly: number | null
   }
 }
 
@@ -33,7 +37,7 @@ interface UserInfo {
   name: string
   balance: number
   hasDiscount: boolean
-  pricePerDay: number
+  promoPercent: number
 }
 
 // Countdown Timer
@@ -171,8 +175,49 @@ export default function RenewPage() {
     return new Date(expiryTime) < new Date()
   }
 
-  const pricePerDay = userInfo?.pricePerDay || 2
-  const totalPrice = days * pricePerDay
+  // Calculate price based on selected order's server pricing (matching buy flow)
+  function calculatePrice(order: VpnOrder | null, selectedDays: number): { pricePerDay: number; totalPrice: number; isPackagePrice: boolean; originalPricePerDay: number } {
+    if (!order || !userInfo) return { pricePerDay: 2, totalPrice: selectedDays * 2, isPackagePrice: false, originalPricePerDay: 2 }
+    
+    const serverPricePerDay = order.server.pricePerDay ?? 2
+    const originalPricePerDay = serverPricePerDay
+    let ppd = serverPricePerDay
+    
+    // Apply 50% discount
+    if (userInfo.hasDiscount) {
+      ppd = Math.max(0.5, ppd * 0.5)
+    }
+    
+    // Apply promo discount
+    const promoPercent = userInfo.promoPercent || 0
+    if (promoPercent > 0) {
+      ppd = Math.max(0.5, Math.round(ppd * (100 - promoPercent) / 100 * 100) / 100)
+    }
+    
+    // Check package pricing
+    let total = 0
+    let isPackage = false
+    if (selectedDays === 7 && order.server.priceWeekly != null) {
+      total = userInfo.hasDiscount ? order.server.priceWeekly * 0.5 : order.server.priceWeekly
+      if (promoPercent > 0) {
+        total = Math.max(0.5, Math.round(total * (100 - promoPercent) / 100 * 100) / 100)
+      }
+      isPackage = true
+    } else if (selectedDays === 30 && order.server.priceMonthly != null) {
+      total = userInfo.hasDiscount ? order.server.priceMonthly * 0.5 : order.server.priceMonthly
+      if (promoPercent > 0) {
+        total = Math.max(0.5, Math.round(total * (100 - promoPercent) / 100 * 100) / 100)
+      }
+      isPackage = true
+    } else {
+      total = selectedDays * ppd
+    }
+    
+    return { pricePerDay: ppd, totalPrice: total, isPackagePrice: isPackage, originalPricePerDay: originalPricePerDay }
+  }
+
+  const { pricePerDay, totalPrice, isPackagePrice, originalPricePerDay } = calculatePrice(selectedOrder, days)
+  const hasAnyDiscount = userInfo?.hasDiscount || (userInfo?.promoPercent || 0) > 0
   const canAfford = userInfo ? userInfo.balance >= totalPrice : false
 
   return (
@@ -223,8 +268,19 @@ export default function RenewPage() {
               <Sparkles className="w-5 h-5 text-pink-400" />
             </div>
             <div>
-              <p className="text-sm font-bold text-pink-400">ส่วนลดพิเศษ</p>
-              <p className="text-xs text-gray-400">คุณได้รับส่วนลด ราคาเพียง <span className="text-pink-400 font-bold">1 ฿/วัน</span> (ปกติ 2 ฿/วัน)</p>
+              <p className="text-sm font-bold text-pink-400">ส่วนลด 50%</p>
+              <p className="text-xs text-gray-400">คุณได้รับส่วนลด 50% จากราคาปกติ</p>
+            </div>
+          </div>
+        )}
+        {(userInfo?.promoPercent || 0) > 0 && (
+          <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl">
+            <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Tag className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-amber-400">โปรโมชั่น -{userInfo?.promoPercent}%</p>
+              <p className="text-xs text-gray-400">คุณได้รับส่วนลดโปรโมชั่นถาวร {userInfo?.promoPercent}%</p>
             </div>
           </div>
         )}
@@ -424,16 +480,23 @@ export default function RenewPage() {
                 {/* Price summary */}
                 <div className="bg-white/[0.03] border border-white/5 rounded-xl p-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">ราคาต่อวัน</span>
-                    <span className={`font-bold ${userInfo?.hasDiscount ? 'text-pink-400' : 'text-white'}`}>
+                    <span className="text-gray-500">ราคาต่อวัน ({selectedOrder.server.name})</span>
+                    <span className={`font-bold ${hasAnyDiscount ? 'text-pink-400' : 'text-white'}`}>
                       {pricePerDay} ฿/วัน
-                      {userInfo?.hasDiscount && <span className="text-gray-600 line-through ml-2">2 ฿</span>}
+                      {hasAnyDiscount && <span className="text-gray-600 line-through ml-2">{originalPricePerDay} ฿</span>}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{days} วัน x {pricePerDay} ฿</span>
-                    <span className="text-white font-bold">{totalPrice} ฿</span>
-                  </div>
+                  {isPackagePrice ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">แพ็ค {days} วัน (ราคาพิเศษ)</span>
+                      <span className="text-emerald-400 font-bold">{totalPrice} ฿</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">{days} วัน x {pricePerDay} ฿</span>
+                      <span className="text-white font-bold">{totalPrice} ฿</span>
+                    </div>
+                  )}
                   <div className="border-t border-white/5 pt-2 flex justify-between">
                     <span className="text-white font-bold">รวมทั้งหมด</span>
                     <span className="text-cyan-400 font-black text-xl">{totalPrice} ฿</span>
