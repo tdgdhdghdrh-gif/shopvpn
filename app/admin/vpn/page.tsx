@@ -72,6 +72,7 @@ interface VpnServer {
   sortOrder: number
   maxClients: number
   defaultIpLimit: number
+  vlessTemplate: string | null
 }
 
 type FilterStatus = 'all' | 'online' | 'offline'
@@ -157,6 +158,7 @@ export default function AdminVpnPage() {
     sortOrder: 0,
     maxClients: 0,
     defaultIpLimit: 0,
+    vlessTemplate: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -223,6 +225,7 @@ export default function AdminVpnPage() {
       sortOrder: 0,
       maxClients: 0,
       defaultIpLimit: 0,
+      vlessTemplate: '',
     })
     setShowModal(true)
     setPanelInbounds([])
@@ -265,6 +268,7 @@ export default function AdminVpnPage() {
       sortOrder: server.sortOrder ?? 0,
       maxClients: server.maxClients ?? 0,
       defaultIpLimit: server.defaultIpLimit ?? 0,
+      vlessTemplate: server.vlessTemplate ?? '',
     })
     setShowModal(true)
     if (server.inboundConfigs && Array.isArray(server.inboundConfigs)) {
@@ -436,6 +440,7 @@ export default function AdminVpnPage() {
         priceWeekly: formData.priceWeekly !== '' ? Number(formData.priceWeekly) : null,
         priceMonthly: formData.priceMonthly !== '' ? Number(formData.priceMonthly) : null,
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        vlessTemplate: formData.vlessTemplate || null,
       }
 
       const res = await fetch(url, {
@@ -1342,6 +1347,36 @@ export default function AdminVpnPage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* === VLESS Template === */}
+              <div>
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Settings2 className="w-3 h-3" /> VLESS Template
+                </p>
+                <div className="space-y-2">
+                  <textarea
+                    value={formData.vlessTemplate}
+                    onChange={(e) => setFormData({...formData, vlessTemplate: e.target.value})}
+                    className={`${inputClass} resize-none font-mono text-[11px] leading-relaxed`}
+                    placeholder="vless://{UUID}@host:8080?type=tcp&encryption=none&path=%2F&host=speedtest.net&headerType=http&security=reality&pbk=xxx&fp=random&sni=speedtest.net&sid=xxx&spx=%2F#{REMARK}"
+                    rows={4}
+                  />
+                  <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-1.5">
+                    <p className="text-[10px] font-bold text-amber-400">วิธีใช้:</p>
+                    <p className="text-[10px] text-zinc-400 leading-relaxed">
+                      วาง VLESS URI ตัวอย่างที่ใช้งานได้จริง ใส่ <code className="px-1 py-0.5 bg-white/5 rounded text-amber-300 font-mono">{'{UUID}'}</code> ตรง UUID และ <code className="px-1 py-0.5 bg-white/5 rounded text-amber-300 font-mono">{'{REMARK}'}</code> ตรงชื่อ
+                    </p>
+                    <p className="text-[10px] text-zinc-500 leading-relaxed">
+                      ระบบจะแทนที่ตอนสร้างโค้ดให้ลูกค้าอัตโนมัติ ถ้าเว้นว่าง = ใช้ระบบสร้างเดิม (จาก Inbound)
+                    </p>
+                    <div className="mt-2 p-2 bg-black/30 rounded-lg overflow-x-auto">
+                      <p className="text-[9px] font-mono text-zinc-500 whitespace-nowrap">
+                        vless://<span className="text-amber-400">{'{UUID}'}</span>@host:8080?type=tcp&...&spx=%2F#<span className="text-amber-400">{'{REMARK}'}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Skip Connection Test */}

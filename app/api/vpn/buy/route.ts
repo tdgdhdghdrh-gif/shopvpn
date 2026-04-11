@@ -566,9 +566,15 @@ export async function POST(request: Request) {
       expiryTime.setDate(expiryTime.getDate() + days)
     }
 
-    // Generate VLESS link - dynamic if we have inbound config, legacy fallback otherwise
+    // Generate VLESS link
+    // Priority: 1) vlessTemplate (admin manual template), 2) dynamic from inbound config, 3) legacy fallback
     let vlessLink: string
-    if (inboundConfig) {
+    if (server.vlessTemplate) {
+      // Use admin-defined template - replace {UUID} and {REMARK}
+      vlessLink = server.vlessTemplate
+        .replace(/\{UUID\}/gi, result.uuid!)
+        .replace(/\{REMARK\}/gi, encodeURIComponent(remark))
+    } else if (inboundConfig) {
       vlessLink = panel.generateDynamicVlessLink(result.uuid!, remark, {
         protocol: inboundConfig.protocol || 'vless',
         port: inboundConfig.port || server.clientPort,

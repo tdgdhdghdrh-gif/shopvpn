@@ -180,6 +180,9 @@ model VpnServer {
   imageUrl       String?  // custom icon/image URL
   sortOrder      Int      @default(0)
 
+  // VLESS template - admin pastes a sample URI, system replaces {UUID} and {REMARK}
+  vlessTemplate  String?  // e.g. vless://{UUID}@host:8080?...#{REMARK}
+
   // Limits
   maxClients     Int      @default(0) // 0 = unlimited
   defaultIpLimit Int      @default(0) // default IP limit for new orders

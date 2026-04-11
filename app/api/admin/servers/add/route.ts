@@ -171,7 +171,8 @@ export async function POST(request: NextRequest) {
       // Per-server pricing & decoration
       pricePerDay, priceWeekly, priceMonthly,
       description, badge, tags, themeColor, themeGradient, imageUrl,
-      sortOrder, maxClients, defaultIpLimit
+      sortOrder, maxClients, defaultIpLimit,
+      vlessTemplate
     } = body
 
     if (!name || !host || !port || !path) {
@@ -241,6 +242,8 @@ export async function POST(request: NextRequest) {
         // Limits
         maxClients: maxClients ?? 0,
         defaultIpLimit: defaultIpLimit ?? 0,
+        // VLESS template
+        vlessTemplate: vlessTemplate || undefined,
       }
     })
 

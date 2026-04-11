@@ -47,7 +47,8 @@ export async function PUT(
       // Per-server pricing & decoration
       pricePerDay, priceWeekly, priceMonthly,
       description, badge, tags, themeColor, themeGradient, imageUrl,
-      sortOrder, maxClients, defaultIpLimit
+      sortOrder, maxClients, defaultIpLimit,
+      vlessTemplate
     } = body
 
     if (!name || !host || !port || !path || !username) {
@@ -92,6 +93,8 @@ export async function PUT(
       // Limits
       maxClients: maxClients ?? 0,
       defaultIpLimit: defaultIpLimit ?? 0,
+      // VLESS template
+      vlessTemplate: vlessTemplate !== undefined ? (vlessTemplate || null) : undefined,
     }
 
     // Only update password if provided
