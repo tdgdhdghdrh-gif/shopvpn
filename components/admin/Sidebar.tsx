@@ -107,6 +107,7 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [disabledMenus, setDisabledMenus] = useState<string[]>([])
   const [roleMenus, setRoleMenus] = useState<Record<string, string[]> | null>(null)
+  const [isLicenseServer, setIsLicenseServer] = useState(false)
 
   // Fetch disabled menus + role menus from settings
   useEffect(() => {
@@ -119,6 +120,13 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
         if (data.adminRoleMenus && typeof data.adminRoleMenus === 'object') {
           setRoleMenus(data.adminRoleMenus)
         }
+      })
+      .catch(() => {})
+    // เช็คว่าเป็น license server หรือไม่ (ซ่อนเมนู "ต่ออายุเว็บ" ในเว็บลูกค้า)
+    fetch('/api/license/activate')
+      .then(res => res.json())
+      .then(data => {
+        if (data.isLicenseServer) setIsLicenseServer(true)
       })
       .catch(() => {})
   }, [])
@@ -273,7 +281,11 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
                   </div>
                 )}
                 {isCollapsed && <div className="pt-2 border-t border-amber-500/20 mt-2" />}
-                {superAdminMenuItems.map((item) => {
+                {superAdminMenuItems.filter(item => {
+                  // ซ่อนเมนู "ต่ออายุเว็บ" ถ้าไม่ใช่ license server (เว็บต้นทาง)
+                  if (item.href === '/admin/site-license' && !isLicenseServer) return false
+                  return true
+                }).map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(item.href)
                   const showDisabledBadge = disabledMenus.includes(item.href)
                   const Icon = item.icon
