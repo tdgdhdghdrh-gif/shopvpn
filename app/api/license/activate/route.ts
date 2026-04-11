@@ -11,12 +11,34 @@ export async function GET(request: NextRequest) {
       select: { licenseKey: true, licenseApiUrl: true }
     })
     
-    return NextResponse.json({
+    const res = NextResponse.json({
       licenseKey: settings?.licenseKey || null,
       licenseApiUrl: settings?.licenseApiUrl || null,
       activated: !!settings?.licenseKey,
       isLicenseServer,
     })
+
+    // ถ้ามี key ใน DB -> set cookie ให้ middleware อ่านได้ (sync cookie กับ DB)
+    if (settings?.licenseKey) {
+      res.cookies.set('license_key', settings.licenseKey, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 365 * 24 * 60 * 60,
+      })
+      if (settings.licenseApiUrl) {
+        res.cookies.set('license_api_url', settings.licenseApiUrl, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 365 * 24 * 60 * 60,
+        })
+      }
+    }
+
+    return res
   } catch (error: any) {
     return NextResponse.json({ 
       licenseKey: null,
@@ -87,13 +109,31 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      return NextResponse.json({ 
+      const res = NextResponse.json({ 
         success: true, 
         siteName: checkData.siteName,
         expiryDate: checkData.expiryDate,
         remaining: checkData.remaining,
         message: 'ลงทะเบียนสำเร็จ'
       })
+
+      // Set cookie เพื่อให้ middleware อ่านได้ (ไม่ต้อง self-fetch)
+      res.cookies.set('license_key', licenseKey, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 365 * 24 * 60 * 60, // 1 year
+      })
+      res.cookies.set('license_api_url', apiUrl, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 365 * 24 * 60 * 60,
+      })
+
+      return res
 
     } catch (fetchError) {
       return NextResponse.json({ 

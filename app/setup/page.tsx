@@ -20,8 +20,10 @@ export default function SetupPage() {
       .then(res => res.json())
       .then(data => {
         // ถ้าเป็น license server (เว็บต้นทาง) หรือ activate แล้ว -> ไม่ต้อง setup
+        // การเรียก GET จะ set cookie ให้ middleware อ่านได้อัตโนมัติ
         if (data.isLicenseServer || data.activated) {
-          window.location.href = '/'
+          // รอให้ cookie ถูก set แล้วค่อย redirect
+          setTimeout(() => { window.location.href = '/' }, 500)
           return
         }
         setChecking(false)

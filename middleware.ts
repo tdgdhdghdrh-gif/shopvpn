@@ -14,67 +14,17 @@ function getClientIP(request: NextRequest): string {
 }
 
 // Cache license check result (check every 5 minutes, not every request)
-let licenseCache: { valid: boolean; checkedAt: number; siteName?: string; needSetup?: boolean } | null = null
+let licenseCache: { valid: boolean; checkedAt: number; siteName?: string } | null = null
 const LICENSE_CHECK_INTERVAL = 5 * 60 * 1000 // 5 minutes
 
-// Cache license key จาก DB
-let licenseKeyCache: { key: string | null; apiUrl: string | null; checkedAt: number } | null = null
-const KEY_CACHE_INTERVAL = 60 * 1000 // 1 minute
-
-async function getLicenseKeyFromDB(baseUrl: string): Promise<{ key: string | null; apiUrl: string | null }> {
-  const now = Date.now()
-  if (licenseKeyCache && (now - licenseKeyCache.checkedAt) < KEY_CACHE_INTERVAL) {
-    return { key: licenseKeyCache.key, apiUrl: licenseKeyCache.apiUrl }
-  }
-  
-  try {
-    const res = await fetch(`${baseUrl}/api/license/activate`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(3000),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      const key = data.licenseKey || null
-      const apiUrl = data.licenseApiUrl || null
-      // ถ้าได้ key มา -> cache ไว้ / ถ้า key เป็น null -> ไม่ cache เพื่อให้ดึงใหม่ทุก request (รอ user activate)
-      if (key) {
-        licenseKeyCache = { key, apiUrl, checkedAt: now }
-      } else {
-        licenseKeyCache = null
-      }
-      return { key, apiUrl }
-    }
-  } catch {}
-  
-  // fallback
-  if (licenseKeyCache) return { key: licenseKeyCache.key, apiUrl: licenseKeyCache.apiUrl }
-  return { key: null, apiUrl: null }
-}
-
-async function checkLicense(request: NextRequest): Promise<{ valid: boolean; siteName?: string; needSetup?: boolean }> {
-  // ถ้าเป็นเว็บต้นทาง (license server) -> ไม่ต้องเช็ค license
-  if (process.env.IS_LICENSE_SERVER === 'true') {
-    return { valid: true }
-  }
-
-  const baseUrl = request.nextUrl.origin
-  
-  // ดึง license key จาก DB ของเว็บลูกค้า
-  const { key: licenseKey, apiUrl: licenseApiUrl } = await getLicenseKeyFromDB(baseUrl)
-  
-  // ถ้ายังไม่มี key = ลูกค้ายังไม่ได้ setup -> redirect ไปหน้า setup
-  if (!licenseKey) {
-    return { valid: false, needSetup: true }
-  }
-
+async function checkLicenseWithServer(licenseKey: string, licenseApiUrl: string): Promise<{ valid: boolean; siteName?: string }> {
   // ใช้ cache ถ้ายังไม่หมดเวลา
   const now = Date.now()
   if (licenseCache && (now - licenseCache.checkedAt) < LICENSE_CHECK_INTERVAL) {
-    return { valid: licenseCache.valid, siteName: licenseCache.siteName, needSetup: licenseCache.needSetup }
+    return { valid: licenseCache.valid, siteName: licenseCache.siteName }
   }
 
   try {
-    // ส่งไปเช็คที่เว็บต้นทาง
     const checkUrl = licenseApiUrl || 'https://simonvpn.darkx.shop'
     const res = await fetch(`${checkUrl}/api/license/check?key=${licenseKey}`, {
       next: { revalidate: 0 },
@@ -110,6 +60,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/uploads') ||
     pathname.startsWith('/api/ip-log') ||
     pathname.startsWith('/api/license') ||
+    pathname.startsWith('/api/admin/update-site') ||
     pathname === '/expired' ||
     pathname === '/setup' ||
     pathname.match(/\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot)$/)
@@ -118,27 +69,33 @@ export async function middleware(request: NextRequest) {
   }
 
   // === License Check ===
-  const license = await checkLicense(request)
-  
-  // ถ้ายังไม่ได้ setup -> redirect ไปหน้า setup
-  if (license.needSetup) {
-    if (pathname !== '/setup') {
-      // Clear cache ทั้งหมดเพื่อให้ดึง key + เช็ค license ใหม่หลัง activate
-      licenseKeyCache = null
-      licenseCache = null
-      const setupUrl = request.nextUrl.clone()
-      setupUrl.pathname = '/setup'
-      return NextResponse.redirect(setupUrl)
-    }
-  }
-  
-  // ถ้า license หมดอายุ -> redirect ไปหน้า /expired
-  if (!license.valid && !license.needSetup) {
-    if (pathname !== '/expired') {
-      licenseCache = null // clear เพื่อ re-check ครั้งถัดไป
-      const expiredUrl = request.nextUrl.clone()
-      expiredUrl.pathname = '/expired'
-      return NextResponse.redirect(expiredUrl)
+  // ถ้าเป็นเว็บต้นทาง (license server) -> ไม่ต้องเช็ค
+  if (process.env.IS_LICENSE_SERVER !== 'true') {
+    // อ่าน license key จาก cookie (set โดย /api/license/activate POST)
+    const licenseKey = request.cookies.get('license_key')?.value
+    const licenseApiUrl = request.cookies.get('license_api_url')?.value || 'https://simonvpn.darkx.shop'
+
+    if (!licenseKey) {
+      // ยังไม่มี key ใน cookie -> redirect ไปหน้า setup
+      if (pathname !== '/setup') {
+        licenseCache = null
+        const setupUrl = request.nextUrl.clone()
+        setupUrl.pathname = '/setup'
+        return NextResponse.redirect(setupUrl)
+      }
+    } else {
+      // มี key แล้ว -> เช็คกับ license server ว่ายัง valid ไหม
+      const result = await checkLicenseWithServer(licenseKey, licenseApiUrl)
+      
+      if (!result.valid) {
+        // license หมดอายุ
+        if (pathname !== '/expired') {
+          licenseCache = null
+          const expiredUrl = request.nextUrl.clone()
+          expiredUrl.pathname = '/expired'
+          return NextResponse.redirect(expiredUrl)
+        }
+      }
     }
   }
 
