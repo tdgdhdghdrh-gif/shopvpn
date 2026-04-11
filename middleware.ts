@@ -34,8 +34,15 @@ async function getLicenseKeyFromDB(baseUrl: string): Promise<{ key: string | nul
     })
     if (res.ok) {
       const data = await res.json()
-      licenseKeyCache = { key: data.licenseKey || null, apiUrl: data.licenseApiUrl || null, checkedAt: now }
-      return { key: data.licenseKey || null, apiUrl: data.licenseApiUrl || null }
+      const key = data.licenseKey || null
+      const apiUrl = data.licenseApiUrl || null
+      // ถ้าได้ key มา -> cache ไว้ / ถ้า key เป็น null -> ไม่ cache เพื่อให้ดึงใหม่ทุก request (รอ user activate)
+      if (key) {
+        licenseKeyCache = { key, apiUrl, checkedAt: now }
+      } else {
+        licenseKeyCache = null
+      }
+      return { key, apiUrl }
     }
   } catch {}
   
@@ -116,6 +123,9 @@ export async function middleware(request: NextRequest) {
   // ถ้ายังไม่ได้ setup -> redirect ไปหน้า setup
   if (license.needSetup) {
     if (pathname !== '/setup') {
+      // Clear cache ทั้งหมดเพื่อให้ดึง key + เช็ค license ใหม่หลัง activate
+      licenseKeyCache = null
+      licenseCache = null
       const setupUrl = request.nextUrl.clone()
       setupUrl.pathname = '/setup'
       return NextResponse.redirect(setupUrl)
@@ -125,6 +135,7 @@ export async function middleware(request: NextRequest) {
   // ถ้า license หมดอายุ -> redirect ไปหน้า /expired
   if (!license.valid && !license.needSetup) {
     if (pathname !== '/expired') {
+      licenseCache = null // clear เพื่อ re-check ครั้งถัดไป
       const expiredUrl = request.nextUrl.clone()
       expiredUrl.pathname = '/expired'
       return NextResponse.redirect(expiredUrl)
