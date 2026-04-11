@@ -45,17 +45,17 @@ async function getLicenseKeyFromDB(baseUrl: string): Promise<{ key: string | nul
 }
 
 async function checkLicense(request: NextRequest): Promise<{ valid: boolean; siteName?: string; needSetup?: boolean }> {
+  // ถ้าเป็นเว็บต้นทาง (license server) -> ไม่ต้องเช็ค license
+  if (process.env.IS_LICENSE_SERVER === 'true') {
+    return { valid: true }
+  }
+
   const baseUrl = request.nextUrl.origin
   
   // ดึง license key จาก DB ของเว็บลูกค้า
   const { key: licenseKey, apiUrl: licenseApiUrl } = await getLicenseKeyFromDB(baseUrl)
   
-  // ถ้าไม่มีทั้ง key และ apiUrl = เว็บต้นทาง (ไม่ใช่ลูกค้า) -> ปล่อยผ่าน
-  if (!licenseKey && !licenseApiUrl) {
-    return { valid: true }
-  }
-  
-  // ถ้ามี apiUrl แต่ยังไม่มี key = ลูกค้ายังไม่ได้ setup
+  // ถ้ายังไม่มี key = ลูกค้ายังไม่ได้ setup -> redirect ไปหน้า setup
   if (!licenseKey) {
     return { valid: false, needSetup: true }
   }

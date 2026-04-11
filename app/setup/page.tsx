@@ -19,8 +19,8 @@ export default function SetupPage() {
     fetch('/api/license/activate')
       .then(res => res.json())
       .then(data => {
-        // ถ้ามี key แล้ว (activate แล้ว) หรือ ไม่มี apiUrl (เว็บต้นทาง) -> ไม่ต้อง setup
-        if (data.activated || !data.licenseApiUrl) {
+        // ถ้าเป็น license server (เว็บต้นทาง) หรือ activate แล้ว -> ไม่ต้อง setup
+        if (data.isLicenseServer || data.activated) {
           window.location.href = '/'
           return
         }

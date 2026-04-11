@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma'
 // GET - ดึง license key ที่บันทึกไว้ใน Settings (สำหรับ middleware ใช้เช็ค)
 export async function GET(request: NextRequest) {
   try {
+    // ถ้าเป็น license server -> ไม่ต้อง setup
+    const isLicenseServer = process.env.IS_LICENSE_SERVER === 'true'
+    
     const settings = await prisma.settings.findFirst({
       select: { licenseKey: true, licenseApiUrl: true }
     })
@@ -12,12 +15,14 @@ export async function GET(request: NextRequest) {
       licenseKey: settings?.licenseKey || null,
       licenseApiUrl: settings?.licenseApiUrl || null,
       activated: !!settings?.licenseKey,
+      isLicenseServer,
     })
   } catch (error: any) {
     return NextResponse.json({ 
       licenseKey: null,
       licenseApiUrl: null,
       activated: false,
+      isLicenseServer: false,
       error: 'Internal error' 
     }, { status: 500 })
   }
