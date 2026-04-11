@@ -7,6 +7,7 @@ import {
   Upload, X, QrCode, Settings as SettingsIcon, Info, ExternalLink,
   Globe, Image as ImageIcon, Type, DollarSign, Layout, Eye, EyeOff,
   CheckCircle, XCircle, ChevronDown,
+  Gift, Clock,
 } from 'lucide-react'
 
 interface Settings {
@@ -25,6 +26,8 @@ interface Settings {
   vpnMonthlyPrice: number
   minTopupAmount: number
   landingTemplate: string
+  trialEnabled: boolean
+  trialDurationMinutes: number
 }
 
 const INITIAL_SETTINGS: Settings = {
@@ -43,6 +46,8 @@ const INITIAL_SETTINGS: Settings = {
   vpnMonthlyPrice: 100,
   minTopupAmount: 60,
   landingTemplate: 'classic',
+  trialEnabled: true,
+  trialDurationMinutes: 60,
 }
 
 function StatusDot({ ok }: { ok: boolean }) {
@@ -272,6 +277,8 @@ export default function AdminSettingsPage() {
           vpnMonthlyPrice: data.settings.vpnMonthlyPrice || 100,
           minTopupAmount: data.settings.minTopupAmount ?? 60,
           landingTemplate: data.settings.landingTemplate || 'classic',
+          trialEnabled: data.settings.trialEnabled ?? true,
+          trialDurationMinutes: data.settings.trialDurationMinutes ?? 60,
         }
         setSettings(s)
         setSavedSettings(s)
@@ -308,7 +315,7 @@ export default function AdminSettingsPage() {
     }
   }
 
-  function updateField(field: keyof Settings, value: string | number) {
+  function updateField(field: keyof Settings, value: string | number | boolean) {
     setSettings(prev => ({ ...prev, [field]: value }))
   }
 
@@ -449,6 +456,42 @@ export default function AdminSettingsPage() {
               <div className="border-t border-white/5 pt-5">
                 <InputField label="เติมเงินขั้นต่ำ (บาท)" value={settings.minTopupAmount} onChange={(v) => updateField('minTopupAmount', v)} placeholder="60" icon={Wallet} type="number" color="emerald" hint="จำนวนเงินขั้นต่ำที่ลูกค้าต้องเติมต่อครั้ง (ซองเล็ท / สลิป)" />
               </div>
+            </div>
+          </SectionCard>
+
+          {/* Trial VPN */}
+          <SectionCard id="trial" title="ทดลองใช้ VPN ฟรี" desc="เปิด/ปิดระบบทดลองฟรี และตั้งระยะเวลา" icon={Gift} color="emerald" mobileSection={mobileSection} onToggle={toggleMobileSection}>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Gift className="w-5 h-5 text-emerald-400" />
+                  <div>
+                    <p className="text-sm font-bold text-white">เปิดใช้ระบบทดลองฟรี</p>
+                    <p className="text-[10px] text-zinc-500">ลูกค้าสามารถทดลองใช้ VPN ฟรี 1 ครั้ง/เซิร์ฟเวอร์/วัน</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateField('trialEnabled', !settings.trialEnabled)}
+                  className={`relative w-12 h-7 rounded-full transition-all ${settings.trialEnabled ? 'bg-emerald-500' : 'bg-zinc-700'}`}
+                >
+                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${settings.trialEnabled ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
+              {settings.trialEnabled && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <InputField 
+                    label="ระยะเวลาทดลอง (นาที)" 
+                    value={settings.trialDurationMinutes} 
+                    onChange={(v) => updateField('trialDurationMinutes', v)} 
+                    placeholder="60" 
+                    icon={Clock} 
+                    type="number" 
+                    color="emerald" 
+                    hint="เช่น 60 = 1 ชม., 30 = 30 นาที, 120 = 2 ชม." 
+                  />
+                </div>
+              )}
             </div>
           </SectionCard>
 

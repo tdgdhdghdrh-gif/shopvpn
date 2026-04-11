@@ -129,6 +129,9 @@ export async function POST(request: NextRequest) {
       defaultHomePage: body.defaultHomePage !== undefined ? body.defaultHomePage : (settings?.defaultHomePage || '/'),
       // Menu Click Effect
       menuClickEffect: body.menuClickEffect !== undefined ? body.menuClickEffect : (settings?.menuClickEffect || 'none'),
+      // Trial VPN
+      trialEnabled: body.trialEnabled !== undefined ? Boolean(body.trialEnabled) : (settings?.trialEnabled ?? true),
+      trialDurationMinutes: body.trialDurationMinutes !== undefined ? parseInt(body.trialDurationMinutes) || 60 : (settings?.trialDurationMinutes ?? 60),
       updatedAt: new Date()
     }
 

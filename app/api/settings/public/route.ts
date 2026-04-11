@@ -59,6 +59,8 @@ export async function GET() {
             themeConfig: null,
             defaultHomePage: '/',
             menuClickEffect: 'none',
+            trialEnabled: true,
+            trialDurationMinutes: 60,
           }
         })
       }
@@ -100,6 +102,9 @@ export async function GET() {
         defaultHomePage: settings.defaultHomePage || '/',
         // Menu Click Effect
         menuClickEffect: settings.menuClickEffect || 'none',
+        // Trial VPN
+        trialEnabled: settings.trialEnabled ?? true,
+        trialDurationMinutes: settings.trialDurationMinutes ?? 60,
       }
     })
   } catch (error) {

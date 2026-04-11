@@ -13,9 +13,9 @@ function getClientIP(request: NextRequest): string {
   return 'unknown'
 }
 
-// Cache license check result (check every 5 minutes, not every request)
+// Cache license check result (check every 1 minute, not every request)
 let licenseCache: { valid: boolean; checkedAt: number; siteName?: string } | null = null
-const LICENSE_CHECK_INTERVAL = 5 * 60 * 1000 // 5 minutes
+const LICENSE_CHECK_INTERVAL = 1 * 60 * 1000 // 1 minute
 
 async function checkLicenseWithServer(licenseKey: string, licenseApiUrl: string): Promise<{ valid: boolean; siteName?: string }> {
   // ใช้ cache ถ้ายังไม่หมดเวลา
@@ -40,12 +40,12 @@ async function checkLicenseWithServer(licenseKey: string, licenseApiUrl: string)
     // API error แต่มี cache เก่า -> ใช้ cache เก่า (graceful)
     if (licenseCache) return { valid: licenseCache.valid, siteName: licenseCache.siteName }
     
-    // ไม่มี cache เลย + API error -> ปล่อยผ่าน (ไม่บล็อกถ้า API ล่ม)
-    return { valid: true }
+    // ไม่มี cache เลย + API error -> บล็อก (ไม่ปล่อยผ่าน ถ้าไม่สามารถตรวจสอบได้)
+    return { valid: false }
   } catch {
-    // Network error -> ใช้ cache เก่า หรือปล่อยผ่าน
+    // Network error -> ใช้ cache เก่า หรือบล็อก
     if (licenseCache) return { valid: licenseCache.valid, siteName: licenseCache.siteName }
-    return { valid: true }
+    return { valid: false }
   }
 }
 

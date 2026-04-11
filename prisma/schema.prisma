@@ -131,6 +131,8 @@ model Settings {
   globalAdLinkUrl     String?  // URL ลิงก์โฆษณา global (redirect หลังนับเวลา)
   globalAdDuration    Int      @default(5) // ระยะเวลาโฆษณา (วินาที)
   menuClickEffect     String   @default("none") // Menu click effect: none, ripple, glow, bounce, particle, shockwave, neon, slide, morphGlow, electricArc, hologram
+  trialEnabled        Boolean  @default(true)  // เปิด/ปิดระบบทดลองฟรี
+  trialDurationMinutes Int     @default(60)    // ระยะเวลาทดลองฟรี (นาที)
   licenseKey          String?  // License key สำหรับเช็คอายุเว็บ (ได้จากเว็บต้นทาง)
   licenseApiUrl       String?  // URL ของเว็บต้นทาง เช่น https://simonvpn.darkx.shop
 }

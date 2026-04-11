@@ -411,7 +411,18 @@ export async function POST(request: Request) {
       .substring(0, 30) // enforce max length server-side
 
     // Check trial
+    let trialDurationMinutes = 60
     if (isTrial) {
+      // Check if trial is enabled in settings
+      const trialSettings = await prisma.settings.findFirst({
+        select: { trialEnabled: true, trialDurationMinutes: true }
+      }).catch(() => null)
+      
+      if (trialSettings && trialSettings.trialEnabled === false) {
+        return NextResponse.json({ success: false, error: 'ระบบทดลองฟรีปิดอยู่ในขณะนี้' })
+      }
+      trialDurationMinutes = trialSettings?.trialDurationMinutes ?? 60
+
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       
@@ -530,7 +541,8 @@ export async function POST(request: Request) {
     }
 
     const remark = isTrial ? ('TRIAL_' + Math.random().toString(36).substring(2, 10)) : sanitizedName
-    const expiryDays = isTrial ? (1 / 24) : days // 1 hour for trial
+    // Use dynamic trial duration from settings (default 60 min = 1 hour)
+    const expiryDays = isTrial ? (trialDurationMinutes / (24 * 60)) : days
 
     // Determine which inbound to use based on selectedInboundId + inboundConfigs
     let targetInboundId = server.inboundId

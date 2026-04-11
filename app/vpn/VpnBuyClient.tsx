@@ -135,6 +135,21 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   const [message, setMessage] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
   const [successData, setSuccessData] = useState({ message: '', subMessage: '', redirect: '' })
+  const [trialEnabled, setTrialEnabled] = useState(true)
+  const [trialDurationMinutes, setTrialDurationMinutes] = useState(60)
+
+  // Fetch trial settings from public API
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings) {
+          setTrialEnabled(data.settings.trialEnabled ?? true)
+          setTrialDurationMinutes(data.settings.trialDurationMinutes ?? 60)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const needsSelection = inboundOptions.length > 1
   
@@ -538,13 +553,14 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
         </div>
 
         {/* === SECTION 4: Free Trial === */}
+        {trialEnabled && (
         <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/5 to-cyan-500/5 overflow-hidden">
           <div className="p-5 flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
               <Gift className="w-5 h-5 text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-white text-sm">ทดลองใช้ฟรี 1 ชม.</h3>
+              <h3 className="font-semibold text-white text-sm">ทดลองใช้ฟรี {trialDurationMinutes >= 60 ? `${Math.floor(trialDurationMinutes / 60)} ชม.${trialDurationMinutes % 60 > 0 ? ` ${trialDurationMinutes % 60} นาที` : ''}` : `${trialDurationMinutes} นาที`}</h3>
               <p className="text-zinc-500 text-[11px]">1 ครั้งต่อเซิร์ฟเวอร์ (รีเซ็ตทุกเที่ยงคืน)</p>
             </div>
             <button
@@ -562,6 +578,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
             </button>
           </div>
         </div>
+        )}
 
         {/* === SECTION 5: Price Summary === */}
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">

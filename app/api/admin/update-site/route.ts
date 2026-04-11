@@ -76,6 +76,17 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
+    // Step 1.5: Cleanup — ลบไฟล์ site-license ที่ไม่ควรอยู่บน VPS ลูกค้า
+    try {
+      await execAsync('rm -rf app/admin/site-license app/api/admin/site-license', {
+        cwd: projectDir,
+        timeout: 5000,
+      })
+      addLog('CLEANUP', 'Removed site-license directories (if any)')
+    } catch (err: any) {
+      addLog('CLEANUP WARNING', err.message || String(err))
+    }
+
     // Step 2: npm install
     try {
       const { stdout, stderr } = await execAsync('npm install --production=false', {
