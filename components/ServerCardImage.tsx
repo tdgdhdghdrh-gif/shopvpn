@@ -41,6 +41,10 @@ const BADGE_MAP: Record<string, { emoji: string; bg: string; text: string }> = {
   'best': { emoji: '⭐', bg: 'bg-purple-500', text: 'BEST' },
   'popular': { emoji: '💎', bg: 'bg-violet-500', text: 'ยอดนิยม' },
   'recommended': { emoji: '👍', bg: 'bg-blue-500', text: 'แนะนำ' },
+  'premium': { emoji: '👑', bg: 'bg-amber-600', text: 'Premium' },
+  'stable': { emoji: '🛡️', bg: 'bg-teal-500', text: 'เสถียร' },
+  'fast': { emoji: '⚡', bg: 'bg-orange-500', text: 'แรงมาก' },
+  'promo': { emoji: '🎉', bg: 'bg-pink-500', text: 'โปรพิเศษ' },
 }
 
 function ServerImageCard({ server, user, defaultPrices }: { 
@@ -125,19 +129,35 @@ function ServerImageCard({ server, user, defaultPrices }: {
       </div>
 
       {/* Info Area */}
-      <div className="p-4">
+      <div className="p-4 space-y-2">
         {/* Server Name */}
         <h3 className="text-sm font-bold text-white truncate group-hover:text-cyan-400 transition-colors">
           {server.flag} {server.name}
         </h3>
 
-        {/* Bottom row: category + count + price */}
-        <div className="flex items-center justify-between mt-2">
+        {/* Description */}
+        {server.description && (
+          <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">{server.description}</p>
+        )}
+
+        {/* Tags */}
+        {server.tags && server.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {server.tags.map(tag => (
+              <span
+                key={tag}
+                className="px-2 py-0.5 bg-white/[0.05] border border-white/[0.08] rounded-full text-[10px] font-medium text-zinc-400"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Bottom row: category + price */}
+        <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-3 text-[11px] text-zinc-500 font-medium">
             <span>{categoryText}</span>
-            {tagCount > 0 && (
-              <span>{tagCount} แท็ก</span>
-            )}
           </div>
           <div className="text-sm font-bold text-cyan-400">
             {priceRange} <span className="text-[10px] text-zinc-500 font-medium">บาท</span>

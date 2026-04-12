@@ -3,9 +3,25 @@
 import { useEffect, useState } from 'react'
 import {
   Server, CheckCircle, Loader2, AlertCircle, Upload, X, Image as ImageIcon,
-  Eye, Link2,
+  Eye, Link2, Tag, Plus, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+const BADGE_OPTIONS = [
+  { value: '', label: 'ไม่มี', emoji: '' },
+  { value: 'hot', label: 'HOT', emoji: '🔥' },
+  { value: 'new', label: 'ใหม่ล่าสุด', emoji: '✨' },
+  { value: 'best', label: 'ขายดี!', emoji: '⭐' },
+  { value: 'sale', label: 'ลดราคา!', emoji: '💰' },
+  { value: 'popular', label: 'ยอดนิยม', emoji: '💎' },
+  { value: 'recommended', label: 'แนะนำ', emoji: '👍' },
+  { value: 'premium', label: 'Premium', emoji: '👑' },
+  { value: 'stable', label: 'เสถียรสุด', emoji: '🛡️' },
+  { value: 'fast', label: 'แรงมาก!', emoji: '⚡' },
+  { value: 'promo', label: 'โปรพิเศษ', emoji: '🎉' },
+]
+
+const TAG_PRESETS = ['เร็ว', 'เสถียร', 'ประหยัด', 'เกม', 'ดูหนัง', 'TikTok', 'สตรีม', 'AIS', 'TRUE', 'DTAC', 'ไม่จำกัด', 'ปิงต่ำ']
 
 interface VpnServer {
   id: string
@@ -15,7 +31,10 @@ interface VpnServer {
   status: string
   category: string
   pricePerDay: number
-  [key: string]: any // เก็บ field อื่นๆ ทั้งหมดจาก API เพื่อส่งกลับตอน update
+  badge: string | null
+  tags: string[]
+  description: string | null
+  [key: string]: any
 }
 
 export default function ServerTemplatePage() {
@@ -183,6 +202,28 @@ export default function ServerTemplatePage() {
     }
   }
 
+  async function handleUpdateServerField(serverId: string, fields: Partial<VpnServer>) {
+    const server = servers.find(s => s.id === serverId)
+    if (!server) return
+
+    try {
+      const res = await fetch(`/api/admin/servers/${serverId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...server, ...fields }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setServers(prev => prev.map(s => s.id === serverId ? { ...s, ...fields } : s))
+        setMessage({ type: 'success', text: `อัพเดท ${server.name} สำเร็จ` })
+      } else {
+        setMessage({ type: 'error', text: data.error || 'บันทึกล้มเหลว' })
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'การเชื่อมต่อล้มเหลว' })
+    }
+  }
+
   const hasChanges = template !== savedTemplate
 
   if (loading) {
@@ -190,9 +231,155 @@ export default function ServerTemplatePage() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
         <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">กำลังโหลด...</p>
-      </div>
-    )
+    </div>
+  )
+}
+
+/* ── Badge & Tag Card ── */
+function ServerBadgeTagCard({ server, onUpdate }: {
+  server: VpnServer
+  onUpdate: (fields: Partial<VpnServer>) => void
+}) {
+  const [newTag, setNewTag] = useState('')
+  const [desc, setDesc] = useState(server.description || '')
+  const [descDirty, setDescDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const currentBadge = BADGE_OPTIONS.find(b => b.value === (server.badge || '')) || BADGE_OPTIONS[0]
+  const tags = server.tags || []
+
+  function handleAddTag(tag: string) {
+    const t = tag.trim()
+    if (!t || tags.includes(t)) return
+    onUpdate({ tags: [...tags, t] })
+    setNewTag('')
   }
+
+  function handleRemoveTag(tag: string) {
+    onUpdate({ tags: tags.filter(t => t !== tag) })
+  }
+
+  async function handleSaveDesc() {
+    setSaving(true)
+    await onUpdate({ description: desc.trim() || null })
+    setDescDirty(false)
+    setSaving(false)
+  }
+
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.1] transition-all space-y-3">
+      {/* Header: flag + name + badge */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-lg">{server.flag}</span>
+        <span className="text-sm font-bold text-white">{server.name}</span>
+        <div className={cn(
+          "h-5 w-px",
+          "bg-white/[0.06]"
+        )} />
+        {/* Badge select */}
+        <select
+          value={server.badge || ''}
+          onChange={(e) => onUpdate({ badge: e.target.value || null })}
+          className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs text-white font-medium focus:border-amber-500/50 transition-all cursor-pointer"
+        >
+          {BADGE_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>
+              {opt.emoji ? `${opt.emoji} ${opt.label}` : opt.label}
+            </option>
+          ))}
+        </select>
+        {currentBadge.value && (
+          <span className="text-[10px] text-amber-400/80 font-medium">
+            กำลังแสดง: {currentBadge.emoji} {currentBadge.label}
+          </span>
+        )}
+      </div>
+
+      {/* Description */}
+      <div className="flex gap-2 items-end">
+        <div className="flex-1">
+          <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1 block">คำอธิบาย</label>
+          <input
+            type="text"
+            value={desc}
+            onChange={(e) => { setDesc(e.target.value); setDescDirty(true) }}
+            maxLength={200}
+            placeholder="เช่น เซิร์ฟเวอร์เร็วสุดสำหรับ..."
+            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-700 focus:border-blue-500/50 transition-all font-medium"
+          />
+        </div>
+        {descDirty && (
+          <button
+            onClick={handleSaveDesc}
+            disabled={saving}
+            className="shrink-0 px-3 py-2 bg-blue-600 border border-blue-500/30 rounded-lg text-[10px] font-bold text-white hover:bg-blue-500 active:scale-95 disabled:opacity-40 transition-all"
+          >
+            {saving ? '...' : 'บันทึก'}
+          </button>
+        )}
+      </div>
+
+      {/* Tags */}
+      <div>
+        <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1.5 block">แท็ก</label>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {tags.length === 0 && (
+            <span className="text-[10px] text-zinc-600 italic">ยังไม่มีแท็ก</span>
+          )}
+          {tags.map(tag => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-[11px] font-bold text-cyan-400"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => handleRemoveTag(tag)}
+                className="w-3.5 h-3.5 rounded-full bg-cyan-500/20 hover:bg-red-500/30 flex items-center justify-center text-cyan-300 hover:text-red-400 transition-colors"
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {/* Add custom tag */}
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(newTag) } }}
+            placeholder="พิมพ์แท็กใหม่..."
+            className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-zinc-700 focus:border-cyan-500/50 transition-all font-medium"
+          />
+          <button
+            type="button"
+            onClick={() => handleAddTag(newTag)}
+            disabled={!newTag.trim()}
+            className="shrink-0 px-2.5 py-1.5 bg-cyan-600/20 border border-cyan-500/30 rounded-lg text-[10px] font-bold text-cyan-400 hover:bg-cyan-500/30 active:scale-95 disabled:opacity-30 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Preset tags */}
+        <div className="flex flex-wrap gap-1">
+          {TAG_PRESETS.filter(t => !tags.includes(t)).map(tag => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => handleAddTag(tag)}
+              className="px-2 py-0.5 bg-white/[0.03] border border-white/[0.06] rounded-full text-[10px] text-zinc-500 hover:text-white hover:border-white/[0.15] hover:bg-white/[0.06] transition-all font-medium"
+            >
+              + {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
   return (
     <div className="space-y-6 pb-28 sm:pb-12">
@@ -335,6 +522,34 @@ export default function ServerTemplatePage() {
                   onUpload={(e) => handleImageUpload(server.id, e)}
                   onRemove={() => handleRemoveImage(server.id)}
                   onSetUrl={(url) => handleSetImageUrl(server.id, url)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ===================== Badge & Tags ===================== */}
+      <div className="bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden">
+        <div className="p-5 border-b border-white/5">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400" /> Badge & แท็ก เซิร์ฟเวอร์
+          </h3>
+          <p className="text-[11px] text-zinc-500 mt-1">เพิ่ม/ลบ badge และแท็กแต่ละเซิร์ฟเวอร์ เพื่อแสดงบนหน้าเว็บ</p>
+        </div>
+        <div className="p-5">
+          {servers.length === 0 ? (
+            <div className="py-12 text-center">
+              <Server className="w-8 h-8 text-zinc-700 mx-auto mb-3" />
+              <p className="text-sm text-zinc-500">ยังไม่มีเซิร์ฟเวอร์</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {servers.map((server) => (
+                <ServerBadgeTagCard
+                  key={server.id}
+                  server={server}
+                  onUpdate={(fields) => handleUpdateServerField(server.id, fields)}
                 />
               ))}
             </div>
