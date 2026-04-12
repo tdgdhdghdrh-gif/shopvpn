@@ -41,7 +41,8 @@ export default function ServerTemplatePage() {
   const [template, setTemplate] = useState('detailed')
   const [savedTemplate, setSavedTemplate] = useState('detailed')
   const [servers, setServers] = useState<VpnServer[]>([])
-  const serversRef = useRef<VpnServer[]>([]) // mirror — อัพเดทเงียบๆ สำหรับ API calls ไม่ต้อง re-render  const [loading, setLoading] = useState(true)
+  const serversRef = useRef<VpnServer[]>([]) // mirror — อัพเดทเงียบๆ สำหรับ API calls ไม่ต้อง re-render
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -240,9 +241,9 @@ export default function ServerTemplatePage() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
         <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">กำลังโหลด...</p>
-    </div>
-  )
-}
+      </div>
+    )
+  }
 
 /* ── Badge & Tag Card ── */
 function ServerBadgeTagCard({ server, onUpdate }: {
