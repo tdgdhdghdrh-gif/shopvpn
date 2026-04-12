@@ -214,7 +214,8 @@ export default function ServerTemplatePage() {
       })
       const data = await res.json()
       if (data.success) {
-        setServers(prev => prev.map(s => s.id === serverId ? { ...s, ...fields } : s))
+        // ไม่ setServers — ServerBadgeTagCard ใช้ local state จัดการ UI เอง
+        // ป้องกัน parent re-render ทั้ง list ซึ่งทำให้ scroll reset
         setMessage({ type: 'success', text: `อัพเดท ${server.name} สำเร็จ` })
       } else {
         setMessage({ type: 'error', text: data.error || 'บันทึกล้มเหลว' })
@@ -244,19 +245,29 @@ function ServerBadgeTagCard({ server, onUpdate }: {
   const [desc, setDesc] = useState(server.description || '')
   const [descDirty, setDescDirty] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [localBadge, setLocalBadge] = useState(server.badge || '')
+  const [localTags, setLocalTags] = useState<string[]>(server.tags || [])
 
-  const currentBadge = BADGE_OPTIONS.find(b => b.value === (server.badge || '')) || BADGE_OPTIONS[0]
-  const tags = server.tags || []
+  const currentBadge = BADGE_OPTIONS.find(b => b.value === localBadge) || BADGE_OPTIONS[0]
 
   function handleAddTag(tag: string) {
     const t = tag.trim()
-    if (!t || tags.includes(t)) return
-    onUpdate({ tags: [...tags, t] })
+    if (!t || localTags.includes(t)) return
+    const updated = [...localTags, t]
+    setLocalTags(updated)
     setNewTag('')
+    onUpdate({ tags: updated })
   }
 
   function handleRemoveTag(tag: string) {
-    onUpdate({ tags: tags.filter(t => t !== tag) })
+    const updated = localTags.filter(t => t !== tag)
+    setLocalTags(updated)
+    onUpdate({ tags: updated })
+  }
+
+  function handleBadgeChange(value: string) {
+    setLocalBadge(value)
+    onUpdate({ badge: value || null })
   }
 
   async function handleSaveDesc() {
@@ -278,8 +289,8 @@ function ServerBadgeTagCard({ server, onUpdate }: {
         )} />
         {/* Badge select */}
         <select
-          value={server.badge || ''}
-          onChange={(e) => onUpdate({ badge: e.target.value || null })}
+          value={localBadge}
+          onChange={(e) => handleBadgeChange(e.target.value)}
           className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs text-white font-medium focus:border-amber-500/50 transition-all cursor-pointer"
         >
           {BADGE_OPTIONS.map(opt => (
@@ -323,10 +334,10 @@ function ServerBadgeTagCard({ server, onUpdate }: {
       <div>
         <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1.5 block">แท็ก</label>
         <div className="flex flex-wrap gap-1.5 mb-2">
-          {tags.length === 0 && (
+          {localTags.length === 0 && (
             <span className="text-[10px] text-zinc-600 italic">ยังไม่มีแท็ก</span>
           )}
-          {tags.map(tag => (
+          {localTags.map(tag => (
             <span
               key={tag}
               className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-[11px] font-bold text-cyan-400"
