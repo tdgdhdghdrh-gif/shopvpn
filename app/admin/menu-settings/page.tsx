@@ -64,6 +64,7 @@ const allAdminMenuItems: MenuItem[] = [
   { name: 'ขายของ', href: '/admin/premium-apps', icon: ShoppingBag, section: 'admin', description: 'จัดการสินค้า เพิ่ม/แก้ไข/ลบ ตั้งราคา สต็อก' },
   { name: 'เปลี่ยนหน้าแรก', href: '/admin/default-homepage', icon: Home, section: 'admin', description: 'กำหนดหน้าแรกเริ่มต้นหลังล็อกอิน' },
   { name: 'สร้างเว็บ', href: '/admin/custom-pages', icon: Code2, section: 'admin', description: 'สร้างหน้าเว็บจาก HTML แล้วแชร์ลิงก์' },
+  { name: 'รูปแบบหน้าเซิร์ฟเวอร์', href: '/admin/server-template', icon: Image, section: 'admin', description: 'เลือกรูปแบบหน้าเซิร์ฟเวอร์ + อัปโหลดรูปภาพ' },
   { name: 'ข้อมูลเซิร์ฟเวอร์', href: '/admin/server-info', icon: Server, section: 'super', description: 'ข้อมูลเซิร์ฟเวอร์ระบบ' },
   { name: 'จัดการรายได้เซิฟ', href: '/admin/super-revenue', icon: Shield, section: 'super', description: 'ล็อก/จัดการรายได้เซิร์ฟเวอร์' },
   { name: 'API Keys', href: '/admin/api-keys', icon: Key, section: 'super', description: 'จัดการ API Key ภายนอก' },
