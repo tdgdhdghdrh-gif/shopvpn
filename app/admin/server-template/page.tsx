@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Server, CheckCircle, Loader2, AlertCircle, Upload, X, Image as ImageIcon,
   Eye, Link2, Tag, Plus, Sparkles,
@@ -41,7 +41,7 @@ export default function ServerTemplatePage() {
   const [template, setTemplate] = useState('detailed')
   const [savedTemplate, setSavedTemplate] = useState('detailed')
   const [servers, setServers] = useState<VpnServer[]>([])
-  const [loading, setLoading] = useState(true)
+  const serversRef = useRef<VpnServer[]>([]) // mirror — อัพเดทเงียบๆ สำหรับ API calls ไม่ต้อง re-render  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -49,6 +49,11 @@ export default function ServerTemplatePage() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  // Keep ref in sync with state (for initial load + image upload/remove)
+  useEffect(() => {
+    serversRef.current = servers
+  }, [servers])
 
   useEffect(() => {
     if (message.text) {
@@ -203,7 +208,7 @@ export default function ServerTemplatePage() {
   }
 
   async function handleUpdateServerField(serverId: string, fields: Partial<VpnServer>) {
-    const server = servers.find(s => s.id === serverId)
+    const server = serversRef.current.find(s => s.id === serverId)
     if (!server) return
 
     try {
@@ -214,8 +219,11 @@ export default function ServerTemplatePage() {
       })
       const data = await res.json()
       if (data.success) {
-        // ไม่ setServers — ServerBadgeTagCard ใช้ local state จัดการ UI เอง
-        // ป้องกัน parent re-render ทั้ง list ซึ่งทำให้ scroll reset
+        // อัพเดท ref เงียบๆ ไม่ setServers — ป้องกัน parent re-render + scroll reset
+        // ServerBadgeTagCard ใช้ local state จัดการ UI เอง
+        serversRef.current = serversRef.current.map(s =>
+          s.id === serverId ? { ...s, ...fields } : s
+        )
         setMessage({ type: 'success', text: `อัพเดท ${server.name} สำเร็จ` })
       } else {
         setMessage({ type: 'error', text: data.error || 'บันทึกล้มเหลว' })
