@@ -245,162 +245,6 @@ export default function ServerTemplatePage() {
     )
   }
 
-/* ── Badge & Tag Card ── */
-function ServerBadgeTagCard({ server, onUpdate }: {
-  server: VpnServer
-  onUpdate: (fields: Partial<VpnServer>) => void
-}) {
-  const [newTag, setNewTag] = useState('')
-  const [desc, setDesc] = useState(server.description || '')
-  const [descDirty, setDescDirty] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [localBadge, setLocalBadge] = useState(server.badge || '')
-  const [localTags, setLocalTags] = useState<string[]>(server.tags || [])
-
-  const currentBadge = BADGE_OPTIONS.find(b => b.value === localBadge) || BADGE_OPTIONS[0]
-
-  function handleAddTag(tag: string) {
-    const t = tag.trim()
-    if (!t || localTags.includes(t)) return
-    const updated = [...localTags, t]
-    setLocalTags(updated)
-    setNewTag('')
-    onUpdate({ tags: updated })
-  }
-
-  function handleRemoveTag(tag: string) {
-    const updated = localTags.filter(t => t !== tag)
-    setLocalTags(updated)
-    onUpdate({ tags: updated })
-  }
-
-  function handleBadgeChange(value: string) {
-    setLocalBadge(value)
-    onUpdate({ badge: value || null })
-  }
-
-  async function handleSaveDesc() {
-    setSaving(true)
-    await onUpdate({ description: desc.trim() || null })
-    setDescDirty(false)
-    setSaving(false)
-  }
-
-  return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.1] transition-all space-y-3">
-      {/* Header: flag + name + badge */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-lg">{server.flag}</span>
-        <span className="text-sm font-bold text-white">{server.name}</span>
-        <div className={cn(
-          "h-5 w-px",
-          "bg-white/[0.06]"
-        )} />
-        {/* Badge select */}
-        <select
-          value={localBadge}
-          onChange={(e) => handleBadgeChange(e.target.value)}
-          className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs text-white font-medium focus:border-amber-500/50 transition-all cursor-pointer"
-        >
-          {BADGE_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>
-              {opt.emoji ? `${opt.emoji} ${opt.label}` : opt.label}
-            </option>
-          ))}
-        </select>
-        {currentBadge.value && (
-          <span className="text-[10px] text-amber-400/80 font-medium">
-            กำลังแสดง: {currentBadge.emoji} {currentBadge.label}
-          </span>
-        )}
-      </div>
-
-      {/* Description */}
-      <div className="flex gap-2 items-end">
-        <div className="flex-1">
-          <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1 block">คำอธิบาย</label>
-          <input
-            type="text"
-            value={desc}
-            onChange={(e) => { setDesc(e.target.value); setDescDirty(true) }}
-            maxLength={200}
-            placeholder="เช่น เซิร์ฟเวอร์เร็วสุดสำหรับ..."
-            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-700 focus:border-blue-500/50 transition-all font-medium"
-          />
-        </div>
-        {descDirty && (
-          <button
-            onClick={handleSaveDesc}
-            disabled={saving}
-            className="shrink-0 px-3 py-2 bg-blue-600 border border-blue-500/30 rounded-lg text-[10px] font-bold text-white hover:bg-blue-500 active:scale-95 disabled:opacity-40 transition-all"
-          >
-            {saving ? '...' : 'บันทึก'}
-          </button>
-        )}
-      </div>
-
-      {/* Tags */}
-      <div>
-        <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1.5 block">แท็ก</label>
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {localTags.length === 0 && (
-            <span className="text-[10px] text-zinc-600 italic">ยังไม่มีแท็ก</span>
-          )}
-          {localTags.map(tag => (
-            <span
-              key={tag}
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-[11px] font-bold text-cyan-400"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => handleRemoveTag(tag)}
-                className="w-3.5 h-3.5 rounded-full bg-cyan-500/20 hover:bg-red-500/30 flex items-center justify-center text-cyan-300 hover:text-red-400 transition-colors"
-              >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            </span>
-          ))}
-        </div>
-
-        {/* Add custom tag */}
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(newTag) } }}
-            placeholder="พิมพ์แท็กใหม่..."
-            className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-zinc-700 focus:border-cyan-500/50 transition-all font-medium"
-          />
-          <button
-            type="button"
-            onClick={() => handleAddTag(newTag)}
-            disabled={!newTag.trim()}
-            className="shrink-0 px-2.5 py-1.5 bg-cyan-600/20 border border-cyan-500/30 rounded-lg text-[10px] font-bold text-cyan-400 hover:bg-cyan-500/30 active:scale-95 disabled:opacity-30 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Preset tags */}
-        <div className="flex flex-wrap gap-1">
-          {TAG_PRESETS.filter(t => !localTags.includes(t)).map(tag => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => handleAddTag(tag)}
-              className="px-2 py-0.5 bg-white/[0.03] border border-white/[0.06] rounded-full text-[10px] text-zinc-500 hover:text-white hover:border-white/[0.15] hover:bg-white/[0.06] transition-all font-medium"
-            >
-              + {tag}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
   return (
     <div className="space-y-6 pb-28 sm:pb-12">
       {/* Toast */}
@@ -587,6 +431,162 @@ function ServerBadgeTagCard({ server, onUpdate }: {
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
           {saving ? 'กำลังบันทึก...' : hasChanges ? 'บันทึกรูปแบบ' : 'ไม่มีการเปลี่ยนแปลง'}
         </button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Badge & Tag Card (top-level เพื่อป้องกัน re-create ทุก render) ── */
+function ServerBadgeTagCard({ server, onUpdate }: {
+  server: VpnServer
+  onUpdate: (fields: Partial<VpnServer>) => void
+}) {
+  const [newTag, setNewTag] = useState('')
+  const [desc, setDesc] = useState(server.description || '')
+  const [descDirty, setDescDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [localBadge, setLocalBadge] = useState(server.badge || '')
+  const [localTags, setLocalTags] = useState<string[]>(server.tags || [])
+
+  const currentBadge = BADGE_OPTIONS.find(b => b.value === localBadge) || BADGE_OPTIONS[0]
+
+  function handleAddTag(tag: string) {
+    const t = tag.trim()
+    if (!t || localTags.includes(t)) return
+    const updated = [...localTags, t]
+    setLocalTags(updated)
+    setNewTag('')
+    onUpdate({ tags: updated })
+  }
+
+  function handleRemoveTag(tag: string) {
+    const updated = localTags.filter(t => t !== tag)
+    setLocalTags(updated)
+    onUpdate({ tags: updated })
+  }
+
+  function handleBadgeChange(value: string) {
+    setLocalBadge(value)
+    onUpdate({ badge: value || null })
+  }
+
+  async function handleSaveDesc() {
+    setSaving(true)
+    await onUpdate({ description: desc.trim() || null })
+    setDescDirty(false)
+    setSaving(false)
+  }
+
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.1] transition-all space-y-3">
+      {/* Header: flag + name + badge */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-lg">{server.flag}</span>
+        <span className="text-sm font-bold text-white">{server.name}</span>
+        <div className={cn(
+          "h-5 w-px",
+          "bg-white/[0.06]"
+        )} />
+        {/* Badge select */}
+        <select
+          value={localBadge}
+          onChange={(e) => handleBadgeChange(e.target.value)}
+          className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs text-white font-medium focus:border-amber-500/50 transition-all cursor-pointer"
+        >
+          {BADGE_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>
+              {opt.emoji ? `${opt.emoji} ${opt.label}` : opt.label}
+            </option>
+          ))}
+        </select>
+        {currentBadge.value && (
+          <span className="text-[10px] text-amber-400/80 font-medium">
+            กำลังแสดง: {currentBadge.emoji} {currentBadge.label}
+          </span>
+        )}
+      </div>
+
+      {/* Description */}
+      <div className="flex gap-2 items-end">
+        <div className="flex-1">
+          <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1 block">คำอธิบาย</label>
+          <input
+            type="text"
+            value={desc}
+            onChange={(e) => { setDesc(e.target.value); setDescDirty(true) }}
+            maxLength={200}
+            placeholder="เช่น เซิร์ฟเวอร์เร็วสุดสำหรับ..."
+            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-700 focus:border-blue-500/50 transition-all font-medium"
+          />
+        </div>
+        {descDirty && (
+          <button
+            onClick={handleSaveDesc}
+            disabled={saving}
+            className="shrink-0 px-3 py-2 bg-blue-600 border border-blue-500/30 rounded-lg text-[10px] font-bold text-white hover:bg-blue-500 active:scale-95 disabled:opacity-40 transition-all"
+          >
+            {saving ? '...' : 'บันทึก'}
+          </button>
+        )}
+      </div>
+
+      {/* Tags */}
+      <div>
+        <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1.5 block">แท็ก</label>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {localTags.length === 0 && (
+            <span className="text-[10px] text-zinc-600 italic">ยังไม่มีแท็ก</span>
+          )}
+          {localTags.map(tag => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-[11px] font-bold text-cyan-400"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => handleRemoveTag(tag)}
+                className="w-3.5 h-3.5 rounded-full bg-cyan-500/20 hover:bg-red-500/30 flex items-center justify-center text-cyan-300 hover:text-red-400 transition-colors"
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {/* Add custom tag */}
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(newTag) } }}
+            placeholder="พิมพ์แท็กใหม่..."
+            className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-zinc-700 focus:border-cyan-500/50 transition-all font-medium"
+          />
+          <button
+            type="button"
+            onClick={() => handleAddTag(newTag)}
+            disabled={!newTag.trim()}
+            className="shrink-0 px-2.5 py-1.5 bg-cyan-600/20 border border-cyan-500/30 rounded-lg text-[10px] font-bold text-cyan-400 hover:bg-cyan-500/30 active:scale-95 disabled:opacity-30 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Preset tags */}
+        <div className="flex flex-wrap gap-1">
+          {TAG_PRESETS.filter(t => !localTags.includes(t)).map(tag => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => handleAddTag(tag)}
+              className="px-2 py-0.5 bg-white/[0.03] border border-white/[0.06] rounded-full text-[10px] text-zinc-500 hover:text-white hover:border-white/[0.15] hover:bg-white/[0.06] transition-all font-medium"
+            >
+              + {tag}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
