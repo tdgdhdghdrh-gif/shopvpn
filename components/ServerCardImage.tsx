@@ -81,20 +81,20 @@ function ServerImageCard({ server, user, defaultPrices }: {
       className="group block rounded-2xl border border-white/[0.06] bg-zinc-900/60 overflow-hidden transition-all hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20 active:scale-[0.98]"
     >
       {/* Image Area */}
-      <div className="relative w-full aspect-[16/10] bg-zinc-800 overflow-hidden">
+      <div className="relative w-full bg-zinc-800/80 overflow-hidden">
         {server.imageUrl && !imgError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={server.imageUrl}
             alt={server.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-auto block transition-transform duration-500 group-hover:scale-105"
             onError={() => setImgError(true)}
             loading="lazy"
           />
         ) : (
           /* Fallback: gradient + flag + name */
           <div className={cn(
-            "w-full h-full flex flex-col items-center justify-center gap-3",
+            "w-full aspect-[16/9] flex flex-col items-center justify-center gap-3",
             server.themeGradient
               ? `bg-gradient-to-br ${server.themeGradient}`
               : "bg-gradient-to-br from-zinc-800 via-zinc-900 to-black"
