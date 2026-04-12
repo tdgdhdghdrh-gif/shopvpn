@@ -2026,11 +2026,11 @@ export default function WebEffectsRenderer({ effect }: Props) {
 
   if (effect === 'none') return null
 
-  return (
+   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 9999 }}
+      style={{ zIndex: 9999, willChange: 'transform', contain: 'strict' }}
     />
   )
 }

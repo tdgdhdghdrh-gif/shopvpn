@@ -53,7 +53,6 @@ function ServerImageCard({ server, user, defaultPrices }: {
   defaultPrices?: { daily: number; weekly: number; monthly: number }
 }) {
   const [imgError, setImgError] = useState(false)
-  const [imgLoaded, setImgLoaded] = useState(false)
 
   // Calculate price range
   const daily = server.pricePerDay ?? defaultPrices?.daily ?? 4
@@ -83,30 +82,18 @@ function ServerImageCard({ server, user, defaultPrices }: {
   return (
     <Link
       href={`/vpn?server=${server.id}`}
-      className="group block rounded-2xl border border-white/[0.06] bg-zinc-900/60 overflow-hidden transition-all hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20 active:scale-[0.98]"
+      className="group block rounded-2xl border border-white/[0.06] bg-zinc-900/60 overflow-hidden hover:border-white/[0.12]"
     >
       {/* Image Area */}
       <div className="relative w-full bg-zinc-800/80 overflow-hidden">
         {server.imageUrl && !imgError ? (
-          <>
-            {/* Placeholder สีพื้นแสดงก่อนรูปโหลดเสร็จ — กัน layout shift */}
-            {!imgLoaded && (
-              <div className="w-full aspect-[16/9] bg-zinc-800 flex items-center justify-center">
-                <span className="text-3xl">{server.flag}</span>
-              </div>
-            )}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={server.imageUrl}
-              alt={server.name}
-              className={cn(
-                "w-full h-auto block transition-opacity duration-300 group-hover:scale-105 transition-transform",
-                imgLoaded ? "opacity-100" : "opacity-0 absolute inset-0"
-              )}
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgError(true)}
-            />
-          </>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={server.imageUrl}
+            alt={server.name}
+            className="w-full h-auto block"
+            onError={() => setImgError(true)}
+          />
         ) : (
           /* Fallback: gradient + flag + name */
           <div className={cn(
@@ -134,8 +121,8 @@ function ServerImageCard({ server, user, defaultPrices }: {
         )}
 
         {/* Status dot (top-left) */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm">
-          <div className={cn("w-2 h-2 rounded-full", isOnline ? "bg-emerald-400 animate-pulse" : "bg-red-400")} />
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/70">
+          <div className={cn("w-2 h-2 rounded-full", isOnline ? "bg-emerald-400" : "bg-red-400")} />
           <span className="text-[10px] font-bold text-white/80">{isOnline ? 'Online' : 'Offline'}</span>
         </div>
       </div>

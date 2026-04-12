@@ -353,9 +353,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // ซ่อน content จนกว่า settings จะโหลดเสร็จ ป้องกันการกระพริบชื่อ/โลโก้/พื้นหลังเดิม
-  if (loading) {
-    return (
-      <SettingsContext.Provider value={{ settings, loading, refetch: fetchSettings }}>
+  // ใช้ CSS ซ่อนแทน conditional render เพื่อไม่ให้ children ถูก unmount/mount ใหม่ (ป้องกันรูปกระพริบ)
+  return (
+    <SettingsContext.Provider value={{ settings, loading, refetch: fetchSettings }}>
+      {loading && (
         <div style={{
           position: 'fixed',
           inset: 0,
@@ -375,13 +376,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
-      </SettingsContext.Provider>
-    )
-  }
-
-  return (
-    <SettingsContext.Provider value={{ settings, loading, refetch: fetchSettings }}>
-      {children}
+      )}
+      <div style={loading ? { visibility: 'hidden', position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden', height: 0 } : undefined}>
+        {children}
+      </div>
     </SettingsContext.Provider>
   )
 }
