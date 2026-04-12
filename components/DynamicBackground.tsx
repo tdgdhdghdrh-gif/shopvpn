@@ -28,6 +28,8 @@ export default function DynamicBackground() {
           bottom: 0,
           zIndex: 0,
           overflow: 'hidden',
+          isolation: 'isolate',
+          transform: 'translateZ(0)',
         }}
       >
         {/* Layer 1: Theme background color */}
@@ -52,7 +54,8 @@ export default function DynamicBackground() {
                 backgroundPosition: 'center center',
                 backgroundRepeat: 'no-repeat',
                 opacity: imgOpacity,
-                willChange: 'opacity',
+                willChange: 'transform',
+                transform: 'translateZ(0)',
               }}
             />
             {/* Layer 3: Overlay for readability — light theme ใช้ขาว, dark theme ใช้ดำ */}

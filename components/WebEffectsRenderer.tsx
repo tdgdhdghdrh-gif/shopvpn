@@ -2030,7 +2030,7 @@ export default function WebEffectsRenderer({ effect }: Props) {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 9999 }}
+      style={{ zIndex: 9999, transform: 'translateZ(0)', willChange: 'transform' }}
     />
   )
 }
