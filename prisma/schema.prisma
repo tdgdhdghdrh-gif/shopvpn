@@ -133,6 +133,7 @@ model Settings {
   menuClickEffect     String   @default("none") // Menu click effect: none, ripple, glow, bounce, particle, shockwave, neon, slide, morphGlow, electricArc, hologram
   trialEnabled        Boolean  @default(true)  // เปิด/ปิดระบบทดลองฟรี
   trialDurationMinutes Int     @default(60)    // ระยะเวลาทดลองฟรี (นาที)
+  serverListTemplate  String   @default("detailed") // รูปแบบหน้าเซิร์ฟเวอร์: detailed, image-card
   licenseKey          String?  // License key สำหรับเช็คอายุเว็บ (ได้จากเว็บต้นทาง)
   licenseApiUrl       String?  // URL ของเว็บต้นทาง เช่น https://simonvpn.darkx.shop
 }

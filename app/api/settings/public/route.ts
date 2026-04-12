@@ -61,6 +61,7 @@ export async function GET() {
             menuClickEffect: 'none',
             trialEnabled: true,
             trialDurationMinutes: 60,
+            serverListTemplate: 'detailed',
           }
         })
       }
@@ -105,6 +106,8 @@ export async function GET() {
         // Trial VPN
         trialEnabled: settings.trialEnabled ?? true,
         trialDurationMinutes: settings.trialDurationMinutes ?? 60,
+        // Server List Template
+        serverListTemplate: settings.serverListTemplate || 'detailed',
       }
     })
   } catch (error) {

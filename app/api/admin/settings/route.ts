@@ -132,6 +132,8 @@ export async function POST(request: NextRequest) {
       // Trial VPN
       trialEnabled: body.trialEnabled !== undefined ? Boolean(body.trialEnabled) : (settings?.trialEnabled ?? true),
       trialDurationMinutes: body.trialDurationMinutes !== undefined ? parseInt(body.trialDurationMinutes) || 60 : (settings?.trialDurationMinutes ?? 60),
+      // Server List Template
+      serverListTemplate: body.serverListTemplate !== undefined ? body.serverListTemplate : (settings?.serverListTemplate || 'detailed'),
       updatedAt: new Date()
     }
 

@@ -24,6 +24,7 @@ import {
 } from '@/components/JsonLd'
 
 import ServerCard from '@/components/ServerCard'
+import ServerCardImageList from '@/components/ServerCardImage'
 import RecentOrders from '@/components/RecentOrders'
 import Link from 'next/link'
 import { 
@@ -90,13 +91,22 @@ export default async function HomePage() {
   const session = await getSession()
 
   // ถ้าผู้ใช้ล็อกอินอยู่ และแอดมินตั้งหน้าแรกไว้ไม่ใช่ / → redirect ไปหน้าที่ตั้งไว้
+  let serverListTemplate = 'detailed'
+  let defaultPrices = { daily: 4, weekly: 25, monthly: 100 }
+  
   if (session.isLoggedIn) {
     const settings = await prisma.settings.findFirst({
-      select: { defaultHomePage: true }
+      select: { defaultHomePage: true, serverListTemplate: true, vpnDailyPrice: true, vpnMonthlyPrice: true, vpnWeeklyPrice: true }
     })
     const homePage = settings?.defaultHomePage || '/'
     if (homePage !== '/') {
       redirect(homePage)
+    }
+    serverListTemplate = settings?.serverListTemplate || 'detailed'
+    defaultPrices = {
+      daily: settings?.vpnDailyPrice ?? 4,
+      weekly: settings?.vpnWeeklyPrice ?? 25,
+      monthly: settings?.vpnMonthlyPrice ?? 100,
     }
   }
 
@@ -540,24 +550,35 @@ export default async function HomePage() {
                   <span className="px-2 py-0.5 rounded-md bg-zinc-900 border border-white/5 text-[10px] text-zinc-500 font-medium">{servers.length} รายการ</span>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {servers.length === 0 ? (
-                  <div className="col-span-full py-20 text-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50">
-                    <div className="w-14 h-14 rounded-2xl bg-zinc-900 flex items-center justify-center mx-auto mb-4">
-                      <Wifi className="w-6 h-6 text-zinc-600" />
+              {serverListTemplate === 'image-card' ? (
+                <ServerCardImageList
+                  servers={servers.map((server) => ({
+                    ...server,
+                    userCount: server._count.orders,
+                  }))}
+                  user={user}
+                  defaultPrices={defaultPrices}
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {servers.length === 0 ? (
+                    <div className="col-span-full py-20 text-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50">
+                      <div className="w-14 h-14 rounded-2xl bg-zinc-900 flex items-center justify-center mx-auto mb-4">
+                        <Wifi className="w-6 h-6 text-zinc-600" />
+                      </div>
+                      <p className="text-sm text-zinc-400 font-medium">ยังไม่มีเซิร์ฟเวอร์</p>
+                      <p className="text-xs text-zinc-600 mt-1">กรุณาติดต่อแอดมินเพื่อเพิ่มเซิร์ฟเวอร์</p>
                     </div>
-                    <p className="text-sm text-zinc-400 font-medium">ยังไม่มีเซิร์ฟเวอร์</p>
-                    <p className="text-xs text-zinc-600 mt-1">กรุณาติดต่อแอดมินเพื่อเพิ่มเซิร์ฟเวอร์</p>
-                  </div>
-                ) : (
-                  servers.map((server) => (
-                    <ServerCard key={server.id} server={{ 
-                      ...server, 
-                      userCount: server._count.orders,
-                    }} user={user} totalServers={servers.length} />
-                  ))
-                )}
-              </div>
+                  ) : (
+                    servers.map((server) => (
+                      <ServerCard key={server.id} server={{ 
+                        ...server, 
+                        userCount: server._count.orders,
+                      }} user={user} totalServers={servers.length} />
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           )
 

@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo } from 'react'
+import { cn } from '@/lib/utils'
 import {
   Save, Key, Phone, Building2, User,
   AlertCircle, CheckCircle2, Loader2, Shield, Wallet, ScanLine,
   Upload, X, QrCode, Settings as SettingsIcon, Info, ExternalLink,
   Globe, Image as ImageIcon, Type, DollarSign, Layout, Eye, EyeOff,
   CheckCircle, XCircle, ChevronDown,
-  Gift, Clock,
+  Gift, Clock, Server,
 } from 'lucide-react'
 
 interface Settings {
@@ -28,6 +29,7 @@ interface Settings {
   landingTemplate: string
   trialEnabled: boolean
   trialDurationMinutes: number
+  serverListTemplate: string
 }
 
 const INITIAL_SETTINGS: Settings = {
@@ -48,6 +50,7 @@ const INITIAL_SETTINGS: Settings = {
   landingTemplate: 'classic',
   trialEnabled: true,
   trialDurationMinutes: 60,
+  serverListTemplate: 'detailed',
 }
 
 function StatusDot({ ok }: { ok: boolean }) {
@@ -279,6 +282,7 @@ export default function AdminSettingsPage() {
           landingTemplate: data.settings.landingTemplate || 'classic',
           trialEnabled: data.settings.trialEnabled ?? true,
           trialDurationMinutes: data.settings.trialDurationMinutes ?? 60,
+          serverListTemplate: data.settings.serverListTemplate || 'detailed',
         }
         setSettings(s)
         setSavedSettings(s)
@@ -492,6 +496,81 @@ export default function AdminSettingsPage() {
                   />
                 </div>
               )}
+            </div>
+          </SectionCard>
+
+          {/* Server List Template */}
+          <SectionCard id="serverTemplate" title="รูปแบบหน้าเซิร์ฟเวอร์" desc="เลือกแบบการแสดงรายการเซิร์ฟเวอร์ VPN" icon={Server} color="blue" mobileSection={mobileSection} onToggle={toggleMobileSection}>
+            <div className="space-y-4">
+              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">เลือกรูปแบบ</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Template 1: Detailed */}
+                <button
+                  type="button"
+                  onClick={() => updateField('serverListTemplate', 'detailed')}
+                  className={cn(
+                    "relative p-4 rounded-xl border-2 text-left transition-all",
+                    settings.serverListTemplate === 'detailed'
+                      ? "border-cyan-500/50 bg-cyan-500/5"
+                      : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"
+                  )}
+                >
+                  {settings.serverListTemplate === 'detailed' && (
+                    <div className="absolute top-2 right-2">
+                      <CheckCircle className="w-4 h-4 text-cyan-400" />
+                    </div>
+                  )}
+                  {/* Preview */}
+                  <div className="w-full h-24 rounded-lg bg-zinc-800/50 border border-white/5 mb-3 p-2.5 flex gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-700 flex items-center justify-center text-lg shrink-0">🇹🇭</div>
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-2 w-2/3 bg-zinc-700 rounded" />
+                      <div className="h-1.5 w-1/2 bg-zinc-800 rounded" />
+                      <div className="flex gap-1 mt-1">
+                        <div className="h-1.5 w-8 bg-zinc-700/50 rounded" />
+                        <div className="h-1.5 w-8 bg-zinc-700/50 rounded" />
+                        <div className="h-1.5 w-8 bg-zinc-700/50 rounded" />
+                      </div>
+                      <div className="h-4 w-16 bg-cyan-500/20 rounded mt-1" />
+                    </div>
+                  </div>
+                  <p className="text-xs font-bold text-white">แบบรายละเอียด</p>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">แสดงข้อมูลครบถ้วน: สถิติ, แอพรองรับ, ราคา, ปุ่มเชื่อมต่อ</p>
+                </button>
+
+                {/* Template 2: Image Card */}
+                <button
+                  type="button"
+                  onClick={() => updateField('serverListTemplate', 'image-card')}
+                  className={cn(
+                    "relative p-4 rounded-xl border-2 text-left transition-all",
+                    settings.serverListTemplate === 'image-card'
+                      ? "border-cyan-500/50 bg-cyan-500/5"
+                      : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"
+                  )}
+                >
+                  {settings.serverListTemplate === 'image-card' && (
+                    <div className="absolute top-2 right-2">
+                      <CheckCircle className="w-4 h-4 text-cyan-400" />
+                    </div>
+                  )}
+                  {/* Preview */}
+                  <div className="w-full h-24 rounded-lg bg-zinc-800/50 border border-white/5 mb-3 overflow-hidden flex flex-col">
+                    <div className="flex-1 bg-gradient-to-br from-amber-900/30 to-orange-900/30 flex items-center justify-center">
+                      <span className="text-2xl">🖼️</span>
+                    </div>
+                    <div className="px-2 py-1.5 flex items-center justify-between">
+                      <div className="h-2 w-16 bg-zinc-700 rounded" />
+                      <div className="h-2 w-10 bg-cyan-500/30 rounded" />
+                    </div>
+                  </div>
+                  <p className="text-xs font-bold text-white">แบบรูปภาพ</p>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">เน้นรูปภาพเซิร์ฟเวอร์ขนาดใหญ่ ชื่อ + ราคาด้านล่าง</p>
+                </button>
+              </div>
+              <p className="text-[10px] text-zinc-600 ml-0.5">
+                * แบบรูปภาพ ต้องอัพโหลดรูปภาพเซิร์ฟเวอร์ในหน้าจัดการเซิร์ฟเวอร์ (ช่อง &quot;รูปภาพ&quot;) ถ้าไม่มีรูปจะแสดงธงชาติแทน
+              </p>
             </div>
           </SectionCard>
 
