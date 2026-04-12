@@ -376,7 +376,7 @@ function ServerBadgeTagCard({ server, onUpdate }: {
 
         {/* Preset tags */}
         <div className="flex flex-wrap gap-1">
-          {TAG_PRESETS.filter(t => !tags.includes(t)).map(tag => (
+          {TAG_PRESETS.filter(t => !localTags.includes(t)).map(tag => (
             <button
               key={tag}
               type="button"
