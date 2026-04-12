@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import {
   Server, CheckCircle, Loader2, AlertCircle, Upload, X, Image as ImageIcon,
-  Eye,
+  Eye, Link2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -153,6 +153,31 @@ export default function ServerTemplatePage() {
       }
     } catch {
       setMessage({ type: 'error', text: 'ลบรูปล้มเหลว' })
+    } finally {
+      setUploading(null)
+    }
+  }
+
+  async function handleSetImageUrl(serverId: string, url: string) {
+    const server = servers.find(s => s.id === serverId)
+    if (!server) return
+
+    setUploading(serverId)
+    try {
+      const res = await fetch(`/api/admin/servers/${serverId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...server, imageUrl: url }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setServers(prev => prev.map(s => s.id === serverId ? { ...s, imageUrl: url } : s))
+        setMessage({ type: 'success', text: `บันทึกลิงก์รูป ${server.name} สำเร็จ` })
+      } else {
+        setMessage({ type: 'error', text: data.error || 'บันทึกล้มเหลว' })
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'การเชื่อมต่อล้มเหลว' })
     } finally {
       setUploading(null)
     }
@@ -309,6 +334,7 @@ export default function ServerTemplatePage() {
                   uploading={uploading === server.id}
                   onUpload={(e) => handleImageUpload(server.id, e)}
                   onRemove={() => handleRemoveImage(server.id)}
+                  onSetUrl={(url) => handleSetImageUrl(server.id, url)}
                 />
               ))}
             </div>
@@ -332,13 +358,16 @@ export default function ServerTemplatePage() {
 }
 
 /* ── Server Image Upload Card (ย้ายออกมาเป็น top-level เพื่อป้องกัน re-create ทุก render) ── */
-function ServerImageUploadCard({ server, uploading, onUpload, onRemove }: {
+function ServerImageUploadCard({ server, uploading, onUpload, onRemove, onSetUrl }: {
   server: VpnServer
   uploading: boolean
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   onRemove: () => void
+  onSetUrl: (url: string) => void
 }) {
   const inputId = `img-${server.id}`
+  const [urlInput, setUrlInput] = useState('')
+  const [showUrlInput, setShowUrlInput] = useState(false)
   
   return (
     <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.1] transition-all">
@@ -383,18 +412,64 @@ function ServerImageUploadCard({ server, uploading, onUpload, onRemove }: {
         )}
       </div>
 
-      {/* Info */}
-      <div className="p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-base">{server.flag}</span>
-          <span className="text-xs font-bold text-white truncate">{server.name}</span>
+      {/* Info + Actions */}
+      <div className="p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-base">{server.flag}</span>
+            <span className="text-xs font-bold text-white truncate">{server.name}</span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* ปุ่มใส่ลิงก์ */}
+            <button
+              type="button"
+              onClick={() => setShowUrlInput(!showUrlInput)}
+              className={cn(
+                "px-2 py-1.5 border rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider",
+                showUrlInput
+                  ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                  : "bg-white/[0.04] border-white/[0.08] text-zinc-400 hover:text-white hover:border-white/[0.15]"
+              )}
+            >
+              <Link2 className="w-3 h-3" />
+            </button>
+            {/* ปุ่มอัปโหลดไฟล์ */}
+            <label
+              htmlFor={inputId}
+              className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-[10px] font-bold text-zinc-400 hover:text-white hover:border-white/[0.15] cursor-pointer transition-all uppercase tracking-wider"
+            >
+              {server.imageUrl ? 'เปลี่ยน' : 'อัปโหลด'}
+            </label>
+          </div>
         </div>
-        <label
-          htmlFor={inputId}
-          className="shrink-0 px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-[10px] font-bold text-zinc-400 hover:text-white hover:border-white/[0.15] cursor-pointer transition-all uppercase tracking-wider"
-        >
-          {server.imageUrl ? 'เปลี่ยน' : 'อัปโหลด'}
-        </label>
+
+        {/* URL Input */}
+        {showUrlInput && (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              placeholder="วางลิงก์รูปภาพ https://..."
+              className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-700 focus:border-blue-500/50 transition-all font-medium"
+            />
+            <button
+              type="button"
+              disabled={!urlInput.trim() || uploading}
+              onClick={() => {
+                const url = urlInput.trim()
+                if (url) {
+                  onSetUrl(url)
+                  setUrlInput('')
+                  setShowUrlInput(false)
+                }
+              }}
+              className="shrink-0 px-3 py-2 bg-blue-600 border border-blue-500/30 rounded-lg text-[10px] font-bold text-white hover:bg-blue-500 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all uppercase tracking-wider"
+            >
+              บันทึก
+            </button>
+          </div>
+        )}
       </div>
       <input
         id={inputId}
