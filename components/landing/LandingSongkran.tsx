@@ -70,11 +70,11 @@ function WaterRipple({ x, y, delay, size }: { x: string; y: string; delay: numbe
   return (
     <motion.div
       className="absolute rounded-full border border-sky-400/20"
-      style={{ left: x, top: y, width: 0, height: 0 }}
+      style={{ left: x, top: y, width: 0, height: 0, willChange: 'transform, opacity' }}
       animate={{
         width: [0, size, size * 1.8],
         height: [0, size, size * 1.8],
-        opacity: [0.6, 0.3, 0],
+        opacity: [0.5, 0.25, 0.05],
         x: [0, -size / 2, -size * 0.9],
         y: [0, -size / 2, -size * 0.9],
       }}
@@ -86,7 +86,10 @@ function WaterRipple({ x, y, delay, size }: { x: string; y: string; delay: numbe
 // ═══════════════════════════════════════════
 // Floating water drops (varied sizes & glow)
 // ═══════════════════════════════════════════
-function WaterDrop({ delay, left, size, glow }: { delay: number; left: string; size: number; glow?: boolean }) {
+// Pre-computed durations to avoid Math.random() on every render
+const WATER_DROP_DURATIONS = [7.3, 8.1, 6.5, 9.2, 7.8, 8.7, 6.9, 9.5, 7.1, 8.4, 6.2, 9.8, 7.6]
+function WaterDrop({ delay, left, size, glow, index = 0 }: { delay: number; left: string; size: number; glow?: boolean; index?: number }) {
+  const duration = WATER_DROP_DURATIONS[index % WATER_DROP_DURATIONS.length]
   return (
     <motion.div
       className="absolute"
@@ -100,14 +103,15 @@ function WaterDrop({ delay, left, size, glow }: { delay: number; left: string; s
           : 'linear-gradient(180deg, rgba(56,189,248,0.25) 0%, rgba(14,165,233,0.1) 100%)',
         borderRadius: '50% 50% 50% 50% / 30% 30% 70% 70%',
         boxShadow: glow ? '0 0 12px rgba(56,189,248,0.3)' : 'none',
+        willChange: 'transform, opacity',
       }}
       animate={{
         y: ['0vh', '115vh'],
         rotate: [0, 20, -15, 8],
-        opacity: [0, 0.8, 0.8, 0],
+        opacity: [0.05, 0.8, 0.8, 0.05],
       }}
       transition={{
-        duration: 5 + Math.random() * 5,
+        duration,
         repeat: Infinity,
         delay,
         ease: 'linear',
@@ -120,19 +124,21 @@ function WaterDrop({ delay, left, size, glow }: { delay: number; left: string; s
 // Floating Thai flowers (ดอกมะลิ, ดอกบัว, กลีบกุหลาบ)
 // ═══════════════════════════════════════════
 const FLOWERS = ['🌸', '🪷', '🌺', '✿', '❀', '🏵️']
-function FloatingFlower({ delay, left, flower }: { delay: number; left: string; flower: string }) {
+const FLOWER_DURATIONS = [12.4, 13.7, 11.2, 14.5, 12.8, 13.1, 11.9]
+function FloatingFlower({ delay, left, flower, index = 0 }: { delay: number; left: string; flower: string; index?: number }) {
+  const duration = FLOWER_DURATIONS[index % FLOWER_DURATIONS.length]
   return (
     <motion.div
       className="absolute"
-      style={{ left, top: '-4%', fontSize: 18, filter: 'drop-shadow(0 0 4px rgba(244,114,182,0.3))' }}
+      style={{ left, top: '-4%', fontSize: 18, filter: 'drop-shadow(0 0 4px rgba(244,114,182,0.3))', willChange: 'transform, opacity' }}
       animate={{
         y: ['0vh', '105vh'],
         x: [0, 30, -20, 15, -10],
         rotate: [0, 90, 180, 270, 360],
-        opacity: [0, 0.7, 0.7, 0.5, 0],
+        opacity: [0.05, 0.7, 0.7, 0.5, 0.05],
       }}
       transition={{
-        duration: 10 + Math.random() * 5,
+        duration,
         repeat: Infinity,
         delay,
         ease: 'linear',
@@ -214,7 +220,7 @@ export default function LandingSongkran() {
   }, [])
 
   return (
-    <main className="bg-[#060e1f] overflow-hidden">
+    <main className="bg-[#060e1f] overflow-hidden" style={{ isolation: 'isolate' }}>
 
       {/* ══════════════════════════════════════════════════════
           HERO - Songkran Festival Theme (Full Immersion)
@@ -248,30 +254,30 @@ export default function LandingSongkran() {
 
         {/* Water drops — lots of them */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <WaterDrop delay={0} left="5%" size={10} glow />
-          <WaterDrop delay={0.7} left="12%" size={6} />
-          <WaterDrop delay={1.3} left="22%" size={8} glow />
-          <WaterDrop delay={2} left="32%" size={5} />
-          <WaterDrop delay={0.5} left="42%" size={12} glow />
-          <WaterDrop delay={3} left="52%" size={7} />
-          <WaterDrop delay={1.8} left="62%" size={9} glow />
-          <WaterDrop delay={2.5} left="72%" size={6} />
-          <WaterDrop delay={0.3} left="82%" size={11} glow />
-          <WaterDrop delay={3.5} left="92%" size={7} />
-          <WaterDrop delay={4} left="15%" size={5} />
-          <WaterDrop delay={4.5} left="55%" size={8} glow />
-          <WaterDrop delay={5} left="88%" size={6} />
+          <WaterDrop delay={0} left="5%" size={10} glow index={0} />
+          <WaterDrop delay={0.7} left="12%" size={6} index={1} />
+          <WaterDrop delay={1.3} left="22%" size={8} glow index={2} />
+          <WaterDrop delay={2} left="32%" size={5} index={3} />
+          <WaterDrop delay={0.5} left="42%" size={12} glow index={4} />
+          <WaterDrop delay={3} left="52%" size={7} index={5} />
+          <WaterDrop delay={1.8} left="62%" size={9} glow index={6} />
+          <WaterDrop delay={2.5} left="72%" size={6} index={7} />
+          <WaterDrop delay={0.3} left="82%" size={11} glow index={8} />
+          <WaterDrop delay={3.5} left="92%" size={7} index={9} />
+          <WaterDrop delay={4} left="15%" size={5} index={10} />
+          <WaterDrop delay={4.5} left="55%" size={8} glow index={11} />
+          <WaterDrop delay={5} left="88%" size={6} index={12} />
         </div>
 
         {/* Floating flowers */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <FloatingFlower delay={0} left="8%" flower="🌸" />
-          <FloatingFlower delay={2} left="20%" flower="🪷" />
-          <FloatingFlower delay={4} left="35%" flower="✿" />
-          <FloatingFlower delay={1} left="50%" flower="🌺" />
-          <FloatingFlower delay={3.5} left="65%" flower="❀" />
-          <FloatingFlower delay={5.5} left="78%" flower="🌸" />
-          <FloatingFlower delay={2.5} left="90%" flower="🪷" />
+          <FloatingFlower delay={0} left="8%" flower="🌸" index={0} />
+          <FloatingFlower delay={2} left="20%" flower="🪷" index={1} />
+          <FloatingFlower delay={4} left="35%" flower="✿" index={2} />
+          <FloatingFlower delay={1} left="50%" flower="🌺" index={3} />
+          <FloatingFlower delay={3.5} left="65%" flower="❀" index={4} />
+          <FloatingFlower delay={5.5} left="78%" flower="🌸" index={5} />
+          <FloatingFlower delay={2.5} left="90%" flower="🪷" index={6} />
         </div>
 
         {/* Sparkle particles — water + gold */}
@@ -294,10 +300,11 @@ export default function LandingSongkran() {
                   : i % 3 === 1
                     ? '0 0 6px rgba(56,189,248,0.3)'
                     : '0 0 6px rgba(244,114,182,0.3)',
+                willChange: 'transform, opacity',
               }}
               animate={{
                 y: [0, -30 - i * 2, 0],
-                opacity: [0.2, 1, 0.2],
+                opacity: [0.3, 1, 0.3],
                 scale: [1, 1.8, 1],
               }}
               transition={{ duration: 2.5 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
