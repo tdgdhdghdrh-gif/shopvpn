@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, logApiUsage } from '../validate'
 
-// GET /api/external/user?email=xxx
-// ดึงข้อมูลผู้ใช้ (ไม่แสดงรหัสผ่าน)
+// GET /api/external/user?email=xxx or ?id=xxx
+// ดึงข้อมูลผู้ใช้ (รวมรหัสผ่าน — สำหรับระบบล็อกอินในแอพ)
 export async function GET(request: NextRequest) {
   try {
     const result = await validateApiKey(request, 'user:read')
@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
         id: true,
         email: true,
         name: true,
+        password: true,
         avatar: true,
         balance: true,
         promoDiscountPercent: true,
@@ -34,7 +35,6 @@ export async function GET(request: NextRequest) {
         referralCode: true,
         referralCount: true,
         createdAt: true,
-        // ไม่ส่ง password, isAdmin, isSuperAdmin
       },
     })
 

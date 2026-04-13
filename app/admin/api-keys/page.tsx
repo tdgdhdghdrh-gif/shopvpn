@@ -38,6 +38,7 @@ const ALL_PERMISSIONS = [
   { value: 'credit:add', label: 'เพิ่มเครดิต', icon: CreditCard, color: 'emerald' },
   { value: 'credit:deduct', label: 'หักเครดิต', icon: CreditCard, color: 'amber' },
   { value: 'promo:activate', label: 'รับส่วนลด', icon: Percent, color: 'purple' },
+  { value: 'vpn:codes', label: 'ดึงโค้ด VPN', icon: Key, color: 'cyan' },
 ]
 
 export default function AdminApiKeysPage() {
@@ -183,6 +184,7 @@ export default function AdminApiKeysPage() {
     emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     purple: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    cyan: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   }
 
   const statusColors: Record<string, string> = {
@@ -421,6 +423,10 @@ export default function AdminApiKeysPage() {
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
             <p className="font-bold text-purple-400">POST /api/external/promo</p>
             <p className="text-zinc-500">{'body: { email, code }'} — ให้ผู้ใช้รับโปร</p>
+          </div>
+          <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
+            <p className="font-bold text-cyan-400">GET /api/external/vpn?email=xxx</p>
+            <p className="text-zinc-500">ดึงโค้ด VPN ของผู้ใช้ (vlessLink, expiryTime, status)</p>
           </div>
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
             <p className="font-bold text-zinc-300">Header ทุก request</p>
