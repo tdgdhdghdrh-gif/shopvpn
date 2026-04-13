@@ -149,6 +149,7 @@ export async function middleware(request: NextRequest) {
   // เพิ่ม IP header เพื่อให้ API routes อื่นๆ ใช้ได้
   const response = NextResponse.next()
   response.headers.set('x-client-ip', ip)
+  response.headers.set('x-pathname', pathname)
   return response
 }
 

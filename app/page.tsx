@@ -254,71 +254,7 @@ export default async function HomePage() {
       switch (section.type) {
         // ===== Welcome Hero Card =====
         case 'hero':
-          return (
-            <div key={section.id || 'hero'} className="relative mb-5 rounded-2xl overflow-hidden border border-white/[0.06] bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800">
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500" />
-              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-cyan-500/[0.04] to-transparent pointer-events-none" />
-              <div className="relative p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="relative shrink-0">
-                      {userAvatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={userAvatar} alt={user.name} className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-white/10" />
-                      ) : (
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border-2 border-white/10 flex items-center justify-center">
-                          <span className="text-lg sm:text-xl font-black text-white/80">{user.name.charAt(0).toUpperCase()}</span>
-                        </div>
-                      )}
-                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full border-2 border-zinc-900 flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      </div>
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h1 className="text-lg sm:text-xl font-black text-white truncate">{user.name}</h1>
-                      </div>
-                      <p className="text-[11px] sm:text-xs text-zinc-500 mt-0.5">
-                        {memberSince ? `สมาชิกตั้งแต่ ${memberSince}` : 'เลือกเซิร์ฟเวอร์แล้วเริ่มเชื่อมต่อได้เลย'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <Link href="/topup" className="flex items-center gap-2.5 px-3.5 py-2.5 sm:px-4 sm:py-3 bg-black/40 border border-white/[0.06] rounded-xl hover:border-cyan-500/20 transition-all group">
-                      <div className="w-8 h-8 bg-cyan-500/10 border border-cyan-500/20 rounded-lg flex items-center justify-center shrink-0">
-                        <Wallet className="w-4 h-4 text-cyan-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[9px] text-zinc-500 font-medium uppercase tracking-wider">ยอดเงินคงเหลือ</p>
-                        <p className="text-sm sm:text-base font-black text-white leading-tight">
-                          {user.balance.toLocaleString('th-TH')} <span className="text-[10px] text-zinc-500 font-medium">฿</span>
-                        </p>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-cyan-400 transition-colors ml-1 shrink-0" />
-                    </Link>
-                    {isAdmin && (
-                      <Link 
-                        href="/admin/vpn" 
-                        className="hidden sm:inline-flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20"
-                      >
-                        <Server size={14} />
-                        จัดการเซิร์ฟเวอร์
-                      </Link>
-                    )}
-                  </div>
-                </div>
-                {isAdmin && (
-                  <Link 
-                    href="/admin/vpn" 
-                    className="sm:hidden mt-3 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20"
-                  >
-                    <Server size={14} />
-                    จัดการเซิร์ฟเวอร์
-                  </Link>
-                )}
-              </div>
-            </div>
-          )
+          return null
 
         // ===== Stats Grid (Dynamic) =====
         case 'stats': {
