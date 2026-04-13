@@ -13,6 +13,7 @@ import LandingMinimal from '@/components/landing/LandingMinimal'
 import LandingGaming from '@/components/landing/LandingGaming'
 import LandingCorporate from '@/components/landing/LandingCorporate'
 import LandingPremium from '@/components/landing/LandingPremium'
+import LandingSongkran from '@/components/landing/LandingSongkran'
 import {
   OrganizationJsonLd,
   WebSiteJsonLd,
@@ -733,6 +734,8 @@ export default async function HomePage() {
         return <LandingCorporate />
       case 'premium':
         return <LandingPremium />
+      case 'songkran':
+        return <LandingSongkran />
       case 'customHtml':
         if (siteSettings?.landingCustomHtml) {
           return <div dangerouslySetInnerHTML={{ __html: siteSettings.landingCustomHtml }} />

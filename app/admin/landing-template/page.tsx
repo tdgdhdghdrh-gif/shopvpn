@@ -5,9 +5,10 @@ import {
   Layout, Sparkles, Gamepad2, Briefcase, Crown, CheckCircle, Loader2,
   Monitor, Smartphone, Eye, Save, ArrowRight, Shield, Zap, Globe,
   Star, Trophy, Building2, Sword, ChevronRight, Diamond, Gem, Code,
+  Droplets, Sun, Waves,
 } from 'lucide-react'
 
-type TemplateId = 'classic' | 'minimal' | 'gaming' | 'corporate' | 'premium' | 'customHtml'
+type TemplateId = 'classic' | 'minimal' | 'gaming' | 'corporate' | 'premium' | 'songkran' | 'customHtml'
 
 interface TemplateInfo {
   id: TemplateId
@@ -94,6 +95,20 @@ const templates: TemplateInfo[] = [
     accent: 'amber',
     heroTitle: 'VPN ระดับพรีเมียม',
     heroSub: 'ความเร็วสูงสุด ปลอดภัยระดับทหาร',
+  },
+  {
+    id: 'songkran',
+    name: 'Songkran',
+    subtitle: 'เทศกาลสงกรานต์',
+    desc: 'ธีมสงกรานต์ไทย - Water Splash, ลายน้ำ/ทอง/ชมพู, Floating Drops & Petals, Animated Effects',
+    features: ['Water Hero', 'Floating Drops', 'Flower Petals', '6 Features', 'Comparison Table', 'How It Works', 'Carriers', 'Pricing', 'Testimonials', 'FAQ', 'CTA'],
+    icon: Droplets,
+    gradient: 'from-sky-400 to-cyan-500',
+    border: 'border-sky-500',
+    bg: 'bg-sky-500',
+    accent: 'sky',
+    heroTitle: 'สาดความเร็ว VPN',
+    heroSub: 'เร็วแรงดั่งสายน้ำสงกรานต์',
   },
   {
     id: 'customHtml',
@@ -430,6 +445,63 @@ function PremiumPreview({ isMobile = false }: { isMobile?: boolean }) {
   )
 }
 
+function SongkranPreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628] text-white relative overflow-hidden">
+      {/* Water glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 bg-sky-500/10 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 right-0 w-20 h-20 bg-amber-500/5 blur-2xl rounded-full" />
+      {/* Navbar */}
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-sky-500/10">
+        <div className="flex items-center gap-1">
+          <Droplets className="w-3 h-3 text-sky-400" />
+          <span className="text-[6px] font-bold text-sky-400">VPN</span>
+        </div>
+        {!isMobile && <div className="w-14 h-3 rounded-full bg-gradient-to-r from-sky-400 to-cyan-500 text-[5px] text-center leading-[12px] font-bold text-white">Songkran</div>}
+      </div>
+      {/* Hero */}
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-5' : 'px-4 py-7'}`}>
+        <div className="flex gap-0.5 mb-1.5">
+          <span className="text-[5px] px-1.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300">Songkran</span>
+          <Sun className="w-2.5 h-2.5 text-amber-400" />
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black mb-0.5`}>
+          <span className="bg-gradient-to-r from-sky-400 to-cyan-400 bg-clip-text text-transparent">สาดความเร็ว</span> <span className="text-white">10Gbps</span>
+        </p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>เร็วแรงดั่งสายน้ำ เข้ารหัสระดับทหาร</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded-full bg-gradient-to-r from-sky-400 to-cyan-500 text-[5px] text-center leading-[12px] font-bold text-white flex items-center justify-center`}>สาดน้ำเริ่มใช้งาน</div>
+      </div>
+      {/* Features */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[
+          { icon: Zap, label: '10Gbps', color: 'text-sky-400' },
+          { icon: Shield, label: 'AES-256', color: 'text-amber-400' },
+          { icon: Globe, label: 'Global', color: 'text-cyan-400' },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col items-center py-1.5 rounded border border-sky-500/10 bg-sky-500/[0.03]">
+            <f.icon className={`w-3 h-3 ${f.color} mb-0.5`} />
+            <span className="text-[4px] text-zinc-500">{f.label}</span>
+          </div>
+        ))}
+      </div>
+      {/* Water drops decoration */}
+      <div className={`flex justify-center gap-1.5 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[1, 2, 3, 4, 5].map((d) => (
+          <div key={d} className="w-2 h-2.5 rounded-full bg-gradient-to-b from-sky-400/30 to-sky-400/10" style={{ borderRadius: '50% 50% 50% 50% / 40% 40% 60% 60%' }} />
+        ))}
+      </div>
+      {/* Pricing hint */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[50, 100, 200].map((p, i) => (
+          <div key={i} className="text-center py-1 rounded border border-sky-500/10 bg-sky-500/[0.03]">
+            <p className="text-[6px] font-bold text-sky-400">{p}฿</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function CustomHtmlPreview({ isMobile = false }: { isMobile?: boolean }) {
   return (
     <div className="w-full h-full bg-zinc-950 text-white relative overflow-hidden">
@@ -480,6 +552,7 @@ const previewComponents: Record<TemplateId, React.FC<{ isMobile?: boolean }>> = 
   gaming: GamingPreview,
   corporate: CorporatePreview,
   premium: PremiumPreview,
+  songkran: SongkranPreview,
   customHtml: CustomHtmlPreview,
 }
 
