@@ -58,6 +58,7 @@ const allAdminMenuItems: MenuItem[] = [
   { name: 'จัดการโฆษณา', href: '/admin/ads', icon: Megaphone, section: 'admin', description: 'อนุมัติ/ปฏิเสธโฆษณาจากผู้ใช้' },
   { name: 'ตกแต่งหน้าแรก', href: '/admin/homepage', icon: LayoutDashboard, section: 'admin', description: 'จัดการ Layout หน้าแรก — เพิ่ม/ลบ/ย้าย sections, ปุ่มลัด, สถิติ' },
   { name: 'รูปแบบหน้าแรก', href: '/admin/landing-template', icon: Palette, section: 'admin', description: 'เลือกรูปแบบ Landing Page สำหรับผู้เยี่ยมชม' },
+  { name: 'ธีมหน้าล็อกอิน/สมัคร', href: '/admin/auth-template', icon: Crown, section: 'admin', description: 'เลือกธีมหน้าเข้าสู่ระบบและสมัครสมาชิก' },
   { name: 'เอฟเฟกต์เว็บ', href: '/admin/web-effects', icon: Sparkles, section: 'admin', description: 'จัดการเอฟเฟกต์พิเศษบนหน้าเว็บ เช่น หิมะ ฝน หิ่งห้อย' },
   { name: 'เอฟเฟกต์คลิก', href: '/admin/menu-click-effect', icon: Wand2, section: 'admin', description: 'เอฟเฟกต์แอนิเมชันเมื่อคลิก/แตะหน้าจอ เช่น Ripple, Particle, Neon' },
   { name: 'จัดเรียงเมนูผู้ใช้', href: '/admin/hamburger-menu', icon: GripVertical, section: 'admin', description: 'จัดลำดับ เปิด/ปิด เมนูแฮมเบอร์เกอร์ของผู้ใช้' },

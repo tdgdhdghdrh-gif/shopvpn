@@ -62,6 +62,8 @@ export async function GET() {
             trialEnabled: true,
             trialDurationMinutes: 60,
             serverListTemplate: 'detailed',
+            loginTemplate: 'classic',
+            registerTemplate: 'classic',
           }
         })
       }
@@ -108,6 +110,9 @@ export async function GET() {
         trialDurationMinutes: settings.trialDurationMinutes ?? 60,
         // Server List Template
         serverListTemplate: settings.serverListTemplate || 'detailed',
+        // Login / Register Template
+        loginTemplate: settings.loginTemplate || 'classic',
+        registerTemplate: settings.registerTemplate || 'classic',
       }
     })
   } catch (error) {
