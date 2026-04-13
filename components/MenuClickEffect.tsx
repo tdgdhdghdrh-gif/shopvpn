@@ -17,6 +17,7 @@ export const MENU_CLICK_EFFECTS = [
   { id: 'hologram', name: 'Hologram', description: 'เอฟเฟกต์โฮโลแกรมกระพริบ', emoji: '🔮' },
   { id: 'confettiBurst', name: 'Confetti', description: 'กระดาษโปรยจากจุดกด', emoji: '🎊' },
   { id: 'songkran', name: 'Songkran', description: 'สาดน้ำสงกรานต์ หยดน้ำ ดอกไม้ กระจายจากจุดกด', emoji: '💦' },
+  { id: 'animePower', name: 'Anime Power', description: 'พลังระเบิดอนิเมะ สปีดไลน์ ออร่า กากบาทพลังงาน', emoji: '⚔️' },
 ] as const
 
 export type MenuClickEffectId = typeof MENU_CLICK_EFFECTS[number]['id']
@@ -465,6 +466,157 @@ function renderSongkran(clientX: number, clientY: number, rect: DOMRect) {
   ], { duration: 400, easing: 'ease-out', fill: 'forwards' })
 }
 
+function renderAnimePower(clientX: number, clientY: number, rect: DOMRect) {
+  const overlay = createOverlay(rect, 1400)
+  const lx = clientX - rect.left
+  const ly = clientY - rect.top
+
+  // 1) Impact flash — bright white/yellow core explosion
+  const flash = createEl('div', {
+    position: 'absolute',
+    left: `${lx}px`,
+    top: `${ly}px`,
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, #fff 0%, rgba(255,220,50,0.9) 30%, rgba(255,100,50,0.6) 60%, transparent 80%)',
+    transform: 'translate(-50%, -50%)',
+    pointerEvents: 'none',
+    zIndex: '10',
+  })
+  overlay.appendChild(flash)
+  flash.animate([
+    { transform: 'translate(-50%, -50%) scale(0)', opacity: '1' },
+    { transform: 'translate(-50%, -50%) scale(4)', opacity: '1', offset: 0.15 },
+    { transform: 'translate(-50%, -50%) scale(6)', opacity: '0' },
+  ], { duration: 350, easing: 'ease-out', fill: 'forwards' })
+
+  // 2) Cross slash — X-shaped energy slash
+  const slashColors = ['rgba(255,50,50,0.9)', 'rgba(50,150,255,0.9)']
+  for (let s = 0; s < 2; s++) {
+    const slash = createEl('div', {
+      position: 'absolute',
+      left: `${lx}px`,
+      top: `${ly}px`,
+      width: '4px',
+      height: '0px',
+      background: `linear-gradient(to bottom, transparent, ${slashColors[s]}, #fff, ${slashColors[s]}, transparent)`,
+      boxShadow: `0 0 12px ${slashColors[s]}, 0 0 24px ${slashColors[s]}`,
+      transform: `translate(-50%, -50%) rotate(${s === 0 ? 45 : -45}deg)`,
+      pointerEvents: 'none',
+      zIndex: '8',
+    })
+    overlay.appendChild(slash)
+    slash.animate([
+      { height: '0px', opacity: '1', width: '4px' },
+      { height: '200px', opacity: '1', width: '3px', offset: 0.3 },
+      { height: '250px', opacity: '0', width: '1px' },
+    ], { duration: 450, easing: 'cubic-bezier(0,.8,.2,1)', fill: 'forwards', delay: 50 + s * 60 })
+  }
+
+  // 3) Speed lines — radiating outward from impact
+  for (let i = 0; i < 20; i++) {
+    const angle = (Math.PI * 2 * i) / 20 + (Math.random() - 0.5) * 0.3
+    const lineLen = 30 + Math.random() * 50
+    const dist = 20 + Math.random() * 15
+    const line = createEl('div', {
+      position: 'absolute',
+      left: `${lx}px`,
+      top: `${ly}px`,
+      width: `${lineLen}px`,
+      height: `${1.5 + Math.random() * 1.5}px`,
+      background: `linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,200,50,0.6), transparent)`,
+      transform: `translate(-50%, -50%) rotate(${(angle * 180) / Math.PI}deg) translateX(${dist}px)`,
+      pointerEvents: 'none',
+      borderRadius: '1px',
+    })
+    overlay.appendChild(line)
+    const endDist = dist + 40 + Math.random() * 30
+    line.animate([
+      { transform: `translate(-50%, -50%) rotate(${(angle * 180) / Math.PI}deg) translateX(${dist}px) scaleX(0)`, opacity: '1' },
+      { transform: `translate(-50%, -50%) rotate(${(angle * 180) / Math.PI}deg) translateX(${dist + 10}px) scaleX(1)`, opacity: '1', offset: 0.2 },
+      { transform: `translate(-50%, -50%) rotate(${(angle * 180) / Math.PI}deg) translateX(${endDist}px) scaleX(0.3)`, opacity: '0' },
+    ], { duration: 350 + Math.random() * 150, easing: 'ease-out', fill: 'forwards', delay: Math.random() * 80 })
+  }
+
+  // 4) Aura rings — expanding power rings
+  const ringColors = ['rgba(255,80,80,0.7)', 'rgba(80,140,255,0.6)', 'rgba(255,200,50,0.5)']
+  for (let i = 0; i < 3; i++) {
+    const ring = createEl('div', {
+      position: 'absolute',
+      left: `${lx}px`,
+      top: `${ly}px`,
+      width: '10px',
+      height: '10px',
+      borderRadius: '50%',
+      border: `2.5px solid ${ringColors[i]}`,
+      boxShadow: `0 0 10px ${ringColors[i]}, inset 0 0 5px ${ringColors[i]}`,
+      transform: 'translate(-50%, -50%)',
+      pointerEvents: 'none',
+    })
+    overlay.appendChild(ring)
+    setTimeout(() => {
+      ring.animate([
+        { width: '10px', height: '10px', opacity: '1', borderWidth: '2.5px' },
+        { width: '160px', height: '160px', opacity: '0.4', borderWidth: '1.5px', offset: 0.5 },
+        { width: '220px', height: '220px', opacity: '0', borderWidth: '0.5px' },
+      ], { duration: 500, easing: 'ease-out', fill: 'forwards' })
+    }, i * 120)
+  }
+
+  // 5) Energy particles — glowing sparks
+  const sparkColors = ['#ff4444', '#ffcc00', '#44aaff', '#ff66aa', '#ffffff']
+  for (let i = 0; i < 14; i++) {
+    const angle = (Math.PI * 2 * i) / 14 + (Math.random() - 0.5) * 0.5
+    const dist = 50 + Math.random() * 60
+    const size = 3 + Math.random() * 4
+    const color = sparkColors[i % sparkColors.length]
+    const spark = createEl('div', {
+      position: 'absolute',
+      left: `${lx}px`,
+      top: `${ly}px`,
+      width: `${size}px`,
+      height: `${size}px`,
+      borderRadius: '50%',
+      background: color,
+      boxShadow: `0 0 8px ${color}, 0 0 16px ${color}`,
+      pointerEvents: 'none',
+    })
+    overlay.appendChild(spark)
+    const tx = Math.cos(angle) * dist
+    const ty = Math.sin(angle) * dist
+    spark.animate([
+      { transform: 'translate(-50%, -50%) scale(0)', opacity: '1' },
+      { transform: `translate(calc(-50% + ${tx * 0.4}px), calc(-50% + ${ty * 0.4}px)) scale(1.5)`, opacity: '1', offset: 0.25 },
+      { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`, opacity: '0' },
+    ], { duration: 600 + Math.random() * 200, easing: 'cubic-bezier(0,.7,.3,1)', fill: 'forwards', delay: 30 + Math.random() * 100 })
+  }
+
+  // 6) Kanji flash — Japanese character appears briefly
+  const kanjis = ['斬', '轟', '爆', '閃', '烈', '覇', '滅', '雷']
+  const kanji = createEl('span', {
+    position: 'absolute',
+    left: `${lx}px`,
+    top: `${ly - 40}px`,
+    fontSize: '28px',
+    fontWeight: '900',
+    color: '#fff',
+    textShadow: '0 0 10px rgba(255,80,80,0.8), 0 0 20px rgba(255,50,50,0.5), 0 0 40px rgba(255,0,0,0.3)',
+    pointerEvents: 'none',
+    fontFamily: 'serif',
+    zIndex: '12',
+    lineHeight: '1',
+  })
+  kanji.textContent = kanjis[Math.floor(Math.random() * kanjis.length)]
+  overlay.appendChild(kanji)
+  kanji.animate([
+    { transform: 'translate(-50%, -50%) scale(0) rotate(-10deg)', opacity: '0' },
+    { transform: 'translate(-50%, -50%) scale(1.8) rotate(0deg)', opacity: '1', offset: 0.15 },
+    { transform: 'translate(-50%, -80%) scale(1.2) rotate(2deg)', opacity: '1', offset: 0.5 },
+    { transform: 'translate(-50%, -120%) scale(0.8) rotate(5deg)', opacity: '0' },
+  ], { duration: 800, easing: 'cubic-bezier(0,.6,.3,1)', fill: 'forwards', delay: 80 })
+}
+
 // ========== Effect registry ==========
 const effectRenderers: Record<string, (clientX: number, clientY: number, rect: DOMRect) => void> = {
   ripple: renderRipple,
@@ -478,6 +630,7 @@ const effectRenderers: Record<string, (clientX: number, clientY: number, rect: D
   hologram: renderHologram,
   confettiBurst: renderConfettiBurst,
   songkran: renderSongkran,
+  animePower: renderAnimePower,
 }
 
 // ========== Hook: useMenuClickEffect ==========

@@ -428,6 +428,155 @@ effectRenderers.songkran = (x, y) => {
   ], { duration: 400, easing: 'ease-out', fill: 'forwards' })
 }
 
+effectRenderers.animePower = (x, y) => {
+  const overlay = createOverlayAt(x, y, 300, 1400)
+
+  // 1) Impact flash — white/yellow core
+  const flash = createEl('div', {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, #fff 0%, rgba(255,220,50,0.9) 30%, rgba(255,100,50,0.6) 60%, transparent 80%)',
+    transform: 'translate(-50%, -50%)',
+    pointerEvents: 'none',
+    zIndex: '10',
+  })
+  overlay.appendChild(flash)
+  flash.animate([
+    { transform: 'translate(-50%, -50%) scale(0)', opacity: '1' },
+    { transform: 'translate(-50%, -50%) scale(5)', opacity: '1', offset: 0.15 },
+    { transform: 'translate(-50%, -50%) scale(8)', opacity: '0' },
+  ], { duration: 350, easing: 'ease-out', fill: 'forwards' })
+
+  // 2) Cross slash — X-shaped energy
+  const slashColors = ['rgba(255,50,50,0.9)', 'rgba(50,150,255,0.9)']
+  for (let s = 0; s < 2; s++) {
+    const slash = createEl('div', {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: '4px',
+      height: '0px',
+      background: `linear-gradient(to bottom, transparent, ${slashColors[s]}, #fff, ${slashColors[s]}, transparent)`,
+      boxShadow: `0 0 12px ${slashColors[s]}, 0 0 24px ${slashColors[s]}`,
+      transform: `translate(-50%, -50%) rotate(${s === 0 ? 45 : -45}deg)`,
+      pointerEvents: 'none',
+      zIndex: '8',
+    })
+    overlay.appendChild(slash)
+    slash.animate([
+      { height: '0px', opacity: '1', width: '4px' },
+      { height: '240px', opacity: '1', width: '3px', offset: 0.3 },
+      { height: '300px', opacity: '0', width: '1px' },
+    ], { duration: 450, easing: 'cubic-bezier(0,.8,.2,1)', fill: 'forwards', delay: 50 + s * 60 })
+  }
+
+  // 3) Speed lines — radiating outward
+  for (let i = 0; i < 24; i++) {
+    const angle = (Math.PI * 2 * i) / 24 + (Math.random() - 0.5) * 0.3
+    const lineLen = 35 + Math.random() * 60
+    const dist = 25 + Math.random() * 20
+    const line = createEl('div', {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: `${lineLen}px`,
+      height: `${1.5 + Math.random() * 1.5}px`,
+      background: 'linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,200,50,0.6), transparent)',
+      transform: `translate(-50%, -50%) rotate(${(angle * 180) / Math.PI}deg) translateX(${dist}px)`,
+      pointerEvents: 'none',
+      borderRadius: '1px',
+    })
+    overlay.appendChild(line)
+    const endDist = dist + 50 + Math.random() * 40
+    line.animate([
+      { transform: `translate(-50%, -50%) rotate(${(angle * 180) / Math.PI}deg) translateX(${dist}px) scaleX(0)`, opacity: '1' },
+      { transform: `translate(-50%, -50%) rotate(${(angle * 180) / Math.PI}deg) translateX(${dist + 12}px) scaleX(1)`, opacity: '1', offset: 0.2 },
+      { transform: `translate(-50%, -50%) rotate(${(angle * 180) / Math.PI}deg) translateX(${endDist}px) scaleX(0.3)`, opacity: '0' },
+    ], { duration: 350 + Math.random() * 150, easing: 'ease-out', fill: 'forwards', delay: Math.random() * 80 })
+  }
+
+  // 4) Aura rings
+  const ringColors = ['rgba(255,80,80,0.7)', 'rgba(80,140,255,0.6)', 'rgba(255,200,50,0.5)']
+  for (let i = 0; i < 3; i++) {
+    const ring = createEl('div', {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: '10px',
+      height: '10px',
+      borderRadius: '50%',
+      border: `2.5px solid ${ringColors[i]}`,
+      boxShadow: `0 0 10px ${ringColors[i]}, inset 0 0 5px ${ringColors[i]}`,
+      transform: 'translate(-50%, -50%)',
+      pointerEvents: 'none',
+    })
+    overlay.appendChild(ring)
+    setTimeout(() => {
+      ring.animate([
+        { width: '10px', height: '10px', opacity: '1', borderWidth: '2.5px' },
+        { width: '180px', height: '180px', opacity: '0.4', borderWidth: '1.5px', offset: 0.5 },
+        { width: '260px', height: '260px', opacity: '0', borderWidth: '0.5px' },
+      ], { duration: 500, easing: 'ease-out', fill: 'forwards' })
+    }, i * 120)
+  }
+
+  // 5) Energy sparks
+  const sparkColors = ['#ff4444', '#ffcc00', '#44aaff', '#ff66aa', '#ffffff']
+  for (let i = 0; i < 16; i++) {
+    const angle = (Math.PI * 2 * i) / 16 + (Math.random() - 0.5) * 0.5
+    const dist = 55 + Math.random() * 70
+    const size = 3 + Math.random() * 5
+    const color = sparkColors[i % sparkColors.length]
+    const spark = createEl('div', {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: `${size}px`,
+      height: `${size}px`,
+      borderRadius: '50%',
+      background: color,
+      boxShadow: `0 0 8px ${color}, 0 0 16px ${color}`,
+      pointerEvents: 'none',
+    })
+    overlay.appendChild(spark)
+    const tx = Math.cos(angle) * dist
+    const ty = Math.sin(angle) * dist
+    spark.animate([
+      { transform: 'translate(-50%, -50%) scale(0)', opacity: '1' },
+      { transform: `translate(calc(-50% + ${tx * 0.4}px), calc(-50% + ${ty * 0.4}px)) scale(1.5)`, opacity: '1', offset: 0.25 },
+      { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`, opacity: '0' },
+    ], { duration: 600 + Math.random() * 200, easing: 'cubic-bezier(0,.7,.3,1)', fill: 'forwards', delay: 30 + Math.random() * 100 })
+  }
+
+  // 6) Kanji flash
+  const kanjis = ['斬', '轟', '爆', '閃', '烈', '覇', '滅', '雷']
+  const kanji = createEl('span', {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    fontSize: '32px',
+    fontWeight: '900',
+    color: '#fff',
+    textShadow: '0 0 10px rgba(255,80,80,0.8), 0 0 20px rgba(255,50,50,0.5), 0 0 40px rgba(255,0,0,0.3)',
+    pointerEvents: 'none',
+    fontFamily: 'serif',
+    zIndex: '12',
+    lineHeight: '1',
+  })
+  kanji.textContent = kanjis[Math.floor(Math.random() * kanjis.length)]
+  overlay.appendChild(kanji)
+  kanji.animate([
+    { transform: 'translate(-50%, -50%) scale(0) rotate(-10deg)', opacity: '0' },
+    { transform: 'translate(-50%, -50%) scale(2) rotate(0deg)', opacity: '1', offset: 0.15 },
+    { transform: 'translate(-50%, -80%) scale(1.4) rotate(2deg)', opacity: '1', offset: 0.5 },
+    { transform: 'translate(-50%, -120%) scale(0.8) rotate(5deg)', opacity: '0' },
+  ], { duration: 800, easing: 'cubic-bezier(0,.6,.3,1)', fill: 'forwards', delay: 80 })
+}
+
 // ========== Main Component ==========
 export default function GlobalClickEffect() {
   const { settings } = useSettings()
