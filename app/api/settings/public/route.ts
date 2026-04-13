@@ -64,6 +64,7 @@ export async function GET() {
             serverListTemplate: 'detailed',
             loginTemplate: 'classic',
             registerTemplate: 'classic',
+            vpnTemplate: 'classic',
           }
         })
       }
@@ -110,9 +111,10 @@ export async function GET() {
         trialDurationMinutes: settings.trialDurationMinutes ?? 60,
         // Server List Template
         serverListTemplate: settings.serverListTemplate || 'detailed',
-        // Login / Register Template
+        // Login / Register / VPN Template
         loginTemplate: settings.loginTemplate || 'classic',
         registerTemplate: settings.registerTemplate || 'classic',
+        vpnTemplate: settings.vpnTemplate || 'classic',
       }
     })
   } catch (error) {

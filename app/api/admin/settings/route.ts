@@ -134,9 +134,10 @@ export async function POST(request: NextRequest) {
       trialDurationMinutes: body.trialDurationMinutes !== undefined ? parseInt(body.trialDurationMinutes) || 60 : (settings?.trialDurationMinutes ?? 60),
       // Server List Template
       serverListTemplate: body.serverListTemplate !== undefined ? body.serverListTemplate : (settings?.serverListTemplate || 'detailed'),
-      // Login / Register Template
+      // Login / Register / VPN Template
       loginTemplate: body.loginTemplate !== undefined ? body.loginTemplate : (settings?.loginTemplate || 'classic'),
       registerTemplate: body.registerTemplate !== undefined ? body.registerTemplate : (settings?.registerTemplate || 'classic'),
+      vpnTemplate: body.vpnTemplate !== undefined ? body.vpnTemplate : (settings?.vpnTemplate || 'classic'),
       updatedAt: new Date()
     }
 

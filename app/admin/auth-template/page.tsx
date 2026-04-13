@@ -5,7 +5,7 @@ import {
   Layout, Sparkles, Gamepad2, Briefcase, Crown, CheckCircle, Loader2,
   Monitor, Smartphone, Eye, Save, Shield, Zap, Globe,
   Star, Building2, Sword, Diamond, Lock, User,
-  Droplets, Sun, LogIn, UserPlus, Palette,
+  Droplets, Sun, LogIn, UserPlus, Palette, ShoppingCart,
 } from 'lucide-react'
 
 type AuthTemplateId = 'classic' | 'minimal' | 'gaming' | 'corporate' | 'premium' | 'songkran'
@@ -26,14 +26,18 @@ interface TemplateInfo {
   btnTextClass: string
   inputBorder: string
   orbColor: string
+  // VPN preview colors
+  topBar: string
+  specColor: string
+  featureColor: string
 }
 
 const templates: TemplateInfo[] = [
   {
     id: 'classic',
     name: 'Classic',
-    subtitle: 'สีฟ้า-น้ำเงิน คลาสสิก',
-    desc: 'ธีมมาตรฐาน - Gradient สีฟ้าครามผสมม่วง, Orb เรืองแสง, ฟีเจอร์ 4 อย่าง',
+    subtitle: '\u0e2a\u0e35\u0e1f\u0e49\u0e32-\u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19 \u0e04\u0e25\u0e32\u0e2a\u0e2a\u0e34\u0e01',
+    desc: '\u0e18\u0e35\u0e21\u0e21\u0e32\u0e15\u0e23\u0e10\u0e32\u0e19 - Gradient \u0e2a\u0e35\u0e1f\u0e49\u0e32\u0e04\u0e23\u0e32\u0e21\u0e1c\u0e2a\u0e21\u0e21\u0e48\u0e27\u0e07, Orb \u0e40\u0e23\u0e37\u0e2d\u0e07\u0e41\u0e2a\u0e07, \u0e1f\u0e35\u0e40\u0e08\u0e2d\u0e23\u0e4c 4 \u0e2d\u0e22\u0e48\u0e32\u0e07',
     icon: Layout,
     gradient: 'from-cyan-500 to-blue-600',
     border: 'border-cyan-500',
@@ -44,12 +48,15 @@ const templates: TemplateInfo[] = [
     btnTextClass: 'text-white',
     inputBorder: 'border-cyan-500/30',
     orbColor: 'bg-cyan-500/10',
+    topBar: 'from-cyan-500 via-violet-500 to-pink-500',
+    specColor: 'text-cyan-400',
+    featureColor: 'text-emerald-400',
   },
   {
     id: 'minimal',
     name: 'Minimal',
-    subtitle: 'ขาว-ดำ เรียบง่าย',
-    desc: 'ธีมขาวดำ Minimalist - ปุ่มขาว ข้อความดำ สะอาดตา',
+    subtitle: '\u0e02\u0e32\u0e27-\u0e14\u0e33 \u0e40\u0e23\u0e35\u0e22\u0e1a\u0e07\u0e48\u0e32\u0e22',
+    desc: '\u0e18\u0e35\u0e21\u0e02\u0e32\u0e27\u0e14\u0e33 Minimalist - \u0e1b\u0e38\u0e48\u0e21\u0e02\u0e32\u0e27 \u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e14\u0e33 \u0e2a\u0e30\u0e2d\u0e32\u0e14\u0e15\u0e32',
     icon: Sparkles,
     gradient: 'from-zinc-400 to-zinc-600',
     border: 'border-zinc-400',
@@ -60,12 +67,15 @@ const templates: TemplateInfo[] = [
     btnTextClass: 'text-black',
     inputBorder: 'border-zinc-500/30',
     orbColor: 'bg-zinc-500/5',
+    topBar: 'from-zinc-500 via-zinc-400 to-zinc-500',
+    specColor: 'text-zinc-300',
+    featureColor: 'text-zinc-300',
   },
   {
     id: 'gaming',
     name: 'Gaming',
-    subtitle: 'สีเขียว Neon เกมเมอร์',
-    desc: 'ธีมเกมเมอร์ - Grid Pattern, Neon เขียว, เอฟเฟกต์เรืองแสง',
+    subtitle: '\u0e2a\u0e35\u0e40\u0e02\u0e35\u0e22\u0e27 Neon \u0e40\u0e01\u0e21\u0e40\u0e21\u0e2d\u0e23\u0e4c',
+    desc: '\u0e18\u0e35\u0e21\u0e40\u0e01\u0e21\u0e40\u0e21\u0e2d\u0e23\u0e4c - Grid Pattern, Neon \u0e40\u0e02\u0e35\u0e22\u0e27, \u0e40\u0e2d\u0e1f\u0e40\u0e1f\u0e01\u0e15\u0e4c\u0e40\u0e23\u0e37\u0e2d\u0e07\u0e41\u0e2a\u0e07',
     icon: Gamepad2,
     gradient: 'from-green-500 to-emerald-500',
     border: 'border-green-500',
@@ -76,12 +86,15 @@ const templates: TemplateInfo[] = [
     btnTextClass: 'text-white',
     inputBorder: 'border-green-500/30',
     orbColor: 'bg-green-500/10',
+    topBar: 'from-green-500 via-emerald-400 to-green-500',
+    specColor: 'text-green-400',
+    featureColor: 'text-green-400',
   },
   {
     id: 'corporate',
     name: 'Corporate',
-    subtitle: 'สีน้ำเงินเข้ม ทางการ',
-    desc: 'ธีมองค์กร - Professional, Security Focus, สีน้ำเงิน-ม่วง',
+    subtitle: '\u0e2a\u0e35\u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19\u0e40\u0e02\u0e49\u0e21 \u0e17\u0e32\u0e07\u0e01\u0e32\u0e23',
+    desc: '\u0e18\u0e35\u0e21\u0e2d\u0e07\u0e04\u0e4c\u0e01\u0e23 - Professional, Security Focus, \u0e2a\u0e35\u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19-\u0e21\u0e48\u0e27\u0e07',
     icon: Briefcase,
     gradient: 'from-blue-600 to-indigo-600',
     border: 'border-blue-500',
@@ -92,12 +105,15 @@ const templates: TemplateInfo[] = [
     btnTextClass: 'text-white',
     inputBorder: 'border-blue-500/30',
     orbColor: 'bg-blue-500/6',
+    topBar: 'from-blue-600 via-indigo-500 to-blue-600',
+    specColor: 'text-blue-400',
+    featureColor: 'text-blue-400',
   },
   {
     id: 'premium',
     name: 'Premium',
-    subtitle: 'สีทอง-เหลือง หรูหรา',
-    desc: 'ธีมพรีเมียม - Gold Accent, VIP Access, ดูหรูหราระดับสูง',
+    subtitle: '\u0e2a\u0e35\u0e17\u0e2d\u0e07-\u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e07 \u0e2b\u0e23\u0e39\u0e2b\u0e23\u0e32',
+    desc: '\u0e18\u0e35\u0e21\u0e1e\u0e23\u0e35\u0e40\u0e21\u0e35\u0e22\u0e21 - Gold Accent, VIP Access, \u0e14\u0e39\u0e2b\u0e23\u0e39\u0e2b\u0e23\u0e32\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e2a\u0e39\u0e07',
     icon: Crown,
     gradient: 'from-amber-500 to-yellow-500',
     border: 'border-amber-500',
@@ -108,12 +124,15 @@ const templates: TemplateInfo[] = [
     btnTextClass: 'text-white',
     inputBorder: 'border-amber-500/30',
     orbColor: 'bg-amber-500/8',
+    topBar: 'from-amber-500 via-yellow-400 to-amber-500',
+    specColor: 'text-amber-400',
+    featureColor: 'text-amber-400',
   },
   {
     id: 'songkran',
     name: 'Songkran',
-    subtitle: 'เทศกาลสงกรานต์',
-    desc: 'ธีมสงกรานต์ - น้ำ/ทอง, Emoji Drops Animation, เทศกาลไทย',
+    subtitle: '\u0e40\u0e17\u0e28\u0e01\u0e32\u0e25\u0e2a\u0e07\u0e01\u0e23\u0e32\u0e19\u0e15\u0e4c',
+    desc: '\u0e18\u0e35\u0e21\u0e2a\u0e07\u0e01\u0e23\u0e32\u0e19\u0e15\u0e4c - \u0e19\u0e49\u0e33/\u0e17\u0e2d\u0e07, Emoji Drops Animation, \u0e40\u0e17\u0e28\u0e01\u0e32\u0e25\u0e44\u0e17\u0e22',
     icon: Droplets,
     gradient: 'from-sky-400 to-cyan-500',
     border: 'border-sky-500',
@@ -124,6 +143,9 @@ const templates: TemplateInfo[] = [
     btnTextClass: 'text-white',
     inputBorder: 'border-sky-500/30',
     orbColor: 'bg-sky-500/8',
+    topBar: 'from-sky-400 via-cyan-400 to-sky-400',
+    specColor: 'text-sky-400',
+    featureColor: 'text-sky-400',
   },
 ]
 
@@ -171,30 +193,22 @@ function LoginPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMobile
 
   return (
     <div className={`w-full h-full bg-gradient-to-br ${tmpl.bgClass} text-white relative overflow-hidden`}>
-      {/* Gaming grid */}
       {isGaming && (
         <div className="absolute inset-0 opacity-[0.04]" style={{
           backgroundImage: 'linear-gradient(rgba(34,197,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.3) 1px, transparent 1px)',
           backgroundSize: '8px 8px',
         }} />
       )}
-      {/* Orb glow */}
       <div className={`absolute top-2 right-2 w-12 h-12 ${tmpl.orbColor} blur-xl rounded-full`} />
-      {/* Songkran emoji */}
-      {isSongkran && (
-        <div className="absolute top-1 right-2 text-[8px] opacity-40">💦🌸🐘</div>
-      )}
+      {isSongkran && <div className="absolute top-1 right-2 text-[8px] opacity-40">💦🌸🐘</div>}
 
       {isMobile ? (
-        /* Mobile: full form */
         <div className="relative flex flex-col items-center justify-center h-full px-3 py-4">
-          {/* Logo + Title */}
           <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${tmpl.gradient}/20 flex items-center justify-center mb-1.5`}>
             <Lock className={`w-2.5 h-2.5 ${tmpl.accentColor}`} />
           </div>
           <p className={`text-[7px] font-bold ${tmpl.accentColor} mb-0.5`}>เข้าสู่ระบบ</p>
           <p className="text-[4px] text-zinc-500 mb-2">ล็อกอินเพื่อใช้งาน VPN</p>
-          {/* Form */}
           <div className="w-full max-w-[80px] space-y-1.5">
             <div className={`h-3 rounded-md bg-white/5 border ${tmpl.inputBorder} px-1 flex items-center gap-0.5`}>
               <User className="w-1.5 h-1.5 text-zinc-600" />
@@ -211,16 +225,13 @@ function LoginPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMobile
           <p className="text-[3.5px] text-zinc-600 mt-1.5">ยังไม่มีบัญชี? <span className={tmpl.accentColor}>สมัครสมาชิก</span></p>
         </div>
       ) : (
-        /* Desktop: split layout */
         <div className="flex h-full">
-          {/* Left panel - hero */}
           <div className={`w-[45%] flex flex-col items-center justify-center px-2 py-3 bg-gradient-to-br ${tmpl.bgClass}`}>
             <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${tmpl.gradient}/20 flex items-center justify-center mb-1`}>
               <Shield className={`w-2.5 h-2.5 ${tmpl.accentColor}`} />
             </div>
             <p className={`text-[5px] font-bold ${tmpl.accentColor} mb-0.5 text-center`}>ยินดีต้อนรับ</p>
             <p className="text-[3.5px] text-zinc-500 text-center mb-1.5">เข้าสู่ระบบ VPN</p>
-            {/* Mini features */}
             <div className="space-y-0.5 w-full px-1">
               {[Shield, Zap, Globe].map((Icon, i) => (
                 <div key={i} className="flex items-center gap-1 px-1 py-0.5 rounded bg-white/[0.03]">
@@ -230,7 +241,6 @@ function LoginPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMobile
               ))}
             </div>
           </div>
-          {/* Right panel - form */}
           <div className="flex-1 flex flex-col items-center justify-center px-3">
             <p className="text-[5px] font-bold text-white mb-0.5">เข้าสู่ระบบ</p>
             <p className="text-[3px] text-zinc-500 mb-2">กรอกข้อมูลเพื่อเข้าใช้งาน</p>
@@ -262,29 +272,22 @@ function RegisterPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMob
 
   return (
     <div className={`w-full h-full bg-gradient-to-br ${tmpl.bgClass} text-white relative overflow-hidden`}>
-      {/* Gaming grid */}
       {isGaming && (
         <div className="absolute inset-0 opacity-[0.04]" style={{
           backgroundImage: 'linear-gradient(rgba(34,197,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.3) 1px, transparent 1px)',
           backgroundSize: '8px 8px',
         }} />
       )}
-      {/* Orb glow */}
       <div className={`absolute top-2 left-2 w-12 h-12 ${tmpl.orbColor} blur-xl rounded-full`} />
-      {/* Songkran emoji */}
-      {isSongkran && (
-        <div className="absolute top-1 left-2 text-[8px] opacity-40">🌊🏖️🎉</div>
-      )}
+      {isSongkran && <div className="absolute top-1 left-2 text-[8px] opacity-40">🌊🏖️🎉</div>}
 
       {isMobile ? (
-        /* Mobile: full form */
         <div className="relative flex flex-col items-center justify-center h-full px-3 py-3">
           <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${tmpl.gradient}/20 flex items-center justify-center mb-1`}>
             <UserPlus className={`w-2.5 h-2.5 ${tmpl.accentColor}`} />
           </div>
           <p className={`text-[7px] font-bold ${tmpl.accentColor} mb-0.5`}>สมัครสมาชิก</p>
           <p className="text-[4px] text-zinc-500 mb-1.5">สร้างบัญชีใหม่</p>
-          {/* Form */}
           <div className="w-full max-w-[80px] space-y-1">
             <div className={`h-2.5 rounded-md bg-white/5 border ${tmpl.inputBorder} px-1 flex items-center gap-0.5`}>
               <User className="w-1.5 h-1.5 text-zinc-600" />
@@ -308,16 +311,13 @@ function RegisterPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMob
           <p className="text-[3px] text-zinc-600 mt-1">มีบัญชีแล้ว? <span className={tmpl.accentColor}>เข้าสู่ระบบ</span></p>
         </div>
       ) : (
-        /* Desktop: split layout */
         <div className="flex h-full">
-          {/* Left panel - hero */}
           <div className={`w-[45%] flex flex-col items-center justify-center px-2 py-3 bg-gradient-to-br ${tmpl.bgClass}`}>
             <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${tmpl.gradient}/20 flex items-center justify-center mb-1`}>
               <Star className={`w-2.5 h-2.5 ${tmpl.accentColor}`} />
             </div>
             <p className={`text-[5px] font-bold ${tmpl.accentColor} mb-0.5 text-center`}>สมัครสมาชิก</p>
             <p className="text-[3.5px] text-zinc-500 text-center mb-1.5">เริ่มต้นใช้ VPN</p>
-            {/* Stats */}
             <div className="flex gap-1 w-full px-1">
               {['1K+', '20+', '99%'].map((v, i) => (
                 <div key={i} className="flex-1 text-center py-0.5 rounded bg-white/[0.03]">
@@ -327,7 +327,6 @@ function RegisterPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMob
               ))}
             </div>
           </div>
-          {/* Right panel - form */}
           <div className="flex-1 flex flex-col items-center justify-center px-2">
             <p className="text-[5px] font-bold text-white mb-0.5">สร้างบัญชีใหม่</p>
             <p className="text-[3px] text-zinc-500 mb-1.5">กรอกข้อมูลเพื่อสมัคร</p>
@@ -349,13 +348,245 @@ function RegisterPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMob
   )
 }
 
+// VPN Buy page mini preview
+function VpnBuyPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMobile?: boolean }) {
+  const isGaming = tmpl.id === 'gaming'
+  const isSongkran = tmpl.id === 'songkran'
+
+  return (
+    <div className={`w-full h-full bg-gradient-to-br ${tmpl.bgClass} text-white relative overflow-hidden`}>
+      {isGaming && (
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: 'linear-gradient(rgba(34,197,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.3) 1px, transparent 1px)',
+          backgroundSize: '8px 8px',
+        }} />
+      )}
+      <div className={`absolute top-2 right-2 w-10 h-10 ${tmpl.orbColor} blur-xl rounded-full`} />
+      {isSongkran && <div className="absolute top-1 right-1 text-[6px] opacity-30">💦🌊</div>}
+
+      {isMobile ? (
+        /* Mobile: stacked layout */
+        <div className="relative flex flex-col h-full px-2 py-2">
+          {/* Server card */}
+          <div className="rounded-md border border-white/[0.08] bg-white/[0.02] overflow-hidden mb-1.5">
+            <div className={`h-0.5 bg-gradient-to-r ${tmpl.topBar}`} />
+            <div className="p-1.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                <div className="w-5 h-5 rounded bg-zinc-800 flex items-center justify-center text-[8px]">🇹🇭</div>
+                <div>
+                  <p className="text-[5px] font-bold text-white">Thailand #1</p>
+                  <div className="flex items-center gap-0.5">
+                    <div className="w-1 h-1 rounded-full bg-emerald-400" />
+                    <span className="text-[3px] text-emerald-400">Online</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-0.5">
+                {[Shield, Zap].map((Icon, i) => (
+                  <div key={i} className="flex-1 flex items-center gap-0.5 p-0.5 rounded bg-white/[0.03] border border-white/[0.05]">
+                    <Icon className={`w-1.5 h-1.5 ${tmpl.specColor}`} />
+                    <div className="h-0.5 flex-1 rounded bg-white/10" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Purchase form */}
+          <div className="flex-1 space-y-1">
+            <div className="h-2 rounded bg-white/5 border border-white/[0.06] px-1 flex items-center">
+              <span className="text-[3px] text-zinc-600">ชื่อ VPN</span>
+            </div>
+            <div className="flex gap-0.5">
+              {['1', '7', '15', '30'].map(d => (
+                <div key={d} className={`flex-1 h-2 rounded text-[3px] font-bold flex items-center justify-center ${d === '30' ? `bg-gradient-to-r ${tmpl.btnClass} ${tmpl.btnTextClass}` : 'bg-white/5 text-zinc-500'}`}>
+                  {d}
+                </div>
+              ))}
+            </div>
+            <div className={`h-3 rounded bg-gradient-to-r ${tmpl.btnClass} flex items-center justify-center`}>
+              <span className={`text-[4px] font-bold ${tmpl.btnTextClass}`}>ซื้อ VPN</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Desktop: 2-column layout */
+        <div className="flex h-full">
+          {/* Left - server info */}
+          <div className="w-[40%] p-2">
+            <div className="rounded-md border border-white/[0.08] bg-white/[0.02] overflow-hidden h-full">
+              <div className={`h-0.5 bg-gradient-to-r ${tmpl.topBar}`} />
+              <div className="p-1.5">
+                <div className="flex items-center gap-1 mb-1.5">
+                  <div className="w-5 h-5 rounded bg-zinc-800 flex items-center justify-center text-[8px]">🇹🇭</div>
+                  <div>
+                    <p className="text-[5px] font-bold">Thailand</p>
+                    <div className="flex items-center gap-0.5">
+                      <div className="w-1 h-1 rounded-full bg-emerald-400" />
+                      <span className="text-[3px] text-emerald-400">Online</span>
+                    </div>
+                  </div>
+                </div>
+                <p className={`text-[6px] font-bold ${tmpl.accentColor} mb-1`}>5 ฿/วัน</p>
+                {/* Mini specs grid */}
+                <div className="grid grid-cols-2 gap-0.5">
+                  {[Shield, Zap, Globe, Star].map((Icon, i) => (
+                    <div key={i} className="flex items-center gap-0.5 p-0.5 rounded bg-white/[0.03] border border-white/[0.05]">
+                      <Icon className={`w-1.5 h-1.5 ${tmpl.specColor}`} />
+                      <div className="h-0.5 flex-1 rounded bg-white/10" />
+                    </div>
+                  ))}
+                </div>
+                {/* Features */}
+                <div className="mt-1.5 space-y-0.5">
+                  {[Lock, Shield, Zap].map((Icon, i) => (
+                    <div key={i} className="flex items-center gap-0.5">
+                      <Icon className={`w-1.5 h-1.5 ${tmpl.featureColor}`} />
+                      <div className="h-0.5 flex-1 rounded bg-white/5" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Right - purchase form */}
+          <div className="flex-1 p-2 flex flex-col justify-center">
+            <div className="space-y-1">
+              <div className="h-2 rounded bg-white/5 border border-white/[0.06] px-1 flex items-center">
+                <span className="text-[3px] text-zinc-600">ชื่อ VPN</span>
+              </div>
+              <div className="flex gap-0.5">
+                {['1', '7', '15', '30'].map(d => (
+                  <div key={d} className={`flex-1 h-2 rounded text-[3px] font-bold flex items-center justify-center ${d === '30' ? `bg-gradient-to-r ${tmpl.btnClass} ${tmpl.btnTextClass}` : 'bg-white/5 text-zinc-500'}`}>
+                    {d}วัน
+                  </div>
+                ))}
+              </div>
+              <div className="h-2 rounded bg-white/5 border border-white/[0.06] px-1 flex items-center justify-between">
+                <span className="text-[3px] text-zinc-500">ราคารวม</span>
+                <span className={`text-[3.5px] font-bold ${tmpl.accentColor}`}>150 ฿</span>
+              </div>
+              <div className={`h-3 rounded bg-gradient-to-r ${tmpl.btnClass} flex items-center justify-center`}>
+                <span className={`text-[4px] font-bold ${tmpl.btnTextClass}`}>ซื้อ VPN</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Reusable template grid section
+function TemplateGridSection({
+  sectionTitle,
+  sectionDesc,
+  sectionIcon: SectionIcon,
+  iconGradient,
+  iconBorder,
+  iconColor,
+  selected,
+  current,
+  onSelect,
+  renderPreview,
+}: {
+  sectionTitle: string
+  sectionDesc: string
+  sectionIcon: React.ElementType
+  iconGradient: string
+  iconBorder: string
+  iconColor: string
+  selected: AuthTemplateId
+  current: AuthTemplateId
+  onSelect: (id: AuthTemplateId) => void
+  renderPreview: (tmpl: TemplateInfo, isMobile: boolean) => React.ReactNode
+}) {
+  return (
+    <div className="mb-10">
+      <div className="flex items-center gap-2.5 mb-4">
+        <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${iconGradient} border ${iconBorder} flex items-center justify-center`}>
+          <SectionIcon className={`w-3.5 h-3.5 ${iconColor}`} />
+        </div>
+        <div>
+          <h2 className="text-base font-bold text-white">{sectionTitle}</h2>
+          <p className="text-[11px] text-zinc-500">{sectionDesc}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {templates.map((tmpl) => {
+          const isActive = selected === tmpl.id
+          const isCurrent = current === tmpl.id
+
+          return (
+            <button
+              key={tmpl.id}
+              onClick={() => onSelect(tmpl.id)}
+              className={`relative text-left rounded-2xl border-2 transition-all overflow-hidden group ${
+                isActive
+                  ? `${tmpl.border}/40 bg-white/[0.03] shadow-lg shadow-${tmpl.accent}-500/5`
+                  : 'border-white/[0.06] hover:border-white/[0.15] bg-white/[0.01] hover:bg-white/[0.02]'
+              }`}
+            >
+              {isActive && (
+                <div className="absolute top-2.5 right-2.5 z-10">
+                  <div className={`w-6 h-6 bg-gradient-to-r ${tmpl.gradient} rounded-full flex items-center justify-center shadow-lg`}>
+                    <CheckCircle className="w-3.5 h-3.5 text-white" />
+                  </div>
+                </div>
+              )}
+
+              {isCurrent && (
+                <div className="absolute top-2.5 left-2.5 z-10">
+                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-bold text-emerald-400">ACTIVE</span>
+                </div>
+              )}
+
+              <div className="p-3 pb-0">
+                <div className="flex gap-2 justify-center">
+                  <div className="flex-1 max-w-[180px]">
+                    <DesktopFrame>
+                      {renderPreview(tmpl, false)}
+                    </DesktopFrame>
+                  </div>
+                  <div className="hidden sm:block">
+                    <PhoneFrame>
+                      {renderPreview(tmpl, true)}
+                    </PhoneFrame>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 pt-2">
+                <div className="flex items-start gap-2.5">
+                  <div className={`w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br ${tmpl.gradient}/10 border border-white/[0.08] flex items-center justify-center`}>
+                    <tmpl.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className={`text-sm font-bold ${isActive ? 'text-white' : 'text-zinc-300'}`}>{tmpl.name}</h3>
+                      <span className="text-[10px] text-zinc-600">{tmpl.subtitle}</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 leading-relaxed">{tmpl.desc}</p>
+                  </div>
+                </div>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ===== Main Page =====
 
 export default function AuthTemplatePage() {
   const [loginCurrent, setLoginCurrent] = useState<AuthTemplateId>('classic')
   const [registerCurrent, setRegisterCurrent] = useState<AuthTemplateId>('classic')
+  const [vpnCurrent, setVpnCurrent] = useState<AuthTemplateId>('classic')
   const [loginSelected, setLoginSelected] = useState<AuthTemplateId>('classic')
   const [registerSelected, setRegisterSelected] = useState<AuthTemplateId>('classic')
+  const [vpnSelected, setVpnSelected] = useState<AuthTemplateId>('classic')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -368,10 +599,9 @@ export default function AuthTemplatePage() {
         const s = data.settings
         const lt = (s?.loginTemplate || 'classic') as AuthTemplateId
         const rt = (s?.registerTemplate || 'classic') as AuthTemplateId
-        setLoginCurrent(lt)
-        setRegisterCurrent(rt)
-        setLoginSelected(lt)
-        setRegisterSelected(rt)
+        const vt = (s?.vpnTemplate || 'classic') as AuthTemplateId
+        setLoginCurrent(lt); setRegisterCurrent(rt); setVpnCurrent(vt)
+        setLoginSelected(lt); setRegisterSelected(rt); setVpnSelected(vt)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -393,11 +623,13 @@ export default function AuthTemplatePage() {
           ...currentSettings,
           loginTemplate: loginSelected,
           registerTemplate: registerSelected,
+          vpnTemplate: vpnSelected,
         }),
       })
       if (res.ok) {
         setLoginCurrent(loginSelected)
         setRegisterCurrent(registerSelected)
+        setVpnCurrent(vpnSelected)
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
       }
@@ -408,7 +640,7 @@ export default function AuthTemplatePage() {
     }
   }
 
-  const hasChanges = loginCurrent !== loginSelected || registerCurrent !== registerSelected
+  const hasChanges = loginCurrent !== loginSelected || registerCurrent !== registerSelected || vpnCurrent !== vpnSelected
 
   if (loading) {
     return (
@@ -427,9 +659,9 @@ export default function AuthTemplatePage() {
             <div className="w-9 h-9 bg-gradient-to-br from-violet-500/20 to-pink-500/20 border border-violet-500/20 rounded-xl flex items-center justify-center">
               <Palette className="w-4.5 h-4.5 text-violet-400" />
             </div>
-            ธีมหน้าล็อกอิน / สมัคร
+            ธีมหน้าล็อกอิน / สมัคร / ซื้อ VPN
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1 ml-[46px]">เลือกธีมสำหรับหน้าเข้าสู่ระบบ และหน้าสมัครสมาชิก แยกกันได้</p>
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1 ml-[46px]">เลือกธีมสำหรับหน้าเข้าสู่ระบบ, หน้าสมัครสมาชิก, และหน้าซื้อ VPN แยกกันได้</p>
         </div>
 
         {/* Save Button */}
@@ -455,7 +687,7 @@ export default function AuthTemplatePage() {
       </div>
 
       {/* Currently Active Summary */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="px-4 py-3 rounded-xl bg-zinc-900/50 border border-white/5 flex items-center gap-3">
           <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${templates.find(t => t.id === loginCurrent)?.gradient || 'from-cyan-500 to-blue-600'} flex items-center justify-center`}>
             <LogIn className="w-4 h-4 text-white" />
@@ -487,167 +719,65 @@ export default function AuthTemplatePage() {
             </div>
           )}
         </div>
+
+        <div className="px-4 py-3 rounded-xl bg-zinc-900/50 border border-white/5 flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${templates.find(t => t.id === vpnCurrent)?.gradient || 'from-cyan-500 to-blue-600'} flex items-center justify-center`}>
+            <ShoppingCart className="w-4 h-4 text-white" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] text-zinc-500">หน้าซื้อ VPN</p>
+            <p className="text-sm font-bold text-white truncate">{templates.find(t => t.id === vpnCurrent)?.name}</p>
+          </div>
+          {vpnCurrent !== vpnSelected && (
+            <div className="ml-auto flex items-center gap-1 text-amber-400 shrink-0">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-[10px] font-medium">เปลี่ยน</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ===== Login Template Section ===== */}
-      <div className="mb-10">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20 flex items-center justify-center">
-            <LogIn className="w-3.5 h-3.5 text-cyan-400" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-white">เลือกธีมหน้าล็อกอิน</h2>
-            <p className="text-[11px] text-zinc-500">ธีมที่ผู้ใช้จะเห็นเมื่อเข้าสู่หน้าเข้าสู่ระบบ</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((tmpl) => {
-            const isActive = loginSelected === tmpl.id
-            const isCurrent = loginCurrent === tmpl.id
-
-            return (
-              <button
-                key={tmpl.id}
-                onClick={() => setLoginSelected(tmpl.id)}
-                className={`relative text-left rounded-2xl border-2 transition-all overflow-hidden group ${
-                  isActive
-                    ? `${tmpl.border}/40 bg-white/[0.03] shadow-lg shadow-${tmpl.accent}-500/5`
-                    : 'border-white/[0.06] hover:border-white/[0.15] bg-white/[0.01] hover:bg-white/[0.02]'
-                }`}
-              >
-                {/* Active badge */}
-                {isActive && (
-                  <div className="absolute top-2.5 right-2.5 z-10">
-                    <div className={`w-6 h-6 bg-gradient-to-r ${tmpl.gradient} rounded-full flex items-center justify-center shadow-lg`}>
-                      <CheckCircle className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Currently in use badge */}
-                {isCurrent && (
-                  <div className="absolute top-2.5 left-2.5 z-10">
-                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-bold text-emerald-400">ACTIVE</span>
-                  </div>
-                )}
-
-                {/* Preview area */}
-                <div className="p-3 pb-0">
-                  <div className="flex gap-2 justify-center">
-                    <div className="flex-1 max-w-[180px]">
-                      <DesktopFrame>
-                        <LoginPreview tmpl={tmpl} isMobile={false} />
-                      </DesktopFrame>
-                    </div>
-                    <div className="hidden sm:block">
-                      <PhoneFrame>
-                        <LoginPreview tmpl={tmpl} isMobile={true} />
-                      </PhoneFrame>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="p-3 pt-2">
-                  <div className="flex items-start gap-2.5">
-                    <div className={`w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br ${tmpl.gradient}/10 border border-white/[0.08] flex items-center justify-center`}>
-                      <tmpl.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className={`text-sm font-bold ${isActive ? 'text-white' : 'text-zinc-300'}`}>{tmpl.name}</h3>
-                        <span className="text-[10px] text-zinc-600">{tmpl.subtitle}</span>
-                      </div>
-                      <p className="text-[11px] text-zinc-500 leading-relaxed">{tmpl.desc}</p>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      <TemplateGridSection
+        sectionTitle="เลือกธีมหน้าล็อกอิน"
+        sectionDesc="ธีมที่ผู้ใช้จะเห็นเมื่อเข้าสู่หน้าเข้าสู่ระบบ"
+        sectionIcon={LogIn}
+        iconGradient="from-cyan-500/20 to-blue-500/20"
+        iconBorder="border-cyan-500/20"
+        iconColor="text-cyan-400"
+        selected={loginSelected}
+        current={loginCurrent}
+        onSelect={setLoginSelected}
+        renderPreview={(tmpl, isMobile) => <LoginPreview tmpl={tmpl} isMobile={isMobile} />}
+      />
 
       {/* ===== Register Template Section ===== */}
-      <div className="mb-10">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/20 flex items-center justify-center">
-            <UserPlus className="w-3.5 h-3.5 text-pink-400" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-white">เลือกธีมหน้าสมัครสมาชิก</h2>
-            <p className="text-[11px] text-zinc-500">ธีมที่ผู้ใช้จะเห็นเมื่อเข้าสู่หน้าสมัครสมาชิก</p>
-          </div>
-        </div>
+      <TemplateGridSection
+        sectionTitle="เลือกธีมหน้าสมัครสมาชิก"
+        sectionDesc="ธีมที่ผู้ใช้จะเห็นเมื่อเข้าสู่หน้าสมัครสมาชิก"
+        sectionIcon={UserPlus}
+        iconGradient="from-pink-500/20 to-rose-500/20"
+        iconBorder="border-pink-500/20"
+        iconColor="text-pink-400"
+        selected={registerSelected}
+        current={registerCurrent}
+        onSelect={setRegisterSelected}
+        renderPreview={(tmpl, isMobile) => <RegisterPreview tmpl={tmpl} isMobile={isMobile} />}
+      />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((tmpl) => {
-            const isActive = registerSelected === tmpl.id
-            const isCurrent = registerCurrent === tmpl.id
-
-            return (
-              <button
-                key={tmpl.id}
-                onClick={() => setRegisterSelected(tmpl.id)}
-                className={`relative text-left rounded-2xl border-2 transition-all overflow-hidden group ${
-                  isActive
-                    ? `${tmpl.border}/40 bg-white/[0.03] shadow-lg shadow-${tmpl.accent}-500/5`
-                    : 'border-white/[0.06] hover:border-white/[0.15] bg-white/[0.01] hover:bg-white/[0.02]'
-                }`}
-              >
-                {/* Active badge */}
-                {isActive && (
-                  <div className="absolute top-2.5 right-2.5 z-10">
-                    <div className={`w-6 h-6 bg-gradient-to-r ${tmpl.gradient} rounded-full flex items-center justify-center shadow-lg`}>
-                      <CheckCircle className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Currently in use badge */}
-                {isCurrent && (
-                  <div className="absolute top-2.5 left-2.5 z-10">
-                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-bold text-emerald-400">ACTIVE</span>
-                  </div>
-                )}
-
-                {/* Preview area */}
-                <div className="p-3 pb-0">
-                  <div className="flex gap-2 justify-center">
-                    <div className="flex-1 max-w-[180px]">
-                      <DesktopFrame>
-                        <RegisterPreview tmpl={tmpl} isMobile={false} />
-                      </DesktopFrame>
-                    </div>
-                    <div className="hidden sm:block">
-                      <PhoneFrame>
-                        <RegisterPreview tmpl={tmpl} isMobile={true} />
-                      </PhoneFrame>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="p-3 pt-2">
-                  <div className="flex items-start gap-2.5">
-                    <div className={`w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br ${tmpl.gradient}/10 border border-white/[0.08] flex items-center justify-center`}>
-                      <tmpl.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className={`text-sm font-bold ${isActive ? 'text-white' : 'text-zinc-300'}`}>{tmpl.name}</h3>
-                        <span className="text-[10px] text-zinc-600">{tmpl.subtitle}</span>
-                      </div>
-                      <p className="text-[11px] text-zinc-500 leading-relaxed">{tmpl.desc}</p>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      {/* ===== VPN Buy Template Section ===== */}
+      <TemplateGridSection
+        sectionTitle="เลือกธีมหน้าซื้อ VPN"
+        sectionDesc="ธีมที่ผู้ใช้จะเห็นเมื่อเข้าสู่หน้าซื้อ VPN (เลือกเซิร์ฟเวอร์แล้วกดซื้อ)"
+        sectionIcon={ShoppingCart}
+        iconGradient="from-emerald-500/20 to-teal-500/20"
+        iconBorder="border-emerald-500/20"
+        iconColor="text-emerald-400"
+        selected={vpnSelected}
+        current={vpnCurrent}
+        onSelect={setVpnSelected}
+        renderPreview={(tmpl, isMobile) => <VpnBuyPreview tmpl={tmpl} isMobile={isMobile} />}
+      />
 
       {/* Bottom save bar (sticky on mobile) */}
       {hasChanges && (
