@@ -45,6 +45,7 @@ import {
   Wand2,
   Download,
   CalendarClock,
+  Crown,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -72,6 +73,7 @@ const menuItems = [
   { name: 'จัดการโฆษณา', href: '/admin/ads', icon: Megaphone },
   { name: 'ตกแต่งหน้าแรก', href: '/admin/homepage', icon: LayoutDashboard },
   { name: 'รูปแบบหน้าแรก', href: '/admin/landing-template', icon: Palette },
+  { name: 'ธีมล็อกอิน/สมัคร', href: '/admin/auth-template', icon: Crown },
   { name: 'เอฟเฟกต์เว็บ', href: '/admin/web-effects', icon: Sparkles },
   { name: 'เอฟเฟกต์คลิก', href: '/admin/menu-click-effect', icon: Wand2 },
   { name: 'จัดเรียงเมนูผู้ใช้', href: '/admin/hamburger-menu', icon: GripVertical },
