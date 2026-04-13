@@ -33,6 +33,7 @@ type EffectType = 'none' | 'snow' | 'rain' | 'fireflies' | 'sakura' | 'bubbles' 
   | 'aurora' | 'lightning' | 'smoke' | 'embers' | 'leaves' | 'diamonds' | 'neon' | 'galaxy' | 'thunder' | 'goldDust'
   | 'jellyfish' | 'meteor' | 'dna' | 'pixel' | 'plasma' | 'lanterns' | 'dandelion' | 'glitch' | 'comet' | 'ripple'
   | 'crystals' | 'zodiac' | 'roses' | 'sparkle' | 'geometric' | 'feathers' | 'musicNotes' | 'butterflies' | 'fog' | 'fireworks'
+  | 'songkran'
 
 interface Props {
   effect: EffectType
@@ -79,6 +80,7 @@ const PARTICLE_COUNTS: Record<EffectType, number> = {
   butterflies: 15,
   fog: 12,
   fireworks: 15,
+  songkran: 50,
 }
 
 export default function WebEffectsRenderer({ effect }: Props) {
@@ -731,6 +733,64 @@ export default function WebEffectsRenderer({ effect }: Props) {
           color: ['#ff3366', '#33ccff', '#ffcc00', '#66ff66', '#ff66ff', '#ff9933', '#ffffff'][Math.floor(Math.random() * 7)],
           phase: 0, // 0 = rising, 1 = exploded
           trail: [],
+        }
+      }
+
+      case 'songkran': {
+        // Mix of water drops, splash particles, and Songkran emojis
+        const songkranType = Math.random()
+        if (songkranType < 0.55) {
+          // Water droplet - falls from top
+          return {
+            x: Math.random() * w,
+            y: fromTop ? -10 : Math.random() * h,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: 2 + Math.random() * 4,
+            size: 3 + Math.random() * 6,
+            opacity: 0.3 + Math.random() * 0.5,
+            rotation: 0, rotationSpeed: 0,
+            life: 0, maxLife: 9999,
+            color: ['#38bdf8', '#22d3ee', '#06b6d4', '#67e8f9', '#a5f3fc'][Math.floor(Math.random() * 5)],
+            wobble: Math.random() * Math.PI * 2,
+            wobbleSpeed: 0.02 + Math.random() * 0.03,
+            phase: 0, // 0 = water drop
+          }
+        } else if (songkranType < 0.8) {
+          // Golden/flower petal - floats gently
+          return {
+            x: Math.random() * w,
+            y: fromTop ? -15 : Math.random() * h,
+            vx: 0.3 + Math.random() * 0.8,
+            vy: 0.5 + Math.random() * 1,
+            size: 5 + Math.random() * 7,
+            opacity: 0.4 + Math.random() * 0.5,
+            rotation: Math.random() * 360,
+            rotationSpeed: (Math.random() - 0.5) * 3,
+            life: 0, maxLife: 9999,
+            color: ['#fbbf24', '#f59e0b', '#fb923c', '#ff6b9d', '#c084fc'][Math.floor(Math.random() * 5)],
+            swing: Math.random() * Math.PI * 2,
+            swingSpeed: 0.02 + Math.random() * 0.02,
+            phase: 1, // 1 = petal/flower
+          }
+        } else {
+          // Songkran emoji particle - floats down slowly
+          const emojis = ['💦', '🌊', '🐘', '🌸', '🏖️', '🎉', '🪷', '☀️', '🌺', '💧']
+          return {
+            x: Math.random() * w,
+            y: fromTop ? -20 : Math.random() * h,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: 0.3 + Math.random() * 0.8,
+            size: 16 + Math.random() * 12,
+            opacity: 0.4 + Math.random() * 0.4,
+            rotation: (Math.random() - 0.5) * 30,
+            rotationSpeed: (Math.random() - 0.5) * 1,
+            life: 0, maxLife: 9999,
+            color: '#ffffff',
+            char: emojis[Math.floor(Math.random() * emojis.length)],
+            wobble: Math.random() * Math.PI * 2,
+            wobbleSpeed: 0.01 + Math.random() * 0.02,
+            phase: 2, // 2 = emoji
+          }
         }
       }
 
@@ -1522,6 +1582,63 @@ export default function WebEffectsRenderer({ effect }: Props) {
         }
         break
       }
+
+      case 'songkran': {
+        const pType = p.phase || 0
+        if (pType === 0) {
+          // Water droplet
+          ctx.translate(p.x, p.y)
+          ctx.fillStyle = p.color
+          // Teardrop shape
+          ctx.beginPath()
+          ctx.moveTo(0, -p.size * 0.6)
+          ctx.bezierCurveTo(p.size * 0.4, -p.size * 0.1, p.size * 0.35, p.size * 0.4, 0, p.size * 0.5)
+          ctx.bezierCurveTo(-p.size * 0.35, p.size * 0.4, -p.size * 0.4, -p.size * 0.1, 0, -p.size * 0.6)
+          ctx.fill()
+          // Shine highlight
+          ctx.globalAlpha = p.opacity * 0.6
+          ctx.fillStyle = '#ffffff'
+          ctx.beginPath()
+          ctx.ellipse(-p.size * 0.12, -p.size * 0.15, p.size * 0.08, p.size * 0.15, -0.3, 0, Math.PI * 2)
+          ctx.fill()
+          // Glow
+          ctx.globalAlpha = p.opacity * 0.15
+          const dropGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * 1.5)
+          dropGlow.addColorStop(0, p.color)
+          dropGlow.addColorStop(1, 'transparent')
+          ctx.fillStyle = dropGlow
+          ctx.beginPath()
+          ctx.arc(0, 0, p.size * 1.5, 0, Math.PI * 2)
+          ctx.fill()
+        } else if (pType === 1) {
+          // Petal / flower
+          ctx.translate(p.x, p.y)
+          ctx.rotate((p.rotation * Math.PI) / 180)
+          ctx.fillStyle = p.color
+          // Petal shape with 5 petals
+          for (let i = 0; i < 5; i++) {
+            ctx.beginPath()
+            ctx.ellipse(0, -p.size * 0.3, p.size * 0.2, p.size * 0.35, 0, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.rotate(Math.PI * 2 / 5)
+          }
+          // Center dot
+          ctx.fillStyle = '#fef08a'
+          ctx.globalAlpha = p.opacity * 0.8
+          ctx.beginPath()
+          ctx.arc(0, 0, p.size * 0.12, 0, Math.PI * 2)
+          ctx.fill()
+        } else {
+          // Emoji
+          ctx.translate(p.x, p.y)
+          ctx.rotate((p.rotation * Math.PI) / 180)
+          ctx.font = `${p.size}px serif`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText(p.char || '💦', 0, 0)
+        }
+        break
+      }
     }
 
     ctx.restore()
@@ -1943,6 +2060,33 @@ export default function WebEffectsRenderer({ effect }: Props) {
           p.opacity -= 0.015
         }
         if (p.life >= p.maxLife || p.opacity <= 0) return false
+        break
+      }
+
+      case 'songkran': {
+        const pType = p.phase || 0
+        if (pType === 0) {
+          // Water drop - falls with wobble
+          p.wobble = (p.wobble || 0) + (p.wobbleSpeed || 0.02)
+          p.x += p.vx + Math.sin(p.wobble) * 0.8
+          p.y += p.vy
+          p.vy += 0.02 // slight gravity acceleration
+          if (p.y > h + 15) return false
+        } else if (pType === 1) {
+          // Petal / flower - drifts with swing
+          p.swing = (p.swing || 0) + (p.swingSpeed || 0.02)
+          p.x += p.vx + Math.sin(p.swing) * 1.5
+          p.y += p.vy
+          p.rotation += p.rotationSpeed
+          if (p.y > h + 20) return false
+        } else {
+          // Emoji - floats down gently
+          p.wobble = (p.wobble || 0) + (p.wobbleSpeed || 0.015)
+          p.x += p.vx + Math.sin(p.wobble) * 0.5
+          p.y += p.vy
+          p.rotation += p.rotationSpeed * 0.3
+          if (p.y > h + 30) return false
+        }
         break
       }
     }

@@ -9,13 +9,14 @@ import {
   CloudDrizzle, Coins, Fish, MoveUpRight, Dna, Grid3x3, Atom,
   Lamp, Flower, ShieldAlert, Orbit, Waves, Gem, CircleDot,
   Shell, Feather, Music, Bird, CloudFog, Rocket,
-  Shapes, Hexagon, SunMedium,
+   Shapes, Hexagon, SunMedium, Droplets,
 } from 'lucide-react'
 
 type EffectId = 'none' | 'snow' | 'rain' | 'fireflies' | 'sakura' | 'bubbles' | 'matrix' | 'stars' | 'hearts' | 'confetti'
   | 'aurora' | 'lightning' | 'smoke' | 'embers' | 'leaves' | 'diamonds' | 'neon' | 'galaxy' | 'thunder' | 'goldDust'
   | 'jellyfish' | 'meteor' | 'dna' | 'pixel' | 'plasma' | 'lanterns' | 'dandelion' | 'glitch' | 'comet' | 'ripple'
   | 'crystals' | 'zodiac' | 'roses' | 'sparkle' | 'geometric' | 'feathers' | 'musicNotes' | 'butterflies' | 'fog' | 'fireworks'
+  | 'songkran'
   | 'customHtml'
 
 interface EffectInfo {
@@ -434,6 +435,16 @@ const effects: EffectInfo[] = [
     previewBg: 'bg-gradient-to-b from-gray-950 to-indigo-950',
   },
   {
+    id: 'songkran',
+    name: 'Songkran',
+    nameTh: 'สงกรานต์',
+    desc: 'เทศกาลสงกรานต์ไทย - หยดน้ำ กลีบดอกไม้ และอีโมจิสงกรานต์ลอยสาดสนุก',
+    icon: Droplets,
+    gradient: 'from-sky-400 to-cyan-500',
+    border: 'border-sky-400',
+    previewBg: 'bg-gradient-to-b from-sky-950 to-blue-950',
+  },
+  {
     id: 'customHtml',
     name: 'Custom HTML',
     nameTh: 'HTML กำหนดเอง',
@@ -507,6 +518,12 @@ function EffectPreview({ effectId, bgClass }: { effectId: EffectId; bgClass: str
       case 'butterflies': return { ...base, y: Math.random() * h, vx: (Math.random() - 0.5) * 1, vy: (Math.random() - 0.5) * 0.3, size: 4 + Math.random() * 5, opacity: 0.3, maxLife: 200 + Math.random() * 200, color: ['#ff8844', '#ffaa22', '#ff6688', '#44aaff'][Math.floor(Math.random() * 4)], pulseSpeed: 0.12 + Math.random() * 0.1 }
       case 'fog': return { ...base, y: Math.random() * h, vx: 0.15 + Math.random() * 0.3, size: 30 + Math.random() * 50, opacity: 0, maxLife: 200 + Math.random() * 150, color: ['#cccccc', '#bbbbbb'][Math.floor(Math.random() * 2)] }
       case 'fireworks': return { ...base, y: h, vx: (Math.random() - 0.5) * 1.5, vy: -(2.5 + Math.random() * 3), size: 1.5, opacity: 0.8, maxLife: 40 + Math.random() * 20, color: ['#ff3366', '#33ccff', '#ffcc00', '#66ff66', '#ff66ff'][Math.floor(Math.random() * 5)], phase: 0, trail: [] }
+      case 'songkran': {
+        const st = Math.random()
+        if (st < 0.5) return { ...base, vy: 1 + Math.random() * 2, size: 2 + Math.random() * 3, opacity: 0.3 + Math.random() * 0.4, color: ['#38bdf8', '#22d3ee', '#67e8f9'][Math.floor(Math.random() * 3)], phase: 0 }
+        if (st < 0.75) return { ...base, vx: 0.2 + Math.random() * 0.5, vy: 0.3 + Math.random() * 0.6, size: 3 + Math.random() * 4, rotation: Math.random() * 360, rSpeed: (Math.random() - 0.5) * 2, opacity: 0.4 + Math.random() * 0.4, color: ['#fbbf24', '#fb923c', '#ff6b9d', '#c084fc'][Math.floor(Math.random() * 4)], phase: 1 }
+        const emojis = ['💦', '🌊', '🐘', '🌸', '🏖️', '🎉', '💧']; return { ...base, vx: (Math.random() - 0.5) * 0.3, vy: 0.2 + Math.random() * 0.5, size: 8 + Math.random() * 5, opacity: 0.4 + Math.random() * 0.3, char: emojis[Math.floor(Math.random() * emojis.length)], phase: 2 }
+      }
       default: return base
     }
   }, [effectId])
@@ -531,6 +548,7 @@ function EffectPreview({ effectId, bgClass }: { effectId: EffectId; bgClass: str
       dandelion: 15, glitch: 8, comet: 4, ripple: 5, crystals: 15,
       zodiac: 10, roses: 12, sparkle: 18, geometric: 10, feathers: 10,
       musicNotes: 8, butterflies: 6, fog: 5, fireworks: 6,
+      songkran: 20,
     }
     const count = countMap[effectId] || 15
     for (let i = 0; i < count; i++) particles.push(createMini(w, h, false))
@@ -739,6 +757,20 @@ function EffectPreview({ effectId, bgClass }: { effectId: EffectId; bgClass: str
               p.opacity -= 0.02
             }
             if (p.life >= p.maxLife || p.opacity <= 0) dead = true; break
+          }
+          case 'songkran': {
+            const pt = p.phase || 0
+            if (pt === 0) {
+              p.wobble += 0.02; p.x += Math.sin(p.wobble) * 0.5; p.y += p.vy; p.vy += 0.01
+              if (p.y > h + 10) dead = true
+            } else if (pt === 1) {
+              p.wobble += 0.02; p.x += p.vx + Math.sin(p.wobble) * 1; p.y += p.vy; p.rotation += p.rSpeed
+              if (p.y > h + 10) dead = true
+            } else {
+              p.wobble += 0.015; p.x += p.vx + Math.sin(p.wobble) * 0.3; p.y += p.vy
+              if (p.y > h + 15) dead = true
+            }
+            break
           }
         }
 
@@ -1054,6 +1086,35 @@ function EffectPreview({ effectId, bgClass }: { effectId: EffectId; bgClass: str
                     ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(sx, sy, 1.5, 0, Math.PI * 2); ctx.fill()
                   }
                 }
+              }
+              break
+            }
+            case 'songkran': {
+              const pt = p.phase || 0
+              if (pt === 0) {
+                // Mini water droplet
+                ctx.translate(p.x, p.y); ctx.fillStyle = p.color
+                ctx.beginPath()
+                ctx.moveTo(0, -p.size * 0.6)
+                ctx.bezierCurveTo(p.size * 0.4, -p.size * 0.1, p.size * 0.35, p.size * 0.4, 0, p.size * 0.5)
+                ctx.bezierCurveTo(-p.size * 0.35, p.size * 0.4, -p.size * 0.4, -p.size * 0.1, 0, -p.size * 0.6)
+                ctx.fill()
+                ctx.globalAlpha = Math.max(0, p.opacity * 0.5)
+                ctx.fillStyle = '#fff'
+                ctx.beginPath(); ctx.ellipse(-p.size * 0.1, -p.size * 0.1, p.size * 0.06, p.size * 0.12, -0.3, 0, Math.PI * 2); ctx.fill()
+              } else if (pt === 1) {
+                // Mini petal / flower
+                ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180); ctx.fillStyle = p.color
+                for (let i2 = 0; i2 < 5; i2++) {
+                  ctx.beginPath(); ctx.ellipse(0, -p.size * 0.25, p.size * 0.15, p.size * 0.28, 0, 0, Math.PI * 2); ctx.fill()
+                  ctx.rotate(Math.PI * 2 / 5)
+                }
+                ctx.fillStyle = '#fef08a'; ctx.globalAlpha = Math.max(0, p.opacity * 0.7)
+                ctx.beginPath(); ctx.arc(0, 0, p.size * 0.1, 0, Math.PI * 2); ctx.fill()
+              } else {
+                // Mini emoji
+                ctx.font = `${p.size}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+                ctx.fillText(p.char || '💦', p.x, p.y)
               }
               break
             }
