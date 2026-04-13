@@ -29,7 +29,7 @@ export default function DynamicBackground() {
           zIndex: 0,
           overflow: 'hidden',
           isolation: 'isolate',
-          transform: 'translateZ(0)',
+          contain: 'strict',
         }}
       >
         {/* Layer 1: Theme background color */}
@@ -42,20 +42,29 @@ export default function DynamicBackground() {
           }}
         />
 
-        {/* Layer 2: Background image — ใช้ background-image CSS (รองรับ GIF + ไม่ขยับ) */}
+        {/* Layer 2: Background image — ใช้ <img> tag แทน CSS background-image
+            เพราะ <img> ที่โหลดเสร็จแล้วจะ cache decoded pixels ไว้ใน GPU memory
+            ไม่ถูก re-decode เมื่อ canvas layer ข้างบนทำ recomposite ทุก frame
+            (CSS background-image จะถูก re-decode → ทำให้ GIF กระพริบ) */}
         {settings.backgroundImage && (
           <>
-            <div
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={settings.backgroundImage}
+              alt=""
+              draggable={false}
               style={{
                 position: 'absolute',
-                inset: 0,
-                backgroundImage: `url(${settings.backgroundImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-                backgroundRepeat: 'no-repeat',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center center',
                 opacity: imgOpacity,
-                willChange: 'transform',
                 transform: 'translateZ(0)',
+                willChange: 'transform',
+                backfaceVisibility: 'hidden',
               }}
             />
             {/* Layer 3: Overlay for readability — light theme ใช้ขาว, dark theme ใช้ดำ */}

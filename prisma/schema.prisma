@@ -543,6 +543,23 @@ model BlockedIP {
 }
 
 // ==========================================
+// Allowed IP System - IP ที่อนุญาตให้เชื่อมต่อ
+// ==========================================
+
+model AllowedIP {
+  id        String   @id @default(cuid())
+  ipAddress String   @unique
+  label     String?  // ชื่อ/หมายเหตุ เช่น "เซิร์ฟเวอร์หลัก", "สำนักงาน"
+  isActive  Boolean  @default(true)
+  createdBy String?  // admin userId ที่เพิ่ม
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ipAddress])
+  @@index([isActive])
+}
+
+// ==========================================
 // External API Key System - ลิงก์ API สำหรับบอท
 // ==========================================
 

@@ -85,6 +85,7 @@ const superAdminMenuItems = [
   { name: 'ข้อมูลเซิร์ฟเวอร์', href: '/admin/server-info', icon: Server },
   { name: 'จัดการรายได้เซิฟ', href: '/admin/super-revenue', icon: Shield },
   { name: 'API Keys', href: '/admin/api-keys', icon: Key },
+  { name: 'IP ที่อนุญาต', href: '/admin/allowed-ips', icon: ShieldCheck },
   { name: 'Branding & Theme', href: '/admin/branding', icon: Palette },
   { name: 'จัดการ UI/Theme', href: '/admin/theme-editor', icon: Sliders },
   { name: 'reCAPTCHA', href: '/admin/recaptcha', icon: ShieldCheck },
