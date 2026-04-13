@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   Wand2, CheckCircle, Loader2, Save, Eye, Power, PowerOff,
   Waves, Sparkles, Zap, Sun, CircleDot, Lightbulb,
-  MoveUpRight, Paintbrush, PartyPopper, Hexagon
+  MoveUpRight, Paintbrush, PartyPopper, Hexagon, Droplets
 } from 'lucide-react'
 import { MENU_CLICK_EFFECTS, MenuClickEffectPreview } from '@/components/MenuClickEffect'
 
@@ -28,6 +28,7 @@ export default function MenuClickEffectPage() {
     electricArc: Zap,
     hologram: Hexagon,
     confettiBurst: PartyPopper,
+    songkran: Droplets,
   }
 
   // Gradient/color map for cards
@@ -43,6 +44,7 @@ export default function MenuClickEffectPage() {
     electricArc: { gradient: 'from-cyan-400 to-blue-500', border: 'border-cyan-400' },
     hologram: { gradient: 'from-teal-400 to-emerald-500', border: 'border-teal-400' },
     confettiBurst: { gradient: 'from-yellow-400 to-red-500', border: 'border-yellow-400' },
+    songkran: { gradient: 'from-cyan-400 to-blue-500', border: 'border-cyan-400' },
   }
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {

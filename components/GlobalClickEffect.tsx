@@ -332,6 +332,102 @@ effectRenderers.confettiBurst = (x, y) => {
   }
 }
 
+effectRenderers.songkran = (x, y) => {
+  const overlay = createOverlayAt(x, y, 250, 1200)
+  const emojis = ['💧', '💦', '🌸', '☀️', '🌊', '🪷', '🎉', '🐘']
+
+  // Water splash ring
+  const ring = createEl('div', {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    border: '3px solid rgba(56,189,248,0.8)',
+    boxShadow: '0 0 15px rgba(56,189,248,0.5), inset 0 0 8px rgba(56,189,248,0.3)',
+    transform: 'translate(-50%, -50%)',
+    pointerEvents: 'none',
+  })
+  overlay.appendChild(ring)
+  ring.animate([
+    { width: '10px', height: '10px', opacity: '1', borderWidth: '3px' },
+    { width: '220px', height: '220px', opacity: '0', borderWidth: '0.5px' },
+  ], { duration: 600, easing: 'ease-out', fill: 'forwards' })
+
+  // Water droplets
+  for (let i = 0; i < 14; i++) {
+    const angle = (Math.PI * 2 * i) / 14 + (Math.random() - 0.5) * 0.6
+    const dist = 40 + Math.random() * 65
+    const size = 4 + Math.random() * 7
+    const blueShade = Math.random() > 0.5 ? 'rgba(56,189,248,0.9)' : 'rgba(14,165,233,0.9)'
+    const drop = createEl('div', {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: `${size}px`,
+      height: `${size * 1.3}px`,
+      borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+      background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), ${blueShade})`,
+      boxShadow: `0 0 6px ${blueShade}`,
+      pointerEvents: 'none',
+    })
+    overlay.appendChild(drop)
+    const tx = Math.cos(angle) * dist
+    const ty = Math.sin(angle) * dist + 12
+    drop.animate([
+      { transform: 'translate(-50%, -50%) scale(1) rotate(0deg)', opacity: '1' },
+      { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0.3) rotate(${Math.random() * 180}deg)`, opacity: '0' },
+    ], { duration: 500 + Math.random() * 300, easing: 'cubic-bezier(0,.8,.3,1)', fill: 'forwards' })
+  }
+
+  // Emoji burst
+  for (let i = 0; i < 8; i++) {
+    const angle = (Math.PI * 2 * i) / 8 + (Math.random() - 0.5) * 0.5
+    const dist = 45 + Math.random() * 55
+    const emoji = emojis[i % emojis.length]
+    const fontSize = 14 + Math.random() * 12
+    const span = createEl('span', {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      fontSize: `${fontSize}px`,
+      lineHeight: '1',
+      pointerEvents: 'none',
+      filter: 'drop-shadow(0 0 4px rgba(56,189,248,0.5))',
+    })
+    span.textContent = emoji
+    overlay.appendChild(span)
+    const tx = Math.cos(angle) * dist
+    const ty = Math.sin(angle) * dist - 18
+    const rot = (Math.random() - 0.5) * 60
+    span.animate([
+      { transform: 'translate(-50%, -50%) scale(0) rotate(0deg)', opacity: '1' },
+      { transform: `translate(calc(-50% + ${tx * 0.5}px), calc(-50% + ${ty * 0.5}px)) scale(1.3) rotate(${rot / 2}deg)`, opacity: '1', offset: 0.3 },
+      { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0.5) rotate(${rot}deg)`, opacity: '0' },
+    ], { duration: 700 + Math.random() * 300, easing: 'cubic-bezier(0,.6,.3,1)', fill: 'forwards', delay: Math.random() * 100 })
+  }
+
+  // Center splash flash
+  const splash = createEl('div', {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: '35px',
+    height: '35px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(56,189,248,0.6) 40%, transparent 70%)',
+    transform: 'translate(-50%, -50%)',
+    pointerEvents: 'none',
+  })
+  overlay.appendChild(splash)
+  splash.animate([
+    { transform: 'translate(-50%, -50%) scale(0)', opacity: '1' },
+    { transform: 'translate(-50%, -50%) scale(2.5)', opacity: '0.6' },
+    { transform: 'translate(-50%, -50%) scale(4)', opacity: '0' },
+  ], { duration: 400, easing: 'ease-out', fill: 'forwards' })
+}
+
 // ========== Main Component ==========
 export default function GlobalClickEffect() {
   const { settings } = useSettings()

@@ -16,6 +16,7 @@ export const MENU_CLICK_EFFECTS = [
   { id: 'electricArc', name: 'Electric Arc', description: 'สายฟ้าวิ่งรอบเมนู', emoji: '⚡' },
   { id: 'hologram', name: 'Hologram', description: 'เอฟเฟกต์โฮโลแกรมกระพริบ', emoji: '🔮' },
   { id: 'confettiBurst', name: 'Confetti', description: 'กระดาษโปรยจากจุดกด', emoji: '🎊' },
+  { id: 'songkran', name: 'Songkran', description: 'สาดน้ำสงกรานต์ หยดน้ำ ดอกไม้ กระจายจากจุดกด', emoji: '💦' },
 ] as const
 
 export type MenuClickEffectId = typeof MENU_CLICK_EFFECTS[number]['id']
@@ -366,6 +367,104 @@ function renderConfettiBurst(clientX: number, clientY: number, rect: DOMRect) {
   }
 }
 
+function renderSongkran(clientX: number, clientY: number, rect: DOMRect) {
+  const overlay = createOverlay(rect, 1200)
+  const lx = clientX - rect.left
+  const ly = clientY - rect.top
+  const emojis = ['💧', '💦', '🌸', '☀️', '🌊', '🪷', '🎉', '🐘']
+  
+  // Water splash ring — expanding blue ring
+  const ring = createEl('div', {
+    position: 'absolute',
+    left: `${lx}px`,
+    top: `${ly}px`,
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    border: '3px solid rgba(56,189,248,0.8)',
+    boxShadow: '0 0 15px rgba(56,189,248,0.5), inset 0 0 8px rgba(56,189,248,0.3)',
+    transform: 'translate(-50%, -50%)',
+    pointerEvents: 'none',
+  })
+  overlay.appendChild(ring)
+  ring.animate([
+    { width: '10px', height: '10px', opacity: '1', borderWidth: '3px' },
+    { width: '200px', height: '200px', opacity: '0', borderWidth: '0.5px' },
+  ], { duration: 600, easing: 'ease-out', fill: 'forwards' })
+
+  // Water droplets — small blue circles bursting outward
+  for (let i = 0; i < 12; i++) {
+    const angle = (Math.PI * 2 * i) / 12 + (Math.random() - 0.5) * 0.6
+    const dist = 35 + Math.random() * 55
+    const size = 4 + Math.random() * 6
+    const blueShade = Math.random() > 0.5 ? 'rgba(56,189,248,0.9)' : 'rgba(14,165,233,0.9)'
+    const drop = createEl('div', {
+      position: 'absolute',
+      left: `${lx}px`,
+      top: `${ly}px`,
+      width: `${size}px`,
+      height: `${size * 1.3}px`,
+      borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+      background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), ${blueShade})`,
+      boxShadow: `0 0 6px ${blueShade}`,
+      pointerEvents: 'none',
+    })
+    overlay.appendChild(drop)
+    const tx = Math.cos(angle) * dist
+    const ty = Math.sin(angle) * dist + 10 // slight gravity
+    drop.animate([
+      { transform: 'translate(-50%, -50%) scale(1) rotate(0deg)', opacity: '1' },
+      { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0.3) rotate(${Math.random() * 180}deg)`, opacity: '0' },
+    ], { duration: 500 + Math.random() * 300, easing: 'cubic-bezier(0,.8,.3,1)', fill: 'forwards' })
+  }
+
+  // Emoji burst — floating emojis
+  for (let i = 0; i < 8; i++) {
+    const angle = (Math.PI * 2 * i) / 8 + (Math.random() - 0.5) * 0.5
+    const dist = 40 + Math.random() * 50
+    const emoji = emojis[i % emojis.length]
+    const fontSize = 12 + Math.random() * 10
+    const span = createEl('span', {
+      position: 'absolute',
+      left: `${lx}px`,
+      top: `${ly}px`,
+      fontSize: `${fontSize}px`,
+      lineHeight: '1',
+      pointerEvents: 'none',
+      filter: 'drop-shadow(0 0 4px rgba(56,189,248,0.5))',
+    })
+    span.textContent = emoji
+    overlay.appendChild(span)
+    const tx = Math.cos(angle) * dist
+    const ty = Math.sin(angle) * dist - 15 // float up
+    const rot = (Math.random() - 0.5) * 60
+    span.animate([
+      { transform: 'translate(-50%, -50%) scale(0) rotate(0deg)', opacity: '1' },
+      { transform: `translate(calc(-50% + ${tx * 0.5}px), calc(-50% + ${ty * 0.5}px)) scale(1.2) rotate(${rot / 2}deg)`, opacity: '1', offset: 0.3 },
+      { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0.5) rotate(${rot}deg)`, opacity: '0' },
+    ], { duration: 700 + Math.random() * 300, easing: 'cubic-bezier(0,.6,.3,1)', fill: 'forwards', delay: Math.random() * 100 })
+  }
+
+  // Center splash — bright flash
+  const splash = createEl('div', {
+    position: 'absolute',
+    left: `${lx}px`,
+    top: `${ly}px`,
+    width: '30px',
+    height: '30px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(56,189,248,0.6) 40%, transparent 70%)',
+    transform: 'translate(-50%, -50%)',
+    pointerEvents: 'none',
+  })
+  overlay.appendChild(splash)
+  splash.animate([
+    { transform: 'translate(-50%, -50%) scale(0)', opacity: '1' },
+    { transform: 'translate(-50%, -50%) scale(2)', opacity: '0.6' },
+    { transform: 'translate(-50%, -50%) scale(3)', opacity: '0' },
+  ], { duration: 400, easing: 'ease-out', fill: 'forwards' })
+}
+
 // ========== Effect registry ==========
 const effectRenderers: Record<string, (clientX: number, clientY: number, rect: DOMRect) => void> = {
   ripple: renderRipple,
@@ -378,6 +477,7 @@ const effectRenderers: Record<string, (clientX: number, clientY: number, rect: D
   electricArc: renderElectricArc,
   hologram: renderHologram,
   confettiBurst: renderConfettiBurst,
+  songkran: renderSongkran,
 }
 
 // ========== Hook: useMenuClickEffect ==========
