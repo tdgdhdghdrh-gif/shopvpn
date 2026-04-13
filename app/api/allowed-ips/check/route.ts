@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/allowed-ips/check?ip=xxx.xxx.xxx.xxx
-// Public API สำหรับแอพเช็คว่า IP อยู่ใน whitelist หรือไม่
+// Public API สำหรับเช็คว่า IP อยู่ใน whitelist หรือไม่
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const ip = searchParams.get('ip')
 
     if (!ip) {
-      return NextResponse.json({ allowed: false, error: 'กรุณาระบุ IP Address (query param: ip)' }, { status: 400 })
+      return NextResponse.json({
+        อนุญาต: false,
+        allowed: false,
+        ข้อผิดพลาด: 'กรุณาระบุ IP Address ผ่าน query parameter เช่น ?ip=203.150.166.82',
+        error: 'กรุณาระบุ IP Address (query param: ip)',
+      }, { status: 400 })
     }
 
     const trimmedIp = ip.trim()
@@ -20,12 +25,31 @@ export async function GET(request: NextRequest) {
     })
 
     if (!found || !found.isActive) {
-      return NextResponse.json({ allowed: false, ip: trimmedIp })
+      return NextResponse.json({
+        อนุญาต: false,
+        allowed: false,
+        ไอพีแอดเดรส: trimmedIp,
+        ip: trimmedIp,
+        ข้อความ: `IP ${trimmedIp} ไม่ได้อยู่ในรายการที่อนุญาต หรือถูกปิดการใช้งาน`,
+      })
     }
 
-    return NextResponse.json({ allowed: true, ip: trimmedIp, label: found.label })
+    return NextResponse.json({
+      อนุญาต: true,
+      allowed: true,
+      ไอพีแอดเดรส: trimmedIp,
+      ip: trimmedIp,
+      ชื่อหมายเหตุ: found.label || '(ไม่ได้ระบุ)',
+      label: found.label,
+      ข้อความ: `IP ${trimmedIp} ได้รับอนุญาตให้เข้าถึงระบบ`,
+    })
   } catch (error: any) {
-    return NextResponse.json({ allowed: false, error: error.message }, { status: 500 })
+    return NextResponse.json({
+      อนุญาต: false,
+      allowed: false,
+      ข้อผิดพลาด: error.message,
+      error: error.message,
+    }, { status: 500 })
   }
 }
 
@@ -43,10 +67,18 @@ export async function POST(request: NextRequest) {
         select: { id: true, ipAddress: true, label: true, isActive: true },
       })
 
+      const isAllowed = !!(found && found.isActive)
+
       return NextResponse.json({
-        allowed: !!(found && found.isActive),
+        อนุญาต: isAllowed,
+        allowed: isAllowed,
+        ไอพีแอดเดรส: trimmedIp,
         ip: trimmedIp,
+        ชื่อหมายเหตุ: found?.label || '(ไม่ได้ระบุ)',
         label: found?.label || null,
+        ข้อความ: isAllowed
+          ? `IP ${trimmedIp} ได้รับอนุญาตให้เข้าถึงระบบ`
+          : `IP ${trimmedIp} ไม่ได้อยู่ในรายการที่อนุญาต หรือถูกปิดการใช้งาน`,
       })
     }
 
@@ -60,16 +92,41 @@ export async function POST(request: NextRequest) {
 
       const allowedSet = new Set(found.map(f => f.ipAddress))
       const results = ips.map((ip: string) => ({
-        ip,
+        อนุญาต: allowedSet.has(ip),
         allowed: allowedSet.has(ip),
+        ไอพีแอดเดรส: ip,
+        ip,
+        ชื่อหมายเหตุ: found.find(f => f.ipAddress === ip)?.label || '(ไม่ได้ระบุ)',
         label: found.find(f => f.ipAddress === ip)?.label || null,
+        ข้อความ: allowedSet.has(ip)
+          ? `IP ${ip} ได้รับอนุญาต`
+          : `IP ${ip} ไม่ได้รับอนุญาต`,
       }))
 
-      return NextResponse.json({ results })
+      const allowedCount = results.filter((r: any) => r.allowed).length
+
+      return NextResponse.json({
+        ข้อความ: `ตรวจสอบ ${ips.length} IP — อนุญาต ${allowedCount} รายการ, ไม่อนุญาต ${ips.length - allowedCount} รายการ`,
+        จำนวนที่ตรวจสอบ: ips.length,
+        อนุญาต: allowedCount,
+        ไม่อนุญาต: ips.length - allowedCount,
+        ผลลัพธ์: results,
+        results,
+      })
     }
 
-    return NextResponse.json({ allowed: false, error: 'กรุณาระบุ ip หรือ ips' }, { status: 400 })
+    return NextResponse.json({
+      อนุญาต: false,
+      allowed: false,
+      ข้อผิดพลาด: 'กรุณาระบุ ip (เช็คเดียว) หรือ ips (เช็คหลาย IP) ใน body',
+      error: 'กรุณาระบุ ip หรือ ips',
+    }, { status: 400 })
   } catch (error: any) {
-    return NextResponse.json({ allowed: false, error: error.message }, { status: 500 })
+    return NextResponse.json({
+      อนุญาต: false,
+      allowed: false,
+      ข้อผิดพลาด: error.message,
+      error: error.message,
+    }, { status: 500 })
   }
 }
