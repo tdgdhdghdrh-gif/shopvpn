@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireSuperAdmin } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 // GET - ดึง Allowed IPs ทั้งหมด
 export async function GET() {
   try {
-    await requireSuperAdmin()
+    await requireAdmin()
 
     const allowedIps = await prisma.allowedIP.findMany({
       orderBy: { createdAt: 'desc' },
@@ -48,7 +48,7 @@ export async function GET() {
 // POST - เพิ่ม IP ใหม่
 export async function POST(request: NextRequest) {
   try {
-    const admin = await requireSuperAdmin()
+    const admin = await requireAdmin()
     const body = await request.json()
 
     const { ipAddress, label } = body
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 // PUT - อัปเดต IP (เปลี่ยน label, เปิด/ปิด)
 export async function PUT(request: NextRequest) {
   try {
-    await requireSuperAdmin()
+    await requireAdmin()
     const body = await request.json()
 
     const { id, label, isActive, ipAddress } = body
@@ -150,7 +150,7 @@ export async function PUT(request: NextRequest) {
 // DELETE - ลบ IP
 export async function DELETE(request: NextRequest) {
   try {
-    await requireSuperAdmin()
+    await requireAdmin()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
