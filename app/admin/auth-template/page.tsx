@@ -348,99 +348,488 @@ function RegisterPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMob
   )
 }
 
-// VPN Buy page mini preview
+// VPN Buy page mini preview — unique layout per theme
 function VpnBuyPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMobile?: boolean }) {
-  const isGaming = tmpl.id === 'gaming'
-  const isSongkran = tmpl.id === 'songkran'
-
-  return (
-    <div className={`w-full h-full bg-gradient-to-br ${tmpl.bgClass} text-white relative overflow-hidden`}>
-      {isGaming && (
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: 'linear-gradient(rgba(34,197,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.3) 1px, transparent 1px)',
-          backgroundSize: '8px 8px',
-        }} />
-      )}
-      <div className={`absolute top-2 right-2 w-10 h-10 ${tmpl.orbColor} blur-xl rounded-full`} />
-      {isSongkran && <div className="absolute top-1 right-1 text-[6px] opacity-30">💦🌊</div>}
-
-      {isMobile ? (
-        /* Mobile: stacked layout */
-        <div className="relative flex flex-col h-full px-2 py-2">
-          {/* Server card */}
-          <div className="rounded-md border border-white/[0.08] bg-white/[0.02] overflow-hidden mb-1.5">
-            <div className={`h-0.5 bg-gradient-to-r ${tmpl.topBar}`} />
-            <div className="p-1.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <div className="w-5 h-5 rounded bg-zinc-800 flex items-center justify-center text-[8px]">🇹🇭</div>
-                <div>
-                  <p className="text-[5px] font-bold text-white">Thailand #1</p>
-                  <div className="flex items-center gap-0.5">
-                    <div className="w-1 h-1 rounded-full bg-emerald-400" />
-                    <span className="text-[3px] text-emerald-400">Online</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-0.5">
-                {[Shield, Zap].map((Icon, i) => (
-                  <div key={i} className="flex-1 flex items-center gap-0.5 p-0.5 rounded bg-white/[0.03] border border-white/[0.05]">
-                    <Icon className={`w-1.5 h-1.5 ${tmpl.specColor}`} />
-                    <div className="h-0.5 flex-1 rounded bg-white/10" />
-                  </div>
-                ))}
-              </div>
-            </div>
+  // Shared mini purchase form (right side / bottom)
+  const MiniForm = ({ compact = false }: { compact?: boolean }) => (
+    <div className={`space-y-${compact ? '0.5' : '1'}`}>
+      <div className="h-2 rounded bg-white/5 border border-white/[0.06] px-1 flex items-center">
+        <span className="text-[3px] text-zinc-600">ชื่อ VPN</span>
+      </div>
+      <div className="flex gap-0.5">
+        {['1', '7', '15', '30'].map(d => (
+          <div key={d} className={`flex-1 h-2 rounded text-[3px] font-bold flex items-center justify-center ${d === '30' ? `bg-gradient-to-r ${tmpl.btnClass} ${tmpl.btnTextClass}` : 'bg-white/5 text-zinc-500'}`}>
+            {compact ? d : `${d}วัน`}
           </div>
-          {/* Purchase form */}
-          <div className="flex-1 space-y-1">
-            <div className="h-2 rounded bg-white/5 border border-white/[0.06] px-1 flex items-center">
-              <span className="text-[3px] text-zinc-600">ชื่อ VPN</span>
-            </div>
-            <div className="flex gap-0.5">
-              {['1', '7', '15', '30'].map(d => (
-                <div key={d} className={`flex-1 h-2 rounded text-[3px] font-bold flex items-center justify-center ${d === '30' ? `bg-gradient-to-r ${tmpl.btnClass} ${tmpl.btnTextClass}` : 'bg-white/5 text-zinc-500'}`}>
-                  {d}
-                </div>
-              ))}
-            </div>
-            <div className={`h-3 rounded bg-gradient-to-r ${tmpl.btnClass} flex items-center justify-center`}>
-              <span className={`text-[4px] font-bold ${tmpl.btnTextClass}`}>ซื้อ VPN</span>
-            </div>
-          </div>
+        ))}
+      </div>
+      {!compact && (
+        <div className="h-2 rounded bg-white/5 border border-white/[0.06] px-1 flex items-center justify-between">
+          <span className="text-[3px] text-zinc-500">ราคารวม</span>
+          <span className={`text-[3.5px] font-bold ${tmpl.accentColor}`}>150 ฿</span>
         </div>
-      ) : (
-        /* Desktop: 2-column layout */
-        <div className="flex h-full">
-          {/* Left - server info */}
-          <div className="w-[40%] p-2">
-            <div className="rounded-md border border-white/[0.08] bg-white/[0.02] overflow-hidden h-full">
-              <div className={`h-0.5 bg-gradient-to-r ${tmpl.topBar}`} />
+      )}
+      <div className={`h-3 rounded bg-gradient-to-r ${tmpl.btnClass} flex items-center justify-center`}>
+        <span className={`text-[4px] font-bold ${tmpl.btnTextClass}`}>ซื้อ VPN</span>
+      </div>
+    </div>
+  )
+
+  // ── CLASSIC: gradient top bar + orb glow + 2x2 specs ──
+  if (tmpl.id === 'classic') {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-black via-zinc-950 to-black text-white relative overflow-hidden">
+        <div className="absolute top-2 right-2 w-10 h-10 bg-cyan-500/5 blur-xl rounded-full" />
+        {isMobile ? (
+          <div className="relative flex flex-col h-full px-2 py-2">
+            <div className="rounded-md border border-zinc-800/60 bg-zinc-950 overflow-hidden mb-1.5">
+              <div className="h-0.5 bg-gradient-to-r from-cyan-500 via-violet-500 to-pink-500" />
               <div className="p-1.5">
-                <div className="flex items-center gap-1 mb-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
                   <div className="w-5 h-5 rounded bg-zinc-800 flex items-center justify-center text-[8px]">🇹🇭</div>
                   <div>
-                    <p className="text-[5px] font-bold">Thailand</p>
+                    <p className="text-[5px] font-bold">Thailand #1</p>
                     <div className="flex items-center gap-0.5">
                       <div className="w-1 h-1 rounded-full bg-emerald-400" />
                       <span className="text-[3px] text-emerald-400">Online</span>
                     </div>
                   </div>
                 </div>
-                <p className={`text-[6px] font-bold ${tmpl.accentColor} mb-1`}>5 ฿/วัน</p>
-                {/* Mini specs grid */}
                 <div className="grid grid-cols-2 gap-0.5">
-                  {[Shield, Zap, Globe, Star].map((Icon, i) => (
-                    <div key={i} className="flex items-center gap-0.5 p-0.5 rounded bg-white/[0.03] border border-white/[0.05]">
-                      <Icon className={`w-1.5 h-1.5 ${tmpl.specColor}`} />
+                  {[Shield, Zap].map((Icon, i) => (
+                    <div key={i} className="flex items-center gap-0.5 p-0.5 rounded bg-zinc-900/60 border border-zinc-800/40">
+                      <Icon className={`w-1.5 h-1.5 ${['text-emerald-400', 'text-cyan-400'][i]}`} />
                       <div className="h-0.5 flex-1 rounded bg-white/10" />
                     </div>
                   ))}
                 </div>
-                {/* Features */}
-                <div className="mt-1.5 space-y-0.5">
-                  {[Lock, Shield, Zap].map((Icon, i) => (
+              </div>
+            </div>
+            <MiniForm compact />
+          </div>
+        ) : (
+          <div className="flex h-full">
+            <div className="w-[40%] p-2">
+              <div className="rounded-md border border-zinc-800/60 bg-zinc-950 overflow-hidden h-full">
+                <div className="h-0.5 bg-gradient-to-r from-cyan-500 via-violet-500 to-pink-500" />
+                <div className="p-1.5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <div className="w-5 h-5 rounded bg-zinc-800 flex items-center justify-center text-[8px]">🇹🇭</div>
+                    <div>
+                      <p className="text-[5px] font-bold">Thailand</p>
+                      <div className="flex items-center gap-0.5">
+                        <div className="w-1 h-1 rounded-full bg-emerald-400" />
+                        <span className="text-[3px] text-emerald-400">Online</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[6px] font-bold text-cyan-400 mb-1">5 ฿/วัน</p>
+                  <div className="grid grid-cols-2 gap-0.5">
+                    {[Shield, Zap, Globe, Star].map((Icon, i) => (
+                      <div key={i} className="flex items-center gap-0.5 p-0.5 rounded bg-zinc-900/60 border border-zinc-800/40">
+                        <Icon className={`w-1.5 h-1.5 ${['text-emerald-400', 'text-cyan-400', 'text-violet-400', 'text-amber-400'][i]}`} />
+                        <div className="h-0.5 flex-1 rounded bg-white/10" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-1 space-y-0.5">
+                    {[Lock, Shield, Zap].map((Icon, i) => (
+                      <div key={i} className="flex items-center gap-0.5">
+                        <Icon className={`w-1.5 h-1.5 ${['text-emerald-400', 'text-cyan-400', 'text-violet-400'][i]}`} />
+                        <div className="h-0.5 flex-1 rounded bg-white/5" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 p-2 flex flex-col justify-center">
+              <MiniForm />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── MINIMAL: ultra clean, no glow, text rows ──
+  if (tmpl.id === 'minimal') {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-zinc-950 via-black to-zinc-950 text-white relative overflow-hidden">
+        {isMobile ? (
+          <div className="relative flex flex-col h-full px-2 py-2">
+            <div className="rounded border border-zinc-800/30 bg-zinc-950/80 overflow-hidden mb-1.5">
+              <div className="h-px bg-zinc-700/50" />
+              <div className="p-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[8px]">🇹🇭</span>
+                  <p className="text-[5px] font-medium text-zinc-200">Thailand #1</p>
+                  <div className="w-1 h-1 rounded-full bg-emerald-400 ml-auto" />
+                </div>
+                <p className="text-[7px] font-light text-white mb-1">5 <span className="text-[4px] text-zinc-600">฿/วัน</span></p>
+                <div className="space-y-0.5">
+                  {['Protocol', 'Speed'].map((l, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <span className="text-[3px] text-zinc-600">{l}</span>
+                      <span className="text-[3px] text-zinc-400">VLESS</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <MiniForm compact />
+          </div>
+        ) : (
+          <div className="flex h-full">
+            <div className="w-[40%] p-2">
+              <div className="rounded border border-zinc-800/30 bg-zinc-950/80 overflow-hidden h-full">
+                <div className="h-px bg-zinc-700/50" />
+                <div className="p-1.5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <span className="text-[8px]">🇹🇭</span>
+                    <p className="text-[5px] font-medium text-zinc-200">Thailand</p>
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 ml-auto" />
+                  </div>
+                  <p className="text-[8px] font-light text-white mb-1">5 <span className="text-[4px] text-zinc-600">฿/วัน</span></p>
+                  <div className="mb-1.5 h-px bg-zinc-800/30" />
+                  <div className="space-y-0.5">
+                    {['Protocol', 'Speed', 'Ping', 'Uptime'].map((l, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <span className="text-[3px] text-zinc-600">{l}</span>
+                        <span className="text-[3px] text-zinc-400">{['VLESS', '10G', '<10ms', '99.9%'][i]}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-1 space-y-0.5">
+                    {['Encryption', 'No-Log', 'Bandwidth'].map((l, i) => (
+                      <div key={i} className="flex items-center gap-0.5">
+                        <div className="w-0.5 h-0.5 rounded-full bg-zinc-600" />
+                        <span className="text-[2.5px] text-zinc-600">{l}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 p-2 flex flex-col justify-center">
+              <MiniForm />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── GAMING: HUD style, neon borders, stat bars ──
+  if (tmpl.id === 'gaming') {
+    return (
+      <div className="w-full h-full bg-[#0a0f0a] text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: 'linear-gradient(rgba(34,197,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.3) 1px, transparent 1px)',
+          backgroundSize: '8px 8px',
+        }} />
+        {isMobile ? (
+          <div className="relative flex flex-col h-full px-2 py-2">
+            <div className="rounded-md border border-green-500/20 bg-[#0a0f0a] overflow-hidden mb-1.5">
+              <div className="h-0.5 bg-gradient-to-r from-green-500 via-emerald-400 to-lime-500 relative">
+                <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_1px,rgba(0,0,0,0.3)_1px,rgba(0,0,0,0.3)_2px)]" />
+              </div>
+              <div className="p-1.5">
+                <div className="flex items-center gap-0.5 mb-1">
+                  <div className="w-0.5 h-0.5 rounded-full bg-green-500" />
+                  <span className="text-[3px] text-green-500/50 font-mono uppercase tracking-wider">Server Intel</span>
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-5 h-5 rounded bg-green-500/5 border border-green-500/20 flex items-center justify-center text-[8px]">🇹🇭</div>
+                  <div>
+                    <p className="text-[5px] font-black text-green-400 font-mono">Thailand #1</p>
+                    <span className="text-[3px] text-green-400 font-mono">ONLINE</span>
+                  </div>
+                </div>
+                {/* Stat bars */}
+                {['Speed', 'Ping'].map((l, i) => (
+                  <div key={i} className="mb-0.5">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[2.5px] text-green-500/50 font-mono">{l}</span>
+                      <span className="text-[2.5px] text-green-300 font-mono">{['10G', '<10ms'][i]}</span>
+                    </div>
+                    <div className="h-0.5 rounded-full bg-green-950/50 overflow-hidden">
+                      <div className="h-full rounded-full bg-green-500" style={{ width: `${[95, 98][i]}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <MiniForm compact />
+          </div>
+        ) : (
+          <div className="flex h-full">
+            <div className="w-[40%] p-2">
+              <div className="rounded-md border border-green-500/20 bg-[#0a0f0a] overflow-hidden h-full">
+                <div className="h-0.5 bg-gradient-to-r from-green-500 via-emerald-400 to-lime-500 relative">
+                  <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_1px,rgba(0,0,0,0.3)_1px,rgba(0,0,0,0.3)_2px)]" />
+                </div>
+                <div className="p-1.5">
+                  <div className="flex items-center gap-0.5 mb-1">
+                    <div className="w-0.5 h-0.5 rounded-full bg-green-500" />
+                    <span className="text-[3px] text-green-500/50 font-mono uppercase tracking-wider">Server Intel</span>
+                  </div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <div className="w-5 h-5 rounded bg-green-500/5 border border-green-500/20 flex items-center justify-center text-[8px]">🇹🇭</div>
+                    <div>
+                      <p className="text-[5px] font-black text-green-400 font-mono">Thailand</p>
+                      <span className="text-[3px] text-green-400 font-mono">ONLINE</span>
+                    </div>
+                  </div>
+                  <div className="p-0.5 rounded bg-green-500/5 border border-green-500/10 mb-1 flex items-center justify-between">
+                    <span className="text-[3px] text-green-500/50 font-mono">Cost</span>
+                    <span className="text-[5px] font-black text-green-400 font-mono">5฿</span>
+                  </div>
+                  {/* Stat bars */}
+                  {['Protocol', 'Speed', 'Ping', 'Uptime'].map((l, i) => (
+                    <div key={i} className="mb-0.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[2.5px] text-green-500/50 font-mono">{l}</span>
+                        <span className="text-[2.5px] text-green-300 font-mono">{['VLESS', '10G', '<10ms', '99.9%'][i]}</span>
+                      </div>
+                      <div className="h-0.5 rounded-full bg-green-950/50 overflow-hidden">
+                        <div className="h-full rounded-full bg-green-500" style={{ width: `${[90, 95, 98, 99][i]}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 p-2 flex flex-col justify-center">
+              <MiniForm />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── CORPORATE: blue header banner, table layout specs ──
+  if (tmpl.id === 'corporate') {
+    return (
+      <div className="w-full h-full bg-slate-950 text-white relative overflow-hidden">
+        {isMobile ? (
+          <div className="relative flex flex-col h-full px-2 py-2">
+            <div className="rounded-md border border-blue-500/15 overflow-hidden mb-1.5">
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 px-1.5 py-1 flex items-center gap-1">
+                <div className="w-4 h-4 rounded bg-white/10 flex items-center justify-center text-[7px]">🇹🇭</div>
+                <div className="flex-1">
+                  <p className="text-[4px] font-bold text-white">Thailand #1</p>
+                  <span className="text-[3px] text-blue-100/70">Active</span>
+                </div>
+                <span className="text-[5px] font-bold text-white">5฿</span>
+              </div>
+              <div className="p-1">
+                {['Protocol', 'Speed'].map((l, i) => (
+                  <div key={i} className={`flex items-center justify-between px-1 py-0.5 ${i === 0 ? 'border-b border-blue-500/5' : ''}`}>
+                    <span className="text-[3px] text-zinc-500">{l}</span>
+                    <span className="text-[3px] text-zinc-300">{['VLESS', '10G'][i]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <MiniForm compact />
+          </div>
+        ) : (
+          <div className="flex h-full">
+            <div className="w-[40%] p-2">
+              <div className="rounded-md border border-blue-500/15 overflow-hidden h-full">
+                <div className="bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 px-1.5 py-1 flex items-center gap-1">
+                  <div className="w-4 h-4 rounded bg-white/10 flex items-center justify-center text-[7px]">🇹🇭</div>
+                  <div className="flex-1">
+                    <p className="text-[4px] font-bold text-white">Thailand</p>
+                    <span className="text-[3px] text-blue-100/70">Active</span>
+                  </div>
+                  <span className="text-[5px] font-bold text-white">5฿</span>
+                </div>
+                <div className="p-1">
+                  <div className="bg-blue-500/5 px-1 py-0.5 border-b border-blue-500/10 mb-0.5">
+                    <span className="text-[3px] text-blue-400 font-semibold uppercase">Specifications</span>
+                  </div>
+                  {['Protocol', 'Speed', 'Ping', 'Uptime'].map((l, i) => (
+                    <div key={i} className={`flex items-center gap-0.5 px-1 py-0.5 ${i < 3 ? 'border-b border-blue-500/5' : ''}`}>
+                      <Shield className="w-1.5 h-1.5 text-blue-400" />
+                      <span className="text-[3px] text-zinc-500 flex-1">{l}</span>
+                      <span className="text-[3px] text-zinc-300">{['VLESS', '10G', '<10ms', '99.9%'][i]}</span>
+                    </div>
+                  ))}
+                  {/* Capacity bar */}
+                  <div className="mt-1 px-1">
+                    <div className="h-0.5 rounded-full bg-slate-800 overflow-hidden">
+                      <div className="h-full rounded-full bg-blue-500 w-[40%]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 p-2 flex flex-col justify-center">
+              <MiniForm />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── PREMIUM: gold shimmer, crown, pill specs ──
+  if (tmpl.id === 'premium') {
+    return (
+      <div className="w-full h-full bg-[#0f0d08] text-white relative overflow-hidden">
+        <div className="absolute top-2 right-2 w-10 h-10 bg-amber-500/8 blur-xl rounded-full" />
+        {isMobile ? (
+          <div className="relative flex flex-col h-full px-2 py-2">
+            <div className="rounded-md border border-amber-500/15 bg-[#0f0d08] overflow-hidden mb-1.5">
+              <div className="h-0.5 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500" />
+              <div className="p-1.5">
+                <div className="flex items-center gap-0.5 mb-1">
+                  <Crown className="w-1.5 h-1.5 text-amber-400" />
+                  <span className="text-[3px] text-amber-400/60 font-bold uppercase">Premium</span>
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-5 h-5 rounded bg-amber-500/10 border border-amber-500/15 flex items-center justify-center text-[8px]">🇹🇭</div>
+                  <div>
+                    <p className="text-[5px] font-bold">Thailand #1</p>
+                    <span className="text-[3px] text-amber-400">Online</span>
+                  </div>
+                </div>
+                <div className="p-1 rounded bg-amber-500/8 border border-amber-500/10 flex items-center justify-between">
+                  <span className="text-[3px] text-amber-400/40">Price</span>
+                  <span className="text-[5px] font-black text-amber-400">5฿</span>
+                </div>
+              </div>
+            </div>
+            <MiniForm compact />
+          </div>
+        ) : (
+          <div className="flex h-full">
+            <div className="w-[40%] p-2">
+              <div className="rounded-md border border-amber-500/15 bg-[#0f0d08] overflow-hidden h-full">
+                <div className="h-0.5 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500" />
+                <div className="p-1.5">
+                  <div className="flex items-center gap-0.5 mb-1">
+                    <Crown className="w-1.5 h-1.5 text-amber-400" />
+                    <span className="text-[3px] text-amber-400/60 font-bold uppercase tracking-wider">Premium Server</span>
+                  </div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <div className="w-5 h-5 rounded bg-amber-500/10 border border-amber-500/15 flex items-center justify-center text-[8px]">🇹🇭</div>
+                    <div>
+                      <p className="text-[5px] font-bold">Thailand</p>
+                      <span className="text-[3px] text-amber-400">Online</span>
+                    </div>
+                  </div>
+                  <div className="p-1 rounded bg-amber-500/8 border border-amber-500/10 mb-1 flex items-center justify-between">
+                    <span className="text-[3px] text-amber-400/40">Price</span>
+                    <span className="text-[6px] font-black text-amber-400">5 ฿</span>
+                  </div>
+                  {/* Pill specs */}
+                  <div className="flex flex-wrap gap-0.5">
+                    {['VLESS', '10G', '<10ms', '99.9%'].map((v, i) => (
+                      <div key={i} className="px-1 py-0.5 rounded-full bg-amber-500/8 border border-amber-500/10">
+                        <span className="text-[2.5px] text-amber-200">{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-1 space-y-0.5">
+                    {[Crown, Shield, Zap].map((Icon, i) => (
+                      <div key={i} className="flex items-center gap-0.5">
+                        <Icon className="w-1.5 h-1.5 text-amber-400" />
+                        <div className="h-0.5 flex-1 rounded bg-amber-500/5" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 p-2 flex flex-col justify-center">
+              <MiniForm />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── SONGKRAN: water wave top, bubble specs, emoji ──
+  return (
+    <div className="w-full h-full bg-[#060e1f] text-white relative overflow-hidden">
+      {isMobile ? (
+        <div className="relative flex flex-col h-full px-2 py-2">
+          <div className="rounded-md border border-sky-500/20 bg-[#060e1f] overflow-hidden mb-1.5">
+            <div className="h-2 bg-gradient-to-b from-sky-500/20 to-transparent relative">
+              <div className="absolute top-0 left-1 text-[4px] opacity-50">💧</div>
+              <div className="absolute top-0 right-1.5 text-[3px] opacity-40">🌸</div>
+            </div>
+            <div className="p-1.5 -mt-0.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                <div className="w-5 h-5 rounded bg-sky-500/10 border border-sky-500/15 flex items-center justify-center text-[8px]">🇹🇭</div>
+                <div>
+                  <p className="text-[5px] font-bold">Thailand #1</p>
+                  <span className="text-[3px] text-sky-400">Online</span>
+                </div>
+              </div>
+              <div className="flex gap-0.5">
+                {[Shield, Zap].map((Icon, i) => (
+                  <div key={i} className="flex-1 flex items-center gap-0.5 p-0.5 rounded-full bg-sky-500/8 border border-sky-500/10">
+                    <div className="w-2 h-2 rounded-full bg-sky-500/10 flex items-center justify-center">
+                      <Icon className="w-1 h-1 text-sky-400" />
+                    </div>
+                    <div className="h-0.5 flex-1 rounded bg-white/10" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <MiniForm compact />
+        </div>
+      ) : (
+        <div className="flex h-full">
+          <div className="w-[40%] p-2">
+            <div className="rounded-md border border-sky-500/20 bg-[#060e1f] overflow-hidden h-full">
+              <div className="h-3 bg-gradient-to-b from-sky-500/20 to-transparent relative">
+                <div className="absolute top-0.5 left-1 text-[4px] opacity-50">💧</div>
+                <div className="absolute top-0 right-1.5 text-[3px] opacity-40">🌸</div>
+                <div className="absolute top-0.5 left-1/2 text-[3px] opacity-30">☀️</div>
+              </div>
+              <div className="p-1.5 -mt-1">
+                <div className="flex items-center gap-1 mb-1">
+                  <div className="w-5 h-5 rounded bg-sky-500/10 border border-sky-500/15 flex items-center justify-center text-[8px] relative">
+                    🇹🇭
+                    <div className="absolute -bottom-0.5 -right-0.5 text-[4px]">💧</div>
+                  </div>
+                  <div>
+                    <p className="text-[5px] font-bold">Thailand</p>
+                    <span className="text-[3px] text-sky-400">Online</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 p-1 rounded bg-sky-500/8 border border-sky-500/10 mb-1">
+                  <Droplets className="w-2 h-2 text-sky-400" />
+                  <div>
+                    <span className="text-[3px] text-sky-400/50 block">ราคา</span>
+                    <span className="text-[5px] font-bold text-white">5 ฿</span>
+                  </div>
+                </div>
+                {/* Bubble specs */}
+                <div className="grid grid-cols-2 gap-0.5">
+                  {[Shield, Zap, Globe, Star].map((Icon, i) => (
+                    <div key={i} className="flex items-center gap-0.5 p-0.5 rounded-lg bg-sky-500/8 border border-sky-500/10">
+                      <div className="w-2 h-2 rounded-full bg-sky-500/10 flex items-center justify-center">
+                        <Icon className="w-1 h-1 text-sky-400" />
+                      </div>
+                      <div className="h-0.5 flex-1 rounded bg-white/10" />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-1 space-y-0.5">
+                  {['💦', '🛡️', '⚡'].map((e, i) => (
                     <div key={i} className="flex items-center gap-0.5">
-                      <Icon className={`w-1.5 h-1.5 ${tmpl.featureColor}`} />
+                      <div className="w-2 h-2 rounded-full bg-sky-500/10 flex items-center justify-center">
+                        <span className="text-[3px]">{e}</span>
+                      </div>
                       <div className="h-0.5 flex-1 rounded bg-white/5" />
                     </div>
                   ))}
@@ -448,27 +837,8 @@ function VpnBuyPreview({ tmpl, isMobile = false }: { tmpl: TemplateInfo; isMobil
               </div>
             </div>
           </div>
-          {/* Right - purchase form */}
           <div className="flex-1 p-2 flex flex-col justify-center">
-            <div className="space-y-1">
-              <div className="h-2 rounded bg-white/5 border border-white/[0.06] px-1 flex items-center">
-                <span className="text-[3px] text-zinc-600">ชื่อ VPN</span>
-              </div>
-              <div className="flex gap-0.5">
-                {['1', '7', '15', '30'].map(d => (
-                  <div key={d} className={`flex-1 h-2 rounded text-[3px] font-bold flex items-center justify-center ${d === '30' ? `bg-gradient-to-r ${tmpl.btnClass} ${tmpl.btnTextClass}` : 'bg-white/5 text-zinc-500'}`}>
-                    {d}วัน
-                  </div>
-                ))}
-              </div>
-              <div className="h-2 rounded bg-white/5 border border-white/[0.06] px-1 flex items-center justify-between">
-                <span className="text-[3px] text-zinc-500">ราคารวม</span>
-                <span className={`text-[3.5px] font-bold ${tmpl.accentColor}`}>150 ฿</span>
-              </div>
-              <div className={`h-3 rounded bg-gradient-to-r ${tmpl.btnClass} flex items-center justify-center`}>
-                <span className={`text-[4px] font-bold ${tmpl.btnTextClass}`}>ซื้อ VPN</span>
-              </div>
-            </div>
+            <MiniForm />
           </div>
         </div>
       )}
