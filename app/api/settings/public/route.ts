@@ -65,6 +65,7 @@ export async function GET() {
             loginTemplate: 'classic',
             registerTemplate: 'classic',
             vpnTemplate: 'classic',
+            registrationIpCheck: true,
           }
         })
       }
@@ -115,6 +116,8 @@ export async function GET() {
         loginTemplate: settings.loginTemplate || 'classic',
         registerTemplate: settings.registerTemplate || 'classic',
         vpnTemplate: settings.vpnTemplate || 'classic',
+        // Registration IP Check
+        registrationIpCheck: settings.registrationIpCheck ?? true,
       }
     })
   } catch (error) {

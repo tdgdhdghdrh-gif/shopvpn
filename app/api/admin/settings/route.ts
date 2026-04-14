@@ -138,6 +138,8 @@ export async function POST(request: NextRequest) {
       loginTemplate: body.loginTemplate !== undefined ? body.loginTemplate : (settings?.loginTemplate || 'classic'),
       registerTemplate: body.registerTemplate !== undefined ? body.registerTemplate : (settings?.registerTemplate || 'classic'),
       vpnTemplate: body.vpnTemplate !== undefined ? body.vpnTemplate : (settings?.vpnTemplate || 'classic'),
+      // Registration IP Check
+      registrationIpCheck: body.registrationIpCheck !== undefined ? Boolean(body.registrationIpCheck) : (settings?.registrationIpCheck ?? true),
       updatedAt: new Date()
     }
 

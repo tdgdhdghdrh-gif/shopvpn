@@ -7,7 +7,7 @@ import {
   Upload, X, QrCode, Settings as SettingsIcon, Info, ExternalLink,
   Globe, Image as ImageIcon, Type, DollarSign, Layout, Eye, EyeOff,
   CheckCircle, XCircle, ChevronDown,
-  Gift, Clock,
+  Gift, Clock, Fingerprint,
 } from 'lucide-react'
 
 interface Settings {
@@ -28,6 +28,7 @@ interface Settings {
   landingTemplate: string
   trialEnabled: boolean
   trialDurationMinutes: number
+  registrationIpCheck: boolean
 }
 
 const INITIAL_SETTINGS: Settings = {
@@ -48,6 +49,7 @@ const INITIAL_SETTINGS: Settings = {
   landingTemplate: 'classic',
   trialEnabled: true,
   trialDurationMinutes: 60,
+  registrationIpCheck: true,
 }
 
 function StatusDot({ ok }: { ok: boolean }) {
@@ -279,6 +281,7 @@ export default function AdminSettingsPage() {
           landingTemplate: data.settings.landingTemplate || 'classic',
           trialEnabled: data.settings.trialEnabled ?? true,
           trialDurationMinutes: data.settings.trialDurationMinutes ?? 60,
+          registrationIpCheck: data.settings.registrationIpCheck ?? true,
         }
         setSettings(s)
         setSavedSettings(s)
@@ -492,6 +495,28 @@ export default function AdminSettingsPage() {
                   />
                 </div>
               )}
+            </div>
+          </SectionCard>
+
+          {/* Registration IP Check */}
+          <SectionCard id="registration-ip" title="เช็ค IP ผู้สมัครสมาชิก" desc="เปิด/ปิดการจำกัด IP ซ้ำตอนสมัครสมาชิก" icon={Fingerprint} color="amber" mobileSection={mobileSection} onToggle={toggleMobileSection}>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Fingerprint className="w-5 h-5 text-amber-400" />
+                  <div>
+                    <p className="text-sm font-bold text-white">เช็ค IP ซ้ำตอนสมัคร</p>
+                    <p className="text-[10px] text-zinc-500">{settings.registrationIpCheck ? 'เปิด — 1 IP สมัครได้ 1 บัญชี (ภายใน 30 วัน)' : 'ปิด — สมัครกี่บัญชีก็ได้ ไม่จำกัด IP'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateField('registrationIpCheck', !settings.registrationIpCheck)}
+                  className={`relative w-12 h-7 rounded-full transition-all ${settings.registrationIpCheck ? 'bg-amber-500' : 'bg-zinc-700'}`}
+                >
+                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${settings.registrationIpCheck ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
             </div>
           </SectionCard>
 

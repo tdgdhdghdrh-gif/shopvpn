@@ -80,8 +80,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'อีเมลนี้ถูกใช้แล้ว' })
     }
 
-    // Check IP tracking for duplicate (prevent farming)
-    if (clientIP !== 'unknown') {
+    // Check IP tracking for duplicate (prevent farming) — only if registrationIpCheck is enabled
+    const isIpCheckEnabled = settings?.registrationIpCheck ?? true
+    if (isIpCheckEnabled && clientIP !== 'unknown') {
       const existingIP = await prisma.referralIPTracking.findFirst({
         where: { 
           ipAddress: clientIP,

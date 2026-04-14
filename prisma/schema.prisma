@@ -137,6 +137,7 @@ model Settings {
   loginTemplate       String   @default("classic") // ธีมหน้าล็อกอิน: classic, minimal, gaming, corporate, premium, songkran
   registerTemplate    String   @default("classic") // ธีมหน้าสมัครสมาชิก: classic, minimal, gaming, corporate, premium, songkran
   vpnTemplate         String   @default("classic") // ธีมหน้าซื้อ VPN: classic, minimal, gaming, corporate, premium, songkran
+  registrationIpCheck Boolean  @default(true) // เปิด/ปิดเช็ค IP ซ้ำตอนสมัครสมาชิก (true = 1 IP สมัครได้ 1 คน)
   licenseKey          String?  // License key สำหรับเช็คอายุเว็บ (ได้จากเว็บต้นทาง)
   licenseApiUrl       String?  // URL ของเว็บต้นทาง เช่น https://simonvpn.darkx.shop
 }
