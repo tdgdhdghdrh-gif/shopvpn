@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const found = await prisma.allowedIP.findUnique({
       where: { ipAddress: trimmedIp },
-      select: { id: true, ipAddress: true, label: true, isActive: true },
+      select: { id: true, ipAddress: true, hostname: true, label: true, isActive: true },
     })
 
     if (!found || !found.isActive) {
@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
       allowed: true,
       ไอพีแอดเดรส: trimmedIp,
       ip: trimmedIp,
+      ชื่อโฮสต์: found.hostname || null,
+      hostname: found.hostname,
       ชื่อหมายเหตุ: found.label || '(ไม่ได้ระบุ)',
       label: found.label,
       ข้อความ: `IP ${trimmedIp} ได้รับอนุญาตให้เข้าถึงระบบ`,
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
       const trimmedIp = body.ip.trim()
       const found = await prisma.allowedIP.findUnique({
         where: { ipAddress: trimmedIp },
-        select: { id: true, ipAddress: true, label: true, isActive: true },
+        select: { id: true, ipAddress: true, hostname: true, label: true, isActive: true },
       })
 
       const isAllowed = !!(found && found.isActive)
@@ -74,6 +76,8 @@ export async function POST(request: NextRequest) {
         allowed: isAllowed,
         ไอพีแอดเดรส: trimmedIp,
         ip: trimmedIp,
+        ชื่อโฮสต์: found?.hostname || null,
+        hostname: found?.hostname || null,
         ชื่อหมายเหตุ: found?.label || '(ไม่ได้ระบุ)',
         label: found?.label || null,
         ข้อความ: isAllowed
@@ -87,7 +91,7 @@ export async function POST(request: NextRequest) {
       const ips = body.ips.map((ip: string) => ip.trim())
       const found = await prisma.allowedIP.findMany({
         where: { ipAddress: { in: ips }, isActive: true },
-        select: { ipAddress: true, label: true },
+        select: { ipAddress: true, hostname: true, label: true },
       })
 
       const allowedSet = new Set(found.map(f => f.ipAddress))
@@ -96,6 +100,8 @@ export async function POST(request: NextRequest) {
         allowed: allowedSet.has(ip),
         ไอพีแอดเดรส: ip,
         ip,
+        ชื่อโฮสต์: found.find(f => f.ipAddress === ip)?.hostname || null,
+        hostname: found.find(f => f.ipAddress === ip)?.hostname || null,
         ชื่อหมายเหตุ: found.find(f => f.ipAddress === ip)?.label || '(ไม่ได้ระบุ)',
         label: found.find(f => f.ipAddress === ip)?.label || null,
         ข้อความ: allowedSet.has(ip)

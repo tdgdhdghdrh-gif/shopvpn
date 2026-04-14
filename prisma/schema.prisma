@@ -552,6 +552,7 @@ model BlockedIP {
 model AllowedIP {
   id        String   @id @default(cuid())
   ipAddress String   @unique
+  hostname  String?  // ชื่อโฮสต์ เช่น "example.com" (resolve จาก DNS → IP)
   label     String?  // ชื่อ/หมายเหตุ เช่น "เซิร์ฟเวอร์หลัก", "สำนักงาน"
   isActive  Boolean  @default(true)
   createdBy String?  // admin userId ที่เพิ่ม

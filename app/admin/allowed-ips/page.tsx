@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react'
 import {
   ShieldCheck, Plus, Trash2, Copy, Check, X,
   RefreshCw, ToggleLeft, ToggleRight, Search,
-  Wifi, WifiOff, Globe, Edit3, Save, FileText
+  Wifi, WifiOff, Globe, Edit3, Save, FileText, Server
 } from 'lucide-react'
 
 interface AllowedIpData {
   id: string
   ipAddress: string
+  hostname: string | null
   label: string | null
   isActive: boolean
   createdAt: string
@@ -23,10 +24,13 @@ export default function AdminAllowedIpsPage() {
   const [search, setSearch] = useState('')
 
   // Form
+  const [formMode, setFormMode] = useState<'ip' | 'hostname'>('ip')
   const [formIp, setFormIp] = useState('')
+  const [formHostname, setFormHostname] = useState('')
   const [formLabel, setFormLabel] = useState('')
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState('')
+  const [formSuccess, setFormSuccess] = useState('')
 
   // Inline edit
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -51,22 +55,36 @@ export default function AdminAllowedIpsPage() {
     e.preventDefault()
     setFormLoading(true)
     setFormError('')
+    setFormSuccess('')
 
     try {
+      const body: any = { label: formLabel || undefined }
+      if (formMode === 'hostname') {
+        body.hostname = formHostname
+      } else {
+        body.ipAddress = formIp
+      }
+
       const res = await fetch('/api/admin/allowed-ips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ipAddress: formIp,
-          label: formLabel || undefined,
-        }),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (data.success) {
-        setShowCreate(false)
+        // แสดง success message ถ้ามี resolved IPs
+        if (data.resolvedIps) {
+          setFormSuccess(`Resolve "${data.hostname}" ได้ ${data.resolvedIps.length} IP: ${data.resolvedIps.join(', ')}`)
+        } else if (data.resolvedFrom) {
+          setFormSuccess(`Resolve "${data.resolvedFrom}" → ${data.data?.ipAddress}`)
+        }
         setFormIp('')
+        setFormHostname('')
         setFormLabel('')
         fetchIps()
+        if (!data.resolvedIps && !data.resolvedFrom) {
+          setShowCreate(false)
+        }
       } else {
         setFormError(data.error || 'เกิดข้อผิดพลาด')
       }
@@ -134,7 +152,7 @@ export default function AdminAllowedIpsPage() {
   const filtered = ips.filter(ip => {
     if (!search) return true
     const q = search.toLowerCase()
-    return ip.ipAddress.includes(q) || (ip.label || '').toLowerCase().includes(q)
+    return ip.ipAddress.includes(q) || (ip.label || '').toLowerCase().includes(q) || (ip.hostname || '').toLowerCase().includes(q)
   })
 
   const activeCount = ips.filter(ip => ip.isActive).length
@@ -188,8 +206,34 @@ export default function AdminAllowedIpsPage() {
               <Plus className="w-4 h-4 text-emerald-400" />
               เพิ่ม IP ที่อนุญาต
             </h3>
-            <button onClick={() => setShowCreate(false)} className="text-zinc-500 hover:text-white transition-colors">
+            <button onClick={() => { setShowCreate(false); setFormError(''); setFormSuccess('') }} className="text-zinc-500 hover:text-white transition-colors">
               <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Mode Toggle */}
+          <div className="flex items-center gap-2 p-1 bg-white/[0.03] border border-white/5 rounded-xl w-fit">
+            <button
+              onClick={() => setFormMode('ip')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                formMode === 'ip'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              IP Address
+            </button>
+            <button
+              onClick={() => setFormMode('hostname')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                formMode === 'hostname'
+                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                  : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
+              }`}
+            >
+              <Server className="w-3.5 h-3.5" />
+              Hostname
             </button>
           </div>
 
@@ -199,18 +243,39 @@ export default function AdminAllowedIpsPage() {
             </div>
           )}
 
-          <form onSubmit={createIp} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">IP Address</label>
-              <input
-                type="text"
-                value={formIp}
-                onChange={(e) => setFormIp(e.target.value)}
-                placeholder="เช่น 203.150.166.82"
-                required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
-              />
+          {formSuccess && (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-400 font-bold">
+              {formSuccess}
             </div>
+          )}
+
+          <form onSubmit={createIp} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {formMode === 'ip' ? (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">IP Address</label>
+                <input
+                  type="text"
+                  value={formIp}
+                  onChange={(e) => setFormIp(e.target.value)}
+                  placeholder="เช่น 203.150.166.82"
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
+                />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Hostname</label>
+                <input
+                  type="text"
+                  value={formHostname}
+                  onChange={(e) => setFormHostname(e.target.value)}
+                  placeholder="เช่น example.com, server1.mysite.com"
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 transition-colors font-mono"
+                />
+                <p className="text-[10px] text-zinc-600">ระบบจะ resolve DNS เป็น IP ให้อัตโนมัติ</p>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">ชื่อ / หมายเหตุ (ไม่บังคับ)</label>
@@ -224,11 +289,15 @@ export default function AdminAllowedIpsPage() {
             </div>
 
             <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => setShowCreate(false)} className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-all">
+              <button type="button" onClick={() => { setShowCreate(false); setFormError(''); setFormSuccess('') }} className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-all">
                 ยกเลิก
               </button>
-              <button type="submit" disabled={formLoading || !formIp.trim()} className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 rounded-xl text-xs font-bold text-white transition-all active:scale-95">
-                {formLoading ? 'กำลังเพิ่ม...' : 'เพิ่ม IP'}
+              <button
+                type="submit"
+                disabled={formLoading || (formMode === 'ip' ? !formIp.trim() : !formHostname.trim())}
+                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
+              >
+                {formLoading ? 'กำลังเพิ่ม...' : formMode === 'hostname' ? 'Resolve & เพิ่ม' : 'เพิ่ม IP'}
               </button>
             </div>
           </form>
@@ -239,7 +308,7 @@ export default function AdminAllowedIpsPage() {
       <div className="bg-zinc-900/30 border border-white/5 rounded-xl p-4 space-y-3">
         <h4 className="text-xs font-bold text-zinc-400 flex items-center gap-2">
           <FileText className="w-3.5 h-3.5 text-emerald-400" />
-          วิธีใช้ API เช็ค IP
+          วิธีใช้ API
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
@@ -249,6 +318,25 @@ export default function AdminAllowedIpsPage() {
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
             <p className="font-bold text-blue-400">POST /api/allowed-ips/check</p>
             <p className="text-zinc-500">{'body: { ip: "xxx" }'} หรือ {'{ ips: ["xxx","yyy"] }'} — เช็คหลาย IP</p>
+          </div>
+          <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1.5">
+            <p className="font-bold text-amber-400">POST /api/allowed-ips/add</p>
+            <p className="text-zinc-500">เพิ่ม IP ผ่าน API (ต้องใช้ API Key + permission: ip:manage)</p>
+            <p className="text-zinc-600 font-mono">Header: Authorization: Bearer sk_xxx</p>
+            <div className="space-y-0.5 text-zinc-600">
+              <p>{'{ "ip": "203.150.x.x", "label": "ชื่อ" }'}</p>
+              <p>{'{ "hostname": "example.com", "label": "ชื่อ" }'}</p>
+              <p>{'{ "ip": "auto" }'} — ใช้ IP ผู้เรียก</p>
+            </div>
+          </div>
+          <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1.5">
+            <p className="font-bold text-red-400">DELETE /api/allowed-ips/add</p>
+            <p className="text-zinc-500">ลบ IP ผ่าน API (ต้องใช้ API Key + permission: ip:manage)</p>
+            <p className="text-zinc-600 font-mono">Header: Authorization: Bearer sk_xxx</p>
+            <div className="space-y-0.5 text-zinc-600">
+              <p>{'{ "ip": "203.150.x.x" }'}</p>
+              <p>{'{ "hostname": "example.com" }'}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -292,7 +380,7 @@ export default function AdminAllowedIpsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="ค้นหา IP หรือชื่อ..."
+            placeholder="ค้นหา IP, hostname หรือชื่อ..."
             className="w-full bg-zinc-900/50 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/30 transition-colors"
           />
         </div>
@@ -332,7 +420,7 @@ export default function AdminAllowedIpsPage() {
                           value={editIp}
                           onChange={(e) => setEditIp(e.target.value)}
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500/50 w-full sm:w-48"
-                          placeholder="IP Address"
+                          placeholder="IP Address หรือ Hostname"
                         />
                         <input
                           type="text"
@@ -346,6 +434,12 @@ export default function AdminAllowedIpsPage() {
                       <>
                         <div className="flex items-center gap-2 flex-wrap">
                           <code className="text-sm font-bold font-mono text-emerald-400">{ip.ipAddress}</code>
+                          {ip.hostname && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                              <Server className="w-3 h-3" />
+                              {ip.hostname}
+                            </span>
+                          )}
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${
                             ip.isActive
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'

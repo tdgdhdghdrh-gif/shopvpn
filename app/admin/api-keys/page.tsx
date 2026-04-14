@@ -39,6 +39,7 @@ const ALL_PERMISSIONS = [
   { value: 'credit:deduct', label: 'หักเครดิต', icon: CreditCard, color: 'amber' },
   { value: 'promo:activate', label: 'รับส่วนลด', icon: Percent, color: 'purple' },
   { value: 'vpn:codes', label: 'ดึงโค้ด VPN', icon: Key, color: 'cyan' },
+  { value: 'ip:manage', label: 'จัดการ IP', icon: Shield, color: 'emerald' },
 ]
 
 export default function AdminApiKeysPage() {
