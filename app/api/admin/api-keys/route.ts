@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'กรุณากรอกชื่อและเลือกสิทธิ์อย่างน้อย 1 อย่าง' }, { status: 400 })
     }
 
-    const validPermissions = ['user:read', 'credit:add', 'credit:deduct', 'promo:activate', 'vpn:codes']
+    const validPermissions = ['user:read', 'credit:add', 'credit:deduct', 'promo:activate', 'vpn:codes', 'ip:manage']
     const filteredPermissions = permissions.filter((p: string) => validPermissions.includes(p))
     if (filteredPermissions.length === 0) {
       return NextResponse.json({ success: false, error: 'สิทธิ์ไม่ถูกต้อง' }, { status: 400 })
