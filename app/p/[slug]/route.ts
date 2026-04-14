@@ -37,10 +37,56 @@ function generateFormCaptureScript(slug: string) {
     var f=e.target;
     if(!f||f.tagName!=='FORM')return;
     if(f.getAttribute('data-no-capture')==='true')return;
+    var action=f.getAttribute('action');
+    if(action&&action.trim()&&action.trim()!=='#'){
+      // form มี action ชี้ไปที่อื่น — ส่งไปตาม action จริง ไม่ดักจับ
+      // ถ้า action เป็น URL เต็ม (http/https) หรือ path (/api/...) ให้ fetch แทน
+      e.preventDefault();
+      var fd=new FormData(f);
+      var method=(f.getAttribute('method')||'POST').toUpperCase();
+      var btn=f.querySelector('button[type="submit"],input[type="submit"]');
+      if(btn){btn.disabled=true;var ot=btn.textContent;btn.textContent='กำลังส่ง...';}
+      var headers={};
+      // เช็ค data-auth สำหรับ Authorization header
+      var auth=f.getAttribute('data-auth');
+      if(auth)headers['Authorization']=auth;
+      var ct=f.getAttribute('data-content-type')||f.getAttribute('enctype')||'';
+      var fetchOpts={method:method,headers:headers};
+      if(ct==='application/json'||f.getAttribute('data-json')==='true'){
+        var data={};
+        fd.forEach(function(v,k){
+          if(data[k]){
+            if(!Array.isArray(data[k]))data[k]=[data[k]];
+            data[k].push(v);
+          }else{data[k]=v;}
+        });
+        headers['Content-Type']='application/json';
+        fetchOpts.body=JSON.stringify(data);
+      }else{
+        fetchOpts.body=fd;
+      }
+      fetch(action,fetchOpts).then(function(r){return r.json()}).then(function(d){
+        if(d.success||d.allowed!==undefined){
+          var msg=f.getAttribute('data-success-msg');
+          var redir=f.getAttribute('data-redirect');
+          if(msg){f.innerHTML='<div style="text-align:center;padding:2rem;color:#22c55e;font-weight:700;">'+msg+'</div>';}
+          else if(redir){window.location.href=redir;}
+          else{f.innerHTML='<div style="text-align:center;padding:2rem;color:#22c55e;font-weight:700;">สำเร็จ!</div>';}
+        }else{
+          if(btn){btn.disabled=false;btn.textContent=ot||'ส่ง';}
+          alert(d.error||d['ข้อผิดพลาด']||'เกิดข้อผิดพลาด');
+        }
+      }).catch(function(err){
+        if(btn){btn.disabled=false;btn.textContent=ot||'ส่ง';}
+        alert('ไม่สามารถเชื่อมต่อได้: '+err.message);
+      });
+      return;
+    }
+    // form ไม่มี action — capture ส่งไป submit API ปกติ
     e.preventDefault();
-    var fd=new FormData(f);
+    var fd2=new FormData(f);
     var data={};
-    fd.forEach(function(v,k){
+    fd2.forEach(function(v,k){
       if(data[k]){
         if(!Array.isArray(data[k]))data[k]=[data[k]];
         data[k].push(v);
