@@ -49,6 +49,18 @@ export async function GET(request: NextRequest) {
       recentOrders,
       topupsByDay,
       ordersByDay,
+      // New queries
+      newUsersByDay,
+      topupMethodBreakdown,
+      topupMethodBreakdownMonth,
+      topServers,
+      openTickets,
+      totalTickets,
+      totalReviews,
+      avgRating,
+      slowReportsToday,
+      trialOrdersToday,
+      trialOrdersMonth,
     ] = await Promise.all([
       // Users
       prisma.user.count(),
@@ -133,6 +145,64 @@ export async function GET(request: NextRequest) {
         GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `, new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)),
+
+      // === NEW QUERIES ===
+
+      // New users per day (last 14 days)
+      prisma.$queryRawUnsafe(`
+        SELECT DATE("createdAt") as date, COUNT(*)::int as count
+        FROM "User"
+        WHERE "createdAt" >= $1
+        GROUP BY DATE("createdAt")
+        ORDER BY date ASC
+      `, new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)),
+
+      // Topup method breakdown (all time)
+      prisma.topUp.groupBy({
+        by: ['method'],
+        where: { status: 'SUCCESS' },
+        _sum: { amount: true },
+        _count: true,
+      }),
+
+      // Topup method breakdown (this month)
+      prisma.topUp.groupBy({
+        by: ['method'],
+        where: { status: 'SUCCESS', createdAt: { gte: monthStart } },
+        _sum: { amount: true },
+        _count: true,
+      }),
+
+      // Top 5 servers by revenue this month
+      prisma.vpnOrder.groupBy({
+        by: ['serverId'],
+        where: { createdAt: { gte: monthStart } },
+        _sum: { price: true },
+        _count: true,
+        orderBy: { _sum: { price: 'desc' } },
+        take: 5,
+      }),
+
+      // Open tickets
+      prisma.ticket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }).catch(() => 0),
+
+      // Total tickets
+      prisma.ticket.count().catch(() => 0),
+
+      // Total reviews
+      prisma.review.count().catch(() => 0),
+
+      // Average rating
+      prisma.review.aggregate({ _avg: { rating: true } }).catch(() => ({ _avg: { rating: null } })),
+
+      // Slow reports today
+      prisma.slowReport.count({ where: { createdAt: { gte: todayStart } } }).catch(() => 0),
+
+      // Trial orders today
+      prisma.vpnOrder.count({ where: { packageType: 'TRIAL', createdAt: { gte: todayStart } } }),
+
+      // Trial orders this month
+      prisma.vpnOrder.count({ where: { packageType: 'TRIAL', createdAt: { gte: monthStart } } }),
     ])
 
     // Online users (active in last 15 minutes via IPLog)
@@ -147,16 +217,38 @@ export async function GET(request: NextRequest) {
     const onlineUsers = onlineUsersResult.length
 
     // VPN revenue (sum of all order prices)
-    const vpnRevenueToday = await prisma.vpnOrder.aggregate({
-      where: { createdAt: { gte: todayStart } },
-      _sum: { price: true },
-    })
-    const vpnRevenueMonth = await prisma.vpnOrder.aggregate({
-      where: { createdAt: { gte: monthStart } },
-      _sum: { price: true },
-    })
-    const vpnRevenueTotal = await prisma.vpnOrder.aggregate({
-      _sum: { price: true },
+    const [vpnRevenueToday, vpnRevenueMonth, vpnRevenueTotal] = await Promise.all([
+      prisma.vpnOrder.aggregate({
+        where: { createdAt: { gte: todayStart } },
+        _sum: { price: true },
+      }),
+      prisma.vpnOrder.aggregate({
+        where: { createdAt: { gte: monthStart } },
+        _sum: { price: true },
+      }),
+      prisma.vpnOrder.aggregate({
+        _sum: { price: true },
+      }),
+    ])
+
+    // Resolve top server names
+    const topServerIds = topServers.map(s => s.serverId)
+    const serverDetails = topServerIds.length > 0 ? await prisma.vpnServer.findMany({
+      where: { id: { in: topServerIds } },
+      select: { id: true, name: true, flag: true, maxClients: true, _count: { select: { orders: { where: { isActive: true } } } } },
+    }) : []
+
+    const topServersData = topServers.map(s => {
+      const detail = serverDetails.find(d => d.id === s.serverId)
+      return {
+        id: s.serverId,
+        name: detail?.name || 'Unknown',
+        flag: detail?.flag || '',
+        revenue: s._sum.price || 0,
+        orders: s._count,
+        activeClients: detail?._count.orders || 0,
+        maxClients: detail?.maxClients || 0,
+      }
     })
 
     // Calculate growth percentages
@@ -194,6 +286,14 @@ export async function GET(request: NextRequest) {
         ordersMonth,
 
         totalBalance: totalBalance._sum.balance || 0,
+
+        openTickets,
+        totalTickets,
+        totalReviews,
+        avgRating: avgRating._avg.rating ? Math.round(avgRating._avg.rating * 10) / 10 : 0,
+        slowReportsToday,
+        trialOrdersToday,
+        trialOrdersMonth,
       },
       revenue: {
         topups: {
@@ -223,7 +323,17 @@ export async function GET(request: NextRequest) {
           amount: Number(d.total) || 0,
           count: d.count,
         })),
+        newUsersByDay: (newUsersByDay as any[]).map((d: any) => ({
+          date: new Date(d.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
+          count: d.count,
+        })),
       },
+      topupMethods: topupMethodBreakdownMonth.map(m => ({
+        method: m.method,
+        amount: m._sum.amount || 0,
+        count: m._count,
+      })),
+      topServers: topServersData,
       recent: {
         topups: recentTopups.map(t => ({
           id: t.id,

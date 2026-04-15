@@ -1,100 +1,132 @@
 'use client'
 
 import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
+  AreaChart, Area, BarChart, Bar, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
 } from 'recharts'
 
 interface ChartData {
   date: string
-  amount: number
+  amount?: number
+  count?: number
 }
 
 interface DashboardChartProps {
   data: ChartData[]
   title: string
+  type?: 'area' | 'bar'
+  color?: string
+  dataKey?: string
+  height?: number
 }
 
-function ChartContent({ data }: { data: ChartData[] }) {
+const TOOLTIP_STYLE = {
+  backgroundColor: '#09090b',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '12px',
+  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+  padding: '10px 14px',
+}
+
+function AreaChartContent({ data, color = '#3b82f6', dataKey = 'amount', height = 280 }: { data: ChartData[]; color?: string; dataKey?: string; height?: number }) {
+  const gradientId = `gradient-${dataKey}-${color.replace('#', '')}`
   return (
-    <div className="h-[250px] sm:h-[320px] w-full">
+    <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.25}/>
+              <stop offset="95%" stopColor={color} stopOpacity={0}/>
             </linearGradient>
           </defs>
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            vertical={false} 
-            stroke="rgba(255,255,255,0.03)" 
-          />
-          <XAxis 
-            dataKey="date" 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: '#71717a', fontSize: 11, fontWeight: 600 }}
-            dy={10}
-          />
-          <YAxis 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: '#71717a', fontSize: 11, fontWeight: 600 }}
-          />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#09090b', 
-              border: '1px solid rgba(255,255,255,0.05)',
-              borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-              padding: '12px 16px',
-            }}
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
+          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#52525b', fontSize: 10, fontWeight: 600 }} dy={8} />
+          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#52525b', fontSize: 10, fontWeight: 600 }} />
+          <Tooltip
+            contentStyle={TOOLTIP_STYLE}
             itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-            labelStyle={{ color: '#71717a', fontSize: '10px', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}
-            formatter={(value: any) => [`${Number(value || 0).toLocaleString()} ฿`, 'จำนวนเงิน']}
+            labelStyle={{ color: '#71717a', fontSize: '10px', marginBottom: '4px', textTransform: 'uppercase' as const, fontWeight: 'bold' }}
+            formatter={(value: any) => [`${Number(value || 0).toLocaleString()} ${dataKey === 'count' ? '' : '฿'}`, dataKey === 'count' ? 'จำนวน' : 'ยอดเงิน']}
           />
-          <Area 
-            type="monotone" 
-            dataKey="amount" 
-            stroke="#3b82f6" 
-            strokeWidth={3}
-            fillOpacity={1} 
-            fill="url(#colorAmount)" 
-            animationDuration={1500}
-          />
+          <Area type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2.5} fillOpacity={1} fill={`url(#${gradientId})`} animationDuration={1200} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
   )
 }
 
-export default function DashboardChart({ data, title }: DashboardChartProps) {
-  // If no title, render just the chart (for embedding in custom containers)
-  if (!title) {
-    return <ChartContent data={data} />
-  }
-
+function BarChartContent({ data, color = '#8b5cf6', dataKey = 'count', height = 280 }: { data: ChartData[]; color?: string; dataKey?: string; height?: number }) {
   return (
-    <div className="bg-zinc-900/50 border border-white/5 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">{title}</h3>
-          <p className="text-xs sm:text-sm font-medium text-zinc-500">อัตราการเติบโตและรายได้สะสมย้อนหลัง</p>
-        </div>
-        <div className="flex bg-zinc-950 border border-white/5 rounded-xl p-1 w-fit">
-          <button className="px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white bg-zinc-800 rounded-lg shadow-lg">7 วัน</button>
-          <button className="px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-zinc-500 hover:text-zinc-300">30 วัน</button>
-        </div>
-      </div>
-
-      <ChartContent data={data} />
+    <div style={{ height }} className="w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
+          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#52525b', fontSize: 10, fontWeight: 600 }} dy={8} />
+          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#52525b', fontSize: 10, fontWeight: 600 }} allowDecimals={false} />
+          <Tooltip
+            contentStyle={TOOLTIP_STYLE}
+            itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+            labelStyle={{ color: '#71717a', fontSize: '10px', marginBottom: '4px', textTransform: 'uppercase' as const, fontWeight: 'bold' }}
+            formatter={(value: any) => [`${Number(value || 0).toLocaleString()}`, 'จำนวน']}
+          />
+          <Bar dataKey={dataKey} fill={color} radius={[4, 4, 0, 0]} animationDuration={1200} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   )
 }
+
+// Donut chart for topup method breakdown
+interface DonutData { name: string; value: number; color: string }
+export function DonutChart({ data, height = 220 }: { data: DonutData[]; height?: number }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0)
+  if (total === 0) return <div style={{ height }} className="flex items-center justify-center text-xs text-zinc-600">ไม่มีข้อมูล</div>
+  
+  return (
+    <div style={{ height }} className="w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius="55%"
+            outerRadius="80%"
+            dataKey="value"
+            stroke="none"
+            animationDuration={1200}
+          >
+            {data.map((entry, i) => (
+              <Cell key={i} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={TOOLTIP_STYLE}
+            formatter={(value: any, name: string) => [`${Number(value).toLocaleString()} ฿`, name]}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+export default function DashboardChart({ data, title, type = 'area', color, dataKey, height }: DashboardChartProps) {
+  if (!title) {
+    if (type === 'bar') return <BarChartContent data={data} color={color} dataKey={dataKey} height={height} />
+    return <AreaChartContent data={data} color={color} dataKey={dataKey} height={height} />
+  }
+
+  return (
+    <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-5 sm:p-6 space-y-4">
+      <h3 className="text-sm font-bold text-white tracking-tight">{title}</h3>
+      {type === 'bar' 
+        ? <BarChartContent data={data} color={color} dataKey={dataKey} height={height} />
+        : <AreaChartContent data={data} color={color} dataKey={dataKey} height={height} />
+      }
+    </div>
+  )
+}
+
+export { AreaChartContent, BarChartContent }
