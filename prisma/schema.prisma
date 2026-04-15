@@ -177,9 +177,7 @@ model VpnServer {
   pricePerDay    Float    @default(2)
   priceWeekly    Float?   // null = pricePerDay * 7
   priceMonthly   Float?   // null = pricePerDay * 30
-  price3Months   Float?   // null = pricePerDay * 90
-  price6Months   Float?   // null = pricePerDay * 180
-  price12Months  Float?   // null = pricePerDay * 365
+  customPackages Json?    // [{ days: number, price: number, label: string }] admin-defined packages
 
   // Decoration & display
   description    String?

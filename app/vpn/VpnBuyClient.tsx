@@ -35,9 +35,7 @@ interface VpnBuyClientProps {
     pricePerDay: number
     priceWeekly: number | null
     priceMonthly: number | null
-    price3Months: number | null
-    price6Months: number | null
-    price12Months: number | null
+    customPackages: { days: number; price: number; label: string }[]
     description: string | null
     badge: string | null
     defaultIpLimit: number
@@ -168,18 +166,15 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   const ipCost = ipLimit > 0 ? ipLimit * 1 : 0
   let baseCost = days * PRICE_PER_DAY
   
-  // Check for package pricing (weekly / monthly / 3/6/12 months)
+  // Check for package pricing (weekly / monthly / custom packages)
   let packagePrice: number | null = null
   if (days === 7 && server.priceWeekly != null) {
     packagePrice = server.priceWeekly
   } else if (days === 30 && server.priceMonthly != null) {
     packagePrice = server.priceMonthly
-  } else if (days === 90 && server.price3Months != null) {
-    packagePrice = server.price3Months
-  } else if (days === 180 && server.price6Months != null) {
-    packagePrice = server.price6Months
-  } else if (days === 365 && server.price12Months != null) {
-    packagePrice = server.price12Months
+  } else {
+    const matchedPkg = server.customPackages.find(p => p.days === days)
+    if (matchedPkg) packagePrice = matchedPkg.price
   }
 
   if (packagePrice != null) {
@@ -194,7 +189,8 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   const isPackagePrice = packagePrice != null
 
   const handleDecrease = () => setDays(prev => Math.max(1, prev - 1))
-  const handleIncrease = () => setDays(prev => Math.min(365, prev + 1))
+  const maxDays = server.customPackages.length > 0 ? Math.max(365, ...server.customPackages.map(p => p.days)) : 365
+  const handleIncrease = () => setDays(prev => Math.min(maxDays, prev + 1))
 
   const handleSuccessComplete = () => {
     window.location.href = successData.redirect
@@ -283,9 +279,9 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
     { value: 1, label: '1 วัน', sub: `${PRICE_PER_DAY} ฿` },
     { value: 7, label: '7 วัน', sub: fmtPkg(server.priceWeekly) || '1 สัปดาห์' },
     { value: 30, label: '30 วัน', sub: fmtPkg(server.priceMonthly) || '1 เดือน' },
-    ...(server.price3Months != null ? [{ value: 90, label: '3 เดือน', sub: fmtPkg(server.price3Months) || '90 วัน' }] : []),
-    ...(server.price6Months != null ? [{ value: 180, label: '6 เดือน', sub: fmtPkg(server.price6Months) || '180 วัน' }] : []),
-    ...(server.price12Months != null ? [{ value: 365, label: '12 เดือน', sub: fmtPkg(server.price12Months) || '365 วัน' }] : []),
+    ...server.customPackages
+      .sort((a, b) => a.days - b.days)
+      .map(pkg => ({ value: pkg.days, label: pkg.label || `${pkg.days} วัน`, sub: fmtPkg(pkg.price) || `${pkg.days} วัน` })),
   ]
 
   return (
@@ -521,7 +517,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
                   value={days}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 1
-                    setDays(Math.max(1, Math.min(365, val)))
+                    setDays(Math.max(1, Math.min(maxDays, val)))
                   }}
                   className="w-full text-center py-3 rounded-xl bg-black/60 border border-zinc-800 text-white text-2xl font-bold focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-700 transition-all [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
@@ -530,7 +526,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
               <button
                 type="button"
                 onClick={handleIncrease}
-                disabled={days >= 365}
+                disabled={days >= maxDays}
                 className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4 text-zinc-400" />

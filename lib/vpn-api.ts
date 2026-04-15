@@ -657,9 +657,7 @@ export async function getVpnServers() {
       pricePerDay: true,
       priceWeekly: true,
       priceMonthly: true,
-      price3Months: true,
-      price6Months: true,
-      price12Months: true,
+      customPackages: true,
       // Decoration
       description: true,
       badge: true,

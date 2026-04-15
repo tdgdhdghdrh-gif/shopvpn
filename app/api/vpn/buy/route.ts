@@ -495,18 +495,17 @@ export async function POST(request: Request) {
     // Calculate total price using server package pricing or per-day calculation
     let totalPrice = 0
     if (!isTrial) {
-      // Check for package pricing (weekly = 7 days, monthly = 30 days, 3/6/12 months)
+      // Check for package pricing (weekly = 7 days, monthly = 30 days, or custom packages)
       let packagePrice: number | null = null
       if (days === 7 && server.priceWeekly != null) {
         packagePrice = server.priceWeekly
       } else if (days === 30 && server.priceMonthly != null) {
         packagePrice = server.priceMonthly
-      } else if (days === 90 && server.price3Months != null) {
-        packagePrice = server.price3Months
-      } else if (days === 180 && server.price6Months != null) {
-        packagePrice = server.price6Months
-      } else if (days === 365 && server.price12Months != null) {
-        packagePrice = server.price12Months
+      } else if (server.customPackages) {
+        // Check custom packages (admin-defined)
+        const pkgs = server.customPackages as any[]
+        const match = pkgs.find((p: any) => p.days === days)
+        if (match) packagePrice = match.price
       }
 
       if (packagePrice != null) {

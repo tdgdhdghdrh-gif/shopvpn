@@ -63,9 +63,7 @@ interface VpnServer {
   pricePerDay: number
   priceWeekly: number | null
   priceMonthly: number | null
-  price3Months: number | null
-  price6Months: number | null
-  price12Months: number | null
+  customPackages: { days: number; price: number; label: string }[] | null
   description: string | null
   badge: string | null
   tags: string[]
@@ -153,9 +151,7 @@ export default function AdminVpnPage() {
     pricePerDay: 2,
     priceWeekly: '' as string | number,
     priceMonthly: '' as string | number,
-    price3Months: '' as string | number,
-    price6Months: '' as string | number,
-    price12Months: '' as string | number,
+    customPackages: [] as { days: number; price: number; label: string }[],
     description: '',
     badge: '',
     tags: '' as string,
@@ -224,9 +220,7 @@ export default function AdminVpnPage() {
       pricePerDay: 2,
       priceWeekly: '',
       priceMonthly: '',
-      price3Months: '',
-      price6Months: '',
-      price12Months: '',
+      customPackages: [],
       description: '',
       badge: '',
       tags: '',
@@ -271,9 +265,7 @@ export default function AdminVpnPage() {
       pricePerDay: server.pricePerDay ?? 2,
       priceWeekly: server.priceWeekly ?? '',
       priceMonthly: server.priceMonthly ?? '',
-      price3Months: server.price3Months ?? '',
-      price6Months: server.price6Months ?? '',
-      price12Months: server.price12Months ?? '',
+      customPackages: server.customPackages ?? [],
       description: server.description ?? '',
       badge: server.badge ?? '',
       tags: (server.tags ?? []).join(', '),
@@ -455,9 +447,7 @@ export default function AdminVpnPage() {
         pricePerDay: formData.pricePerDay || 2,
         priceWeekly: formData.priceWeekly !== '' ? Number(formData.priceWeekly) : null,
         priceMonthly: formData.priceMonthly !== '' ? Number(formData.priceMonthly) : null,
-        price3Months: formData.price3Months !== '' ? Number(formData.price3Months) : null,
-        price6Months: formData.price6Months !== '' ? Number(formData.price6Months) : null,
-        price12Months: formData.price12Months !== '' ? Number(formData.price12Months) : null,
+        customPackages: formData.customPackages.length > 0 ? formData.customPackages : null,
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
         features: formData.features ? formData.features.split('\n').map(f => f.trim()).filter(Boolean) : [],
         vlessTemplate: formData.vlessTemplate || null,
@@ -889,14 +879,14 @@ export default function AdminVpnPage() {
                       <span className="text-zinc-400 font-mono truncate">{server.host}:{server.port}</span>
                     </div>
                     {/* Package prices */}
-                    {(server.priceWeekly || server.priceMonthly || server.price3Months || server.price6Months || server.price12Months) && (
+                    {(server.priceWeekly || server.priceMonthly || (server.customPackages && (server.customPackages as any[]).length > 0)) && (
                       <div className="flex items-center gap-2 text-[10px] flex-wrap">
                         <span className="text-zinc-600 font-bold">PKG</span>
                         {server.priceWeekly && <span className="text-zinc-400">7วัน: {server.priceWeekly}฿</span>}
                         {server.priceMonthly && <span className="text-zinc-400">30วัน: {server.priceMonthly}฿</span>}
-                        {server.price3Months && <span className="text-zinc-400">3ด: {server.price3Months}฿</span>}
-                        {server.price6Months && <span className="text-zinc-400">6ด: {server.price6Months}฿</span>}
-                        {server.price12Months && <span className="text-zinc-400">12ด: {server.price12Months}฿</span>}
+                        {server.customPackages && (server.customPackages as any[]).map((pkg: any, i: number) => (
+                          <span key={i} className="text-zinc-400">{pkg.label}: {pkg.price}฿</span>
+                        ))}
                       </div>
                     )}
                     {/* Tags */}
@@ -1120,21 +1110,84 @@ export default function AdminVpnPage() {
                     <input type="number" step="0.5" min="0" value={formData.priceMonthly} onChange={(e) => setFormData({...formData, priceMonthly: e.target.value === '' ? '' : parseFloat(e.target.value)})} className={inputClass} placeholder="auto" />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2.5 mt-2">
-                  <div>
-                    <label className={labelClass}>3 เดือน / 90 วัน (฿)</label>
-                    <input type="number" step="1" min="0" value={formData.price3Months} onChange={(e) => setFormData({...formData, price3Months: e.target.value === '' ? '' : parseFloat(e.target.value)})} className={inputClass} placeholder="auto" />
+                <p className="text-[9px] text-zinc-700 mt-1.5 ml-0.5">เว้นว่าง 7/30 วัน = คำนวณจากราคา/วัน x จำนวนวัน</p>
+
+                {/* Custom Packages */}
+                <div className="mt-4 pt-3 border-t border-white/[0.04]">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <label className={labelClass}>แพ็กเกจเหมาจ่าย</label>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        customPackages: [...formData.customPackages, { days: 90, price: 0, label: '' }]
+                      })}
+                      className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" /> เพิ่มแพ็กเกจ
+                    </button>
                   </div>
-                  <div>
-                    <label className={labelClass}>6 เดือน / 180 วัน (฿)</label>
-                    <input type="number" step="1" min="0" value={formData.price6Months} onChange={(e) => setFormData({...formData, price6Months: e.target.value === '' ? '' : parseFloat(e.target.value)})} className={inputClass} placeholder="auto" />
+                  {formData.customPackages.length === 0 && (
+                    <p className="text-[9px] text-zinc-700 ml-0.5">ยังไม่มีแพ็กเกจ — กดปุ่ม "เพิ่มแพ็กเกจ" เพื่อสร้าง</p>
+                  )}
+                  <div className="space-y-2">
+                    {formData.customPackages.map((pkg, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <div className="flex-1 grid grid-cols-3 gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={pkg.days}
+                            onChange={(e) => {
+                              const updated = [...formData.customPackages]
+                              updated[idx] = { ...updated[idx], days: parseInt(e.target.value) || 1 }
+                              setFormData({ ...formData, customPackages: updated })
+                            }}
+                            className={inputClass}
+                            placeholder="จำนวนวัน"
+                          />
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            value={pkg.price}
+                            onChange={(e) => {
+                              const updated = [...formData.customPackages]
+                              updated[idx] = { ...updated[idx], price: parseFloat(e.target.value) || 0 }
+                              setFormData({ ...formData, customPackages: updated })
+                            }}
+                            className={inputClass}
+                            placeholder="ราคา (฿)"
+                          />
+                          <input
+                            type="text"
+                            value={pkg.label}
+                            onChange={(e) => {
+                              const updated = [...formData.customPackages]
+                              updated[idx] = { ...updated[idx], label: e.target.value }
+                              setFormData({ ...formData, customPackages: updated })
+                            }}
+                            className={inputClass}
+                            placeholder="ชื่อ เช่น 3 เดือน"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = formData.customPackages.filter((_, i) => i !== idx)
+                            setFormData({ ...formData, customPackages: updated })
+                          }}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors flex-shrink-0"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <label className={labelClass}>12 เดือน / 365 วัน (฿)</label>
-                    <input type="number" step="1" min="0" value={formData.price12Months} onChange={(e) => setFormData({...formData, price12Months: e.target.value === '' ? '' : parseFloat(e.target.value)})} className={inputClass} placeholder="auto" />
-                  </div>
+                  {formData.customPackages.length > 0 && (
+                    <p className="text-[9px] text-zinc-700 mt-1.5 ml-0.5">จำนวนวัน | ราคา (฿) | ชื่อที่แสดง — จะเป็นปุ่มให้ลูกค้าเลือกในหน้าซื้อ</p>
+                  )}
                 </div>
-                <p className="text-[9px] text-zinc-700 mt-1.5 ml-0.5">เว้นว่าง = คำนวณจากราคา/วัน x จำนวนวัน</p>
               </div>
 
               {/* === Features (จุดเด่น) === */}
