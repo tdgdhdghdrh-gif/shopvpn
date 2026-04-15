@@ -41,9 +41,9 @@ export async function GET(req: NextRequest) {
 
       try {
         const ipResult = await adminGetClientIps(order.serverId, order.remark)
-        if (ipResult?.success && ipResult.obj) {
-          // obj can be a string like "1.2.3.4\n5.6.7.8" or null
-          const ipStr = typeof ipResult.obj === 'string' ? ipResult.obj : ''
+        if (ipResult?.success && ipResult.data) {
+          // data can be a string like "1.2.3.4\n5.6.7.8" or null
+          const ipStr = typeof ipResult.data === 'string' ? ipResult.data : ''
           ips = ipStr.split('\n').map((ip: string) => ip.trim()).filter((ip: string) => ip && ip !== 'No IP Record')
         }
       } catch (e) {
@@ -52,8 +52,8 @@ export async function GET(req: NextRequest) {
 
       try {
         const onlineResult = await adminGetOnlineClients(order.serverId)
-        if (onlineResult?.success && Array.isArray(onlineResult.obj)) {
-          isOnline = onlineResult.obj.some((email: string) => email === order.remark)
+        if (onlineResult?.success && Array.isArray(onlineResult.data)) {
+          isOnline = onlineResult.data.some((email: string) => email === order.remark)
         }
       } catch (e) {
         console.error('Error fetching online clients:', e)
@@ -61,11 +61,11 @@ export async function GET(req: NextRequest) {
 
       try {
         const trafficResult = await adminGetClientTraffic(order.serverId, order.remark)
-        if (trafficResult?.success && trafficResult.obj) {
+        if (trafficResult?.success && trafficResult.data) {
           traffic = {
-            up: trafficResult.obj.up || 0,
-            down: trafficResult.obj.down || 0,
-            total: (trafficResult.obj.up || 0) + (trafficResult.obj.down || 0),
+            up: trafficResult.data.up || 0,
+            down: trafficResult.data.down || 0,
+            total: (trafficResult.data.up || 0) + (trafficResult.data.down || 0),
           }
         }
       } catch (e) {
