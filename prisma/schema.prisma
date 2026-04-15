@@ -1151,3 +1151,24 @@ model SiteUpdateLog {
 
   @@index([createdAt])
 }
+
+// ==========================================
+// V2Box Code — แจกโค้ดเน็ต V2Box
+// ==========================================
+model V2BoxCode {
+  id          String   @id @default(cuid())
+  name        String                          // ชื่อโค้ด / ชื่อค่าย
+  code        String   @db.Text               // โค้ด V2Box (vless link หรือ subscription URL)
+  description String?  @db.Text               // รายละเอียดโค้ด
+  logoUrl     String?                         // URL โลโก้ค่าย
+  carrier     String?                         // ชื่อค่าย เช่น AIS, TRUE, DTAC
+  expiryDate  DateTime                        // วันหมดอายุ (ลบอัตโนมัติเมื่อหมด)
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdBy   String                          // admin userId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, expiryDate])
+  @@index([createdAt])
+}
