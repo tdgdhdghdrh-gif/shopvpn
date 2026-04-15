@@ -46,7 +46,6 @@ import {
   Download,
   CalendarClock,
   Crown,
-  Fingerprint,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -83,7 +82,6 @@ const menuItems = [
   { name: 'สร้างเว็บ', href: '/admin/custom-pages', icon: Code2 },
   { name: 'รูปแบบหน้าเซิร์ฟเวอร์', href: '/admin/server-template', icon: Image },
   { name: 'IP ที่อนุญาต', href: '/admin/allowed-ips', icon: ShieldCheck },
-  { name: 'ตรวจสอบ UUID IP', href: '/admin/uuid-ips', icon: Fingerprint },
 ]
 
 const superAdminMenuItems = [
@@ -139,7 +137,7 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
 
 
   // กรองเมนูตามระดับยศ — ใช้ per-user override ก่อน, ถ้าไม่มีใช้ role config จาก DB, ถ้าไม่มีใช้ fallback hardcode
-  const adminAllowedHrefsFallback = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/uuid-ips']
+  const adminAllowedHrefsFallback = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips']
   const agentAllowedHrefsFallback = ['/admin', '/admin/vpn', '/admin/revenue']
   const revenueAllowedHrefsFallback = ['/admin', '/admin/revenue']
 

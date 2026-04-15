@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 }
 
 // Default role fallbacks (same as Sidebar.tsx)
-const ADMIN_FALLBACK = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/auth-template', '/admin/menu-click-effect', '/admin/topups', '/admin/resellers', '/admin/withdrawals', '/admin/uuid-ips']
+const ADMIN_FALLBACK = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/auth-template', '/admin/menu-click-effect', '/admin/topups', '/admin/resellers', '/admin/withdrawals']
 const AGENT_FALLBACK = ['/admin', '/admin/vpn', '/admin/revenue']
 const REVENUE_FALLBACK = ['/admin', '/admin/revenue']
 
