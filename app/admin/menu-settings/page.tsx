@@ -11,7 +11,8 @@ import {
   ShoppingBag, Wifi, Clock, ArrowRightLeft, History, User, Gift,
   MessageSquare, RotateCcw, Calendar, Crown, Target, Activity,
   Bell, Percent, Palette, Sparkles, GripVertical, Sliders,
-  UserCog, ChevronDown, ChevronUp, X, RotateCw, Code2, Wand2
+  UserCog, ChevronDown, ChevronUp, X, RotateCw, Code2, Wand2,
+  ShieldCheck
 } from 'lucide-react'
 
 interface MenuItem {
@@ -66,6 +67,8 @@ const allAdminMenuItems: MenuItem[] = [
   { name: 'เปลี่ยนหน้าแรก', href: '/admin/default-homepage', icon: Home, section: 'admin', description: 'กำหนดหน้าแรกเริ่มต้นหลังล็อกอิน' },
   { name: 'สร้างเว็บ', href: '/admin/custom-pages', icon: Code2, section: 'admin', description: 'สร้างหน้าเว็บจาก HTML แล้วแชร์ลิงก์' },
   { name: 'รูปแบบหน้าเซิร์ฟเวอร์', href: '/admin/server-template', icon: Image, section: 'admin', description: 'เลือกรูปแบบหน้าเซิร์ฟเวอร์ + อัปโหลดรูปภาพ' },
+  { name: 'IP ที่อนุญาต', href: '/admin/allowed-ips', icon: ShieldCheck, section: 'admin', description: 'จัดการ IP ที่อนุญาตเข้าถึง' },
+  { name: 'แจกโค้ด V2Box', href: '/admin/v2box-codes', icon: Smartphone, section: 'admin', description: 'จัดการโค้ดเน็ต V2Box แจกฟรี' },
   { name: 'ข้อมูลเซิร์ฟเวอร์', href: '/admin/server-info', icon: Server, section: 'super', description: 'ข้อมูลเซิร์ฟเวอร์ระบบ' },
   { name: 'จัดการรายได้เซิฟ', href: '/admin/super-revenue', icon: Shield, section: 'super', description: 'ล็อก/จัดการรายได้เซิร์ฟเวอร์' },
   { name: 'API Keys', href: '/admin/api-keys', icon: Key, section: 'super', description: 'จัดการ API Key ภายนอก' },
