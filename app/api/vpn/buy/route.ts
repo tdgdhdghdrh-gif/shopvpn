@@ -580,7 +580,7 @@ export async function POST(request: Request) {
     // Calculate expiry
     const expiryTime = new Date()
     if (isTrial) {
-      expiryTime.setHours(expiryTime.getHours() + 1) // 1 hour for trial
+      expiryTime.setMinutes(expiryTime.getMinutes() + trialDurationMinutes)
     } else {
       expiryTime.setDate(expiryTime.getDate() + days)
     }
@@ -626,7 +626,7 @@ export async function POST(request: Request) {
           serverId: serverId,
           packageType: isTrial ? 'TRIAL' : 'CUSTOM',
           price: totalPrice,
-          duration: isTrial ? 1 : days,
+          duration: isTrial ? trialDurationMinutes : days,
           clientUUID: result.uuid!,
           remark: remark,
           subId: result.subId!,
