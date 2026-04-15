@@ -438,8 +438,8 @@ export async function POST(request: Request) {
       if (existingTrialToday) {
         return NextResponse.json({ success: false, error: 'คุณใช้สิทธิ์ทดลองฟรีเซิร์ฟเวอร์นี้วันนี้ไปแล้ว กรุณารอรีเซ็ตเที่ยงคืนหรือลองเซิร์ฟเวอร์อื่น' })
       }
-    } else if (!days || days < 1 || days > 30) {
-      return NextResponse.json({ success: false, error: 'กรุณาเลือกจำนวนวัน 1-30 วัน' })
+    } else if (!days || days < 1 || days > 365) {
+      return NextResponse.json({ success: false, error: 'กรุณาเลือกจำนวนวัน 1-365 วัน' })
     }
 
     // Get server details
@@ -495,14 +495,22 @@ export async function POST(request: Request) {
     // Calculate total price using server package pricing or per-day calculation
     let totalPrice = 0
     if (!isTrial) {
-      // Check for package pricing (weekly = 7 days, monthly = 30 days)
+      // Check for package pricing (weekly = 7 days, monthly = 30 days, 3/6/12 months)
+      let packagePrice: number | null = null
       if (days === 7 && server.priceWeekly != null) {
-        totalPrice = hasDiscount ? server.priceWeekly * 0.5 : server.priceWeekly
-        if (promoPercent > 0) {
-          totalPrice = Math.max(0.5, Math.round(totalPrice * (100 - promoPercent) / 100 * 100) / 100)
-        }
+        packagePrice = server.priceWeekly
       } else if (days === 30 && server.priceMonthly != null) {
-        totalPrice = hasDiscount ? server.priceMonthly * 0.5 : server.priceMonthly
+        packagePrice = server.priceMonthly
+      } else if (days === 90 && server.price3Months != null) {
+        packagePrice = server.price3Months
+      } else if (days === 180 && server.price6Months != null) {
+        packagePrice = server.price6Months
+      } else if (days === 365 && server.price12Months != null) {
+        packagePrice = server.price12Months
+      }
+
+      if (packagePrice != null) {
+        totalPrice = hasDiscount ? packagePrice * 0.5 : packagePrice
         if (promoPercent > 0) {
           totalPrice = Math.max(0.5, Math.round(totalPrice * (100 - promoPercent) / 100 * 100) / 100)
         }

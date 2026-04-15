@@ -63,9 +63,13 @@ interface VpnServer {
   pricePerDay: number
   priceWeekly: number | null
   priceMonthly: number | null
+  price3Months: number | null
+  price6Months: number | null
+  price12Months: number | null
   description: string | null
   badge: string | null
   tags: string[]
+  features: string[]
   themeColor: string | null
   themeGradient: string | null
   imageUrl: string | null
@@ -149,9 +153,13 @@ export default function AdminVpnPage() {
     pricePerDay: 2,
     priceWeekly: '' as string | number,
     priceMonthly: '' as string | number,
+    price3Months: '' as string | number,
+    price6Months: '' as string | number,
+    price12Months: '' as string | number,
     description: '',
     badge: '',
     tags: '' as string,
+    features: '' as string,
     themeColor: '',
     themeGradient: '',
     imageUrl: '',
@@ -216,9 +224,13 @@ export default function AdminVpnPage() {
       pricePerDay: 2,
       priceWeekly: '',
       priceMonthly: '',
+      price3Months: '',
+      price6Months: '',
+      price12Months: '',
       description: '',
       badge: '',
       tags: '',
+      features: '',
       themeColor: '',
       themeGradient: '',
       imageUrl: '',
@@ -259,9 +271,13 @@ export default function AdminVpnPage() {
       pricePerDay: server.pricePerDay ?? 2,
       priceWeekly: server.priceWeekly ?? '',
       priceMonthly: server.priceMonthly ?? '',
+      price3Months: server.price3Months ?? '',
+      price6Months: server.price6Months ?? '',
+      price12Months: server.price12Months ?? '',
       description: server.description ?? '',
       badge: server.badge ?? '',
       tags: (server.tags ?? []).join(', '),
+      features: (server.features ?? []).join('\n'),
       themeColor: server.themeColor ?? '',
       themeGradient: server.themeGradient ?? '',
       imageUrl: server.imageUrl ?? '',
@@ -439,7 +455,11 @@ export default function AdminVpnPage() {
         pricePerDay: formData.pricePerDay || 2,
         priceWeekly: formData.priceWeekly !== '' ? Number(formData.priceWeekly) : null,
         priceMonthly: formData.priceMonthly !== '' ? Number(formData.priceMonthly) : null,
+        price3Months: formData.price3Months !== '' ? Number(formData.price3Months) : null,
+        price6Months: formData.price6Months !== '' ? Number(formData.price6Months) : null,
+        price12Months: formData.price12Months !== '' ? Number(formData.price12Months) : null,
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        features: formData.features ? formData.features.split('\n').map(f => f.trim()).filter(Boolean) : [],
         vlessTemplate: formData.vlessTemplate || null,
       }
 
@@ -869,11 +889,14 @@ export default function AdminVpnPage() {
                       <span className="text-zinc-400 font-mono truncate">{server.host}:{server.port}</span>
                     </div>
                     {/* Package prices */}
-                    {(server.priceWeekly || server.priceMonthly) && (
-                      <div className="flex items-center gap-2 text-[10px]">
+                    {(server.priceWeekly || server.priceMonthly || server.price3Months || server.price6Months || server.price12Months) && (
+                      <div className="flex items-center gap-2 text-[10px] flex-wrap">
                         <span className="text-zinc-600 font-bold">PKG</span>
                         {server.priceWeekly && <span className="text-zinc-400">7วัน: {server.priceWeekly}฿</span>}
                         {server.priceMonthly && <span className="text-zinc-400">30วัน: {server.priceMonthly}฿</span>}
+                        {server.price3Months && <span className="text-zinc-400">3ด: {server.price3Months}฿</span>}
+                        {server.price6Months && <span className="text-zinc-400">6ด: {server.price6Months}฿</span>}
+                        {server.price12Months && <span className="text-zinc-400">12ด: {server.price12Months}฿</span>}
                       </div>
                     )}
                     {/* Tags */}
@@ -1097,7 +1120,36 @@ export default function AdminVpnPage() {
                     <input type="number" step="0.5" min="0" value={formData.priceMonthly} onChange={(e) => setFormData({...formData, priceMonthly: e.target.value === '' ? '' : parseFloat(e.target.value)})} className={inputClass} placeholder="auto" />
                   </div>
                 </div>
+                <div className="grid grid-cols-3 gap-2.5 mt-2">
+                  <div>
+                    <label className={labelClass}>3 เดือน / 90 วัน (฿)</label>
+                    <input type="number" step="1" min="0" value={formData.price3Months} onChange={(e) => setFormData({...formData, price3Months: e.target.value === '' ? '' : parseFloat(e.target.value)})} className={inputClass} placeholder="auto" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>6 เดือน / 180 วัน (฿)</label>
+                    <input type="number" step="1" min="0" value={formData.price6Months} onChange={(e) => setFormData({...formData, price6Months: e.target.value === '' ? '' : parseFloat(e.target.value)})} className={inputClass} placeholder="auto" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>12 เดือน / 365 วัน (฿)</label>
+                    <input type="number" step="1" min="0" value={formData.price12Months} onChange={(e) => setFormData({...formData, price12Months: e.target.value === '' ? '' : parseFloat(e.target.value)})} className={inputClass} placeholder="auto" />
+                  </div>
+                </div>
                 <p className="text-[9px] text-zinc-700 mt-1.5 ml-0.5">เว้นว่าง = คำนวณจากราคา/วัน x จำนวนวัน</p>
+              </div>
+
+              {/* === Features (จุดเด่น) === */}
+              <div>
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Sparkles className="w-3 h-3" /> จุดเด่น / รายละเอียด
+                </p>
+                <textarea
+                  value={formData.features}
+                  onChange={(e) => setFormData({...formData, features: e.target.value})}
+                  className={`${inputClass} resize-none`}
+                  placeholder={"รองรับ Android / iOS\nแชร์ Wi-Fi ได้\n1000Mbps ไม่จำกัด GB\nเล่นเกมลื่นๆ ยูทูปปรับภาพสูง\nมีให้เทสฟรี"}
+                  rows={5}
+                />
+                <p className="text-[9px] text-zinc-700 mt-1.5 ml-0.5">ใส่ 1 บรรทัดต่อ 1 รายการ — แสดงเป็นรายการจุดเด่นในหน้าซื้อ</p>
               </div>
 
               {/* === Decoration === */}

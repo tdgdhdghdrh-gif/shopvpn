@@ -35,11 +35,15 @@ interface VpnBuyClientProps {
     pricePerDay: number
     priceWeekly: number | null
     priceMonthly: number | null
+    price3Months: number | null
+    price6Months: number | null
+    price12Months: number | null
     description: string | null
     badge: string | null
     defaultIpLimit: number
     maxClients: number
     activeClients: number
+    features: string[]
   }
   user: {
     balance: number
@@ -164,14 +168,22 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   const ipCost = ipLimit > 0 ? ipLimit * 1 : 0
   let baseCost = days * PRICE_PER_DAY
   
-  // Check for package pricing (weekly / monthly)
+  // Check for package pricing (weekly / monthly / 3/6/12 months)
+  let packagePrice: number | null = null
   if (days === 7 && server.priceWeekly != null) {
-    baseCost = user.hasDiscount ? server.priceWeekly * 0.5 : server.priceWeekly
-    if (user.promoDiscountPercent > 0) {
-      baseCost = Math.max(0.5, Math.round(baseCost * (100 - user.promoDiscountPercent) / 100 * 100) / 100)
-    }
+    packagePrice = server.priceWeekly
   } else if (days === 30 && server.priceMonthly != null) {
-    baseCost = user.hasDiscount ? server.priceMonthly * 0.5 : server.priceMonthly
+    packagePrice = server.priceMonthly
+  } else if (days === 90 && server.price3Months != null) {
+    packagePrice = server.price3Months
+  } else if (days === 180 && server.price6Months != null) {
+    packagePrice = server.price6Months
+  } else if (days === 365 && server.price12Months != null) {
+    packagePrice = server.price12Months
+  }
+
+  if (packagePrice != null) {
+    baseCost = user.hasDiscount ? packagePrice * 0.5 : packagePrice
     if (user.promoDiscountPercent > 0) {
       baseCost = Math.max(0.5, Math.round(baseCost * (100 - user.promoDiscountPercent) / 100 * 100) / 100)
     }
@@ -179,10 +191,10 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   
   const totalPrice = baseCost + ipCost
   const canAfford = totalPrice <= user.balance
-  const isPackagePrice = (days === 7 && server.priceWeekly != null) || (days === 30 && server.priceMonthly != null)
+  const isPackagePrice = packagePrice != null
 
   const handleDecrease = () => setDays(prev => Math.max(1, prev - 1))
-  const handleIncrease = () => setDays(prev => Math.min(30, prev + 1))
+  const handleIncrease = () => setDays(prev => Math.min(365, prev + 1))
 
   const handleSuccessComplete = () => {
     window.location.href = successData.redirect
@@ -259,11 +271,21 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
     }
   }
 
+  // Helper to format package price with discount
+  const fmtPkg = (price: number | null) => {
+    if (price == null) return null
+    let p = user.hasDiscount ? price * 0.5 : price
+    if (user.promoDiscountPercent > 0) p = Math.max(0.5, Math.round(p * (100 - user.promoDiscountPercent) / 100 * 100) / 100)
+    return `${p} ฿`
+  }
+
   const quickDays = [
     { value: 1, label: '1 วัน', sub: `${PRICE_PER_DAY} ฿` },
-    { value: 7, label: '7 วัน', sub: server.priceWeekly != null ? `${user.hasDiscount ? server.priceWeekly * 0.5 : server.priceWeekly} ฿` : '1 สัปดาห์' },
-    { value: 15, label: '15 วัน', sub: '2 สัปดาห์' },
-    { value: 30, label: '30 วัน', sub: server.priceMonthly != null ? `${user.hasDiscount ? server.priceMonthly * 0.5 : server.priceMonthly} ฿` : 'คุ้มสุด' },
+    { value: 7, label: '7 วัน', sub: fmtPkg(server.priceWeekly) || '1 สัปดาห์' },
+    { value: 30, label: '30 วัน', sub: fmtPkg(server.priceMonthly) || '1 เดือน' },
+    ...(server.price3Months != null ? [{ value: 90, label: '3 เดือน', sub: fmtPkg(server.price3Months) || '90 วัน' }] : []),
+    ...(server.price6Months != null ? [{ value: 180, label: '6 เดือน', sub: fmtPkg(server.price6Months) || '180 วัน' }] : []),
+    ...(server.price12Months != null ? [{ value: 365, label: '12 เดือน', sub: fmtPkg(server.price12Months) || '365 วัน' }] : []),
   ]
 
   return (
@@ -391,6 +413,31 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
           </div>
         )}
 
+        {/* === Features (mobile - shown only when admin defines features) === */}
+        {server.features && server.features.length > 0 && (
+          <div className="lg:hidden rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">
+            <div className="p-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/10 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-zinc-200 block leading-tight">จุดเด่น</span>
+                  <span className="text-[11px] text-zinc-600">รายละเอียดเซิร์ฟเวอร์</span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                {server.features.map((feat, i) => (
+                  <div key={i} className="flex items-center gap-2.5 py-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 flex-shrink-0" />
+                    <span className="text-xs text-zinc-400">{feat}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* === SECTION 1: Account Name === */}
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">
           <div className="p-5">
@@ -433,7 +480,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
             </div>
 
             {/* Quick select pills */}
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            <div className={`grid gap-2 mb-4 ${quickDays.length <= 4 ? 'grid-cols-4' : quickDays.length <= 6 ? 'grid-cols-3' : 'grid-cols-4'}`}>
               {quickDays.map((d) => (
                 <button
                   key={d.value}
@@ -449,7 +496,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
                   {d.sub && (
                     <span className={`block text-[10px] mt-0.5 ${days === d.value ? 'text-black/60' : 'text-zinc-600'}`}>{d.sub}</span>
                   )}
-                  {d.value === 30 && server.priceMonthly != null && (
+                  {(d.value >= 90) && (
                     <span className="absolute -top-2 -right-1.5 px-1.5 py-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-[8px] font-bold text-white rounded-md uppercase shadow-sm">Save</span>
                   )}
                 </button>
@@ -474,7 +521,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
                   value={days}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 1
-                    setDays(Math.max(1, Math.min(30, val)))
+                    setDays(Math.max(1, Math.min(365, val)))
                   }}
                   className="w-full text-center py-3 rounded-xl bg-black/60 border border-zinc-800 text-white text-2xl font-bold focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-700 transition-all [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
@@ -483,7 +530,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
               <button
                 type="button"
                 onClick={handleIncrease}
-                disabled={days >= 30}
+                disabled={days >= 365}
                 className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4 text-zinc-400" />

@@ -63,11 +63,15 @@ export default async function VpnPage({ searchParams }: PageProps) {
       pricePerDay: sv.pricePerDay,
       priceWeekly: sv.priceWeekly,
       priceMonthly: sv.priceMonthly,
+      price3Months: sv.price3Months,
+      price6Months: sv.price6Months,
+      price12Months: sv.price12Months,
       description: sv.description,
       badge: sv.badge,
       defaultIpLimit: sv.defaultIpLimit,
       maxClients: sv.maxClients,
       activeClients: sv._count.orders,
+      features: sv.features || [],
     },
     user: {
       name: user.name,
@@ -175,19 +179,30 @@ export default async function VpnPage({ searchParams }: PageProps) {
                       <div className="p-5 space-y-3.5">
                         <h3 className="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold">Features</h3>
                         <div className="space-y-2.5">
-                          {[
-                            { icon: Lock, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'AES-256 Encryption' },
-                            { icon: Shield, color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'Zero-Log Policy' },
-                            { icon: Wifi, color: 'text-violet-400', bg: 'bg-violet-500/10', label: 'Unlimited Bandwidth' },
-                            { icon: Server, color: 'text-amber-400', bg: 'bg-amber-500/10', label: '24/7 Support' },
-                          ].map((feat, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                              <div className={`w-7 h-7 rounded-lg ${feat.bg} flex items-center justify-center flex-shrink-0`}>
-                                <feat.icon className={`w-3.5 h-3.5 ${feat.color}`} />
+                          {sv.features && sv.features.length > 0 ? (
+                            sv.features.map((feat: string, i: number) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                                </div>
+                                <span className="text-xs text-zinc-400 font-medium">{feat}</span>
                               </div>
-                              <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
-                            </div>
-                          ))}
+                            ))
+                          ) : (
+                            [
+                              { icon: Lock, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'AES-256 Encryption' },
+                              { icon: Shield, color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'Zero-Log Policy' },
+                              { icon: Wifi, color: 'text-violet-400', bg: 'bg-violet-500/10', label: 'Unlimited Bandwidth' },
+                              { icon: Server, color: 'text-amber-400', bg: 'bg-amber-500/10', label: '24/7 Support' },
+                            ].map((feat, i) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className={`w-7 h-7 rounded-lg ${feat.bg} flex items-center justify-center flex-shrink-0`}>
+                                  <feat.icon className={`w-3.5 h-3.5 ${feat.color}`} />
+                                </div>
+                                <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
@@ -250,7 +265,10 @@ export default async function VpnPage({ searchParams }: PageProps) {
                     <div className="hidden lg:block rounded-xl border border-zinc-800/40 bg-zinc-950/80 overflow-hidden">
                       <div className="p-5">
                         <div className="space-y-2">
-                          {['AES-256 Encryption', 'Zero-Log Policy', 'Unlimited Bandwidth', '24/7 Support'].map((label, i) => (
+                          {(sv.features && sv.features.length > 0
+                            ? sv.features
+                            : ['AES-256 Encryption', 'Zero-Log Policy', 'Unlimited Bandwidth', '24/7 Support']
+                          ).map((label: string, i: number) => (
                             <div key={i} className="flex items-center gap-2">
                               <div className="w-1 h-1 rounded-full bg-zinc-600" />
                               <span className="text-[11px] text-zinc-500">{label}</span>
@@ -365,17 +383,26 @@ export default async function VpnPage({ searchParams }: PageProps) {
                           <Gamepad2 className="w-3 h-3 text-green-500/50" />
                           <span className="text-[9px] text-green-500/50 font-mono uppercase tracking-[2px]">Perks</span>
                         </div>
-                        {[
-                          { icon: Gamepad2, label: 'Low Ping Gaming' },
-                          { icon: Zap, label: 'Anti-Lag Technology' },
-                          { icon: Shield, label: 'Anti-DDoS Protection' },
-                          { icon: Globe, label: 'Gaming Servers' },
-                        ].map((feat, i) => (
-                          <div key={i} className="flex items-center gap-2.5 p-2 rounded-lg bg-green-500/5 border border-green-500/10">
-                            <feat.icon className="w-3.5 h-3.5 text-green-400" />
-                            <span className="text-[11px] text-green-300/70 font-mono">{feat.label}</span>
-                          </div>
-                        ))}
+                        {sv.features && sv.features.length > 0 ? (
+                          sv.features.map((feat: string, i: number) => (
+                            <div key={i} className="flex items-center gap-2.5 p-2 rounded-lg bg-green-500/5 border border-green-500/10">
+                              <Zap className="w-3.5 h-3.5 text-green-400" />
+                              <span className="text-[11px] text-green-300/70 font-mono">{feat}</span>
+                            </div>
+                          ))
+                        ) : (
+                          [
+                            { icon: Gamepad2, label: 'Low Ping Gaming' },
+                            { icon: Zap, label: 'Anti-Lag Technology' },
+                            { icon: Shield, label: 'Anti-DDoS Protection' },
+                            { icon: Globe, label: 'Gaming Servers' },
+                          ].map((feat, i) => (
+                            <div key={i} className="flex items-center gap-2.5 p-2 rounded-lg bg-green-500/5 border border-green-500/10">
+                              <feat.icon className="w-3.5 h-3.5 text-green-400" />
+                              <span className="text-[11px] text-green-300/70 font-mono">{feat.label}</span>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   </>
@@ -449,19 +476,30 @@ export default async function VpnPage({ searchParams }: PageProps) {
                       <div className="p-5 space-y-3.5">
                         <h3 className="text-[10px] text-blue-400/60 uppercase tracking-wider font-semibold">Enterprise Features</h3>
                         <div className="space-y-2">
-                          {[
-                            { icon: Building2, label: 'Enterprise Security' },
-                            { icon: Shield, label: 'Compliance Ready' },
-                            { icon: Lock, label: 'End-to-End Encryption' },
-                            { icon: Server, label: 'Dedicated Support' },
-                          ].map((feat, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                              <div className="w-7 h-7 rounded-lg bg-blue-500/8 border border-blue-500/10 flex items-center justify-center flex-shrink-0">
-                                <feat.icon className="w-3.5 h-3.5 text-blue-400" />
+                          {sv.features && sv.features.length > 0 ? (
+                            sv.features.map((feat: string, i: number) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-lg bg-blue-500/8 border border-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                  <Zap className="w-3.5 h-3.5 text-blue-400" />
+                                </div>
+                                <span className="text-xs text-zinc-400 font-medium">{feat}</span>
                               </div>
-                              <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
-                            </div>
-                          ))}
+                            ))
+                          ) : (
+                            [
+                              { icon: Building2, label: 'Enterprise Security' },
+                              { icon: Shield, label: 'Compliance Ready' },
+                              { icon: Lock, label: 'End-to-End Encryption' },
+                              { icon: Server, label: 'Dedicated Support' },
+                            ].map((feat, i) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-lg bg-blue-500/8 border border-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                  <feat.icon className="w-3.5 h-3.5 text-blue-400" />
+                                </div>
+                                <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
@@ -554,19 +592,30 @@ export default async function VpnPage({ searchParams }: PageProps) {
                           <h3 className="text-[10px] text-amber-400/60 uppercase tracking-wider font-semibold">VIP Benefits</h3>
                         </div>
                         <div className="space-y-2.5">
-                          {[
-                            { icon: Crown, label: 'VIP Priority Access' },
-                            { icon: Shield, label: 'Premium Protection' },
-                            { icon: Zap, label: 'Ultra-Fast Speed' },
-                            { icon: Star, label: 'Premium Support 24/7' },
-                          ].map((feat, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                              <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/10 flex items-center justify-center flex-shrink-0">
-                                <feat.icon className="w-3.5 h-3.5 text-amber-400" />
+                          {sv.features && sv.features.length > 0 ? (
+                            sv.features.map((feat: string, i: number) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/10 flex items-center justify-center flex-shrink-0">
+                                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                                </div>
+                                <span className="text-xs text-zinc-400 font-medium">{feat}</span>
                               </div>
-                              <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
-                            </div>
-                          ))}
+                            ))
+                          ) : (
+                            [
+                              { icon: Crown, label: 'VIP Priority Access' },
+                              { icon: Shield, label: 'Premium Protection' },
+                              { icon: Zap, label: 'Ultra-Fast Speed' },
+                              { icon: Star, label: 'Premium Support 24/7' },
+                            ].map((feat, i) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/10 flex items-center justify-center flex-shrink-0">
+                                  <feat.icon className="w-3.5 h-3.5 text-amber-400" />
+                                </div>
+                                <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
@@ -670,22 +719,33 @@ export default async function VpnPage({ searchParams }: PageProps) {
                       <div className="p-5 space-y-3.5">
                         <div className="flex items-center gap-2">
                           <span className="text-sm">🎉</span>
-                          <h3 className="text-[10px] text-sky-400/60 uppercase tracking-wider font-semibold">สงกรานต์ Features</h3>
+                          <h3 className="text-[10px] text-sky-400/60 uppercase tracking-wider font-semibold">Features</h3>
                         </div>
                         <div className="space-y-2.5">
-                          {[
-                            { emoji: '💦', label: 'Splash Protection' },
-                            { emoji: '🛡️', label: 'Festival Security' },
-                            { emoji: '⚡', label: 'Cool Speed' },
-                            { emoji: '🌏', label: 'Summer Servers' },
-                          ].map((feat, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                              <div className="w-7 h-7 rounded-full bg-sky-500/10 border border-sky-500/10 flex items-center justify-center flex-shrink-0">
-                                <span className="text-xs">{feat.emoji}</span>
+                          {sv.features && sv.features.length > 0 ? (
+                            sv.features.map((feat: string, i: number) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-full bg-sky-500/10 border border-sky-500/10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-xs">✨</span>
+                                </div>
+                                <span className="text-xs text-zinc-400 font-medium">{feat}</span>
                               </div>
-                              <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
-                            </div>
-                          ))}
+                            ))
+                          ) : (
+                            [
+                              { emoji: '💦', label: 'Splash Protection' },
+                              { emoji: '🛡️', label: 'Festival Security' },
+                              { emoji: '⚡', label: 'Cool Speed' },
+                              { emoji: '🌏', label: 'Summer Servers' },
+                            ].map((feat, i) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-full bg-sky-500/10 border border-sky-500/10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-xs">{feat.emoji}</span>
+                                </div>
+                                <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>

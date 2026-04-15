@@ -46,7 +46,8 @@ export async function PUT(
       inboundConfigs,
       // Per-server pricing & decoration
       pricePerDay, priceWeekly, priceMonthly,
-      description, badge, tags, themeColor, themeGradient, imageUrl,
+      price3Months, price6Months, price12Months,
+      description, badge, tags, features, themeColor, themeGradient, imageUrl,
       sortOrder, maxClients, defaultIpLimit,
       vlessTemplate
     } = body
@@ -82,10 +83,14 @@ export async function PUT(
       pricePerDay: pricePerDay ?? 2,
       priceWeekly: priceWeekly !== undefined ? priceWeekly : null,
       priceMonthly: priceMonthly !== undefined ? priceMonthly : null,
+      price3Months: price3Months !== undefined ? price3Months : null,
+      price6Months: price6Months !== undefined ? price6Months : null,
+      price12Months: price12Months !== undefined ? price12Months : null,
       // Decoration
       description: description || null,
       badge: badge || null,
       tags: tags || [],
+      features: features || [],
       themeColor: themeColor || null,
       themeGradient: themeGradient || null,
       imageUrl: imageUrl || null,

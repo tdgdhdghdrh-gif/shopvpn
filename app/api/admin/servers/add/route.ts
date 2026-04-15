@@ -170,7 +170,8 @@ export async function POST(request: NextRequest) {
       skipConnectionTest, inboundConfigs,
       // Per-server pricing & decoration
       pricePerDay, priceWeekly, priceMonthly,
-      description, badge, tags, themeColor, themeGradient, imageUrl,
+      price3Months, price6Months, price12Months,
+      description, badge, tags, features, themeColor, themeGradient, imageUrl,
       sortOrder, maxClients, defaultIpLimit,
       vlessTemplate
     } = body
@@ -231,10 +232,14 @@ export async function POST(request: NextRequest) {
         pricePerDay: pricePerDay ?? 2,
         priceWeekly: priceWeekly ?? undefined,
         priceMonthly: priceMonthly ?? undefined,
+        price3Months: price3Months ?? undefined,
+        price6Months: price6Months ?? undefined,
+        price12Months: price12Months ?? undefined,
         // Decoration
         description: description || undefined,
         badge: badge || undefined,
         tags: tags || [],
+        features: features || [],
         themeColor: themeColor || undefined,
         themeGradient: themeGradient || undefined,
         imageUrl: imageUrl || undefined,
