@@ -39,6 +39,7 @@ const ALL_PERMISSIONS = [
   { value: 'credit:deduct', label: 'หักเครดิต', icon: CreditCard, color: 'amber' },
   { value: 'promo:activate', label: 'รับส่วนลด', icon: Percent, color: 'purple' },
   { value: 'vpn:codes', label: 'ดึงโค้ด VPN', icon: Key, color: 'cyan' },
+  { value: 'v2box:read', label: 'ดึงโค้ด V2Box', icon: Key, color: 'cyan' },
   { value: 'ip:manage', label: 'จัดการ IP', icon: Shield, color: 'emerald' },
 ]
 
@@ -428,6 +429,10 @@ export default function AdminApiKeysPage() {
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
             <p className="font-bold text-cyan-400">GET /api/external/vpn?email=xxx</p>
             <p className="text-zinc-500">ดึงโค้ด VPN ของผู้ใช้ (vlessLink, expiryTime, status)</p>
+          </div>
+          <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
+            <p className="font-bold text-cyan-400">GET /api/external/v2box-codes</p>
+            <p className="text-zinc-500">ดึงโค้ด V2Box ทั้งหมด (ชื่อ, โค้ด, โลโก้, ค่าย, วันหมดอายุ)</p>
           </div>
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
             <p className="font-bold text-zinc-300">Header ทุก request</p>
