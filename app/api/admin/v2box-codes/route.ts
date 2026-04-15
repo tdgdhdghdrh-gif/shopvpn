@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     const { action } = body
 
     if (action === 'create') {
-      const { name, code, description, logoUrl, carrier, expiryDate, sortOrder } = body
+      const { name, code, description, logoUrl, carrier, ownerContact, expiryDate, sortOrder } = body
       if (!name || !code || !expiryDate) {
         return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบ (ชื่อ, โค้ด, วันหมดอายุ)' }, { status: 400 })
       }
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
           description: description || null,
           logoUrl: logoUrl || null,
           carrier: carrier || null,
+          ownerContact: ownerContact || null,
           expiryDate: new Date(expiryDate),
           sortOrder: sortOrder ? parseInt(sortOrder) : 0,
           createdBy: admin.id,
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'update') {
-      const { id, name, code, description, logoUrl, carrier, expiryDate, sortOrder } = body
+      const { id, name, code, description, logoUrl, carrier, ownerContact, expiryDate, sortOrder } = body
       if (!id) return NextResponse.json({ error: 'ไม่พบ ID' }, { status: 400 })
 
       const v2boxCode = await prisma.v2BoxCode.update({
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
           ...(description !== undefined && { description: description || null }),
           ...(logoUrl !== undefined && { logoUrl: logoUrl || null }),
           ...(carrier !== undefined && { carrier: carrier || null }),
+          ...(ownerContact !== undefined && { ownerContact: ownerContact || null }),
           ...(expiryDate !== undefined && { expiryDate: new Date(expiryDate) }),
           ...(sortOrder !== undefined && { sortOrder: parseInt(sortOrder) }),
         },

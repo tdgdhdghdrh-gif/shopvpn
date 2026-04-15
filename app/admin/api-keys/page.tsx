@@ -432,11 +432,11 @@ export default function AdminApiKeysPage() {
           </div>
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
             <p className="font-bold text-cyan-400">GET /api/external/v2box-codes</p>
-            <p className="text-zinc-500">ดึงโค้ด V2Box ทั้งหมด (ไม่ต้องใช้ Key)</p>
+            <p className="text-zinc-500">ดึงโค้ด V2Box ทั้งหมด ไม่ต้องใช้ Key (?carrier=AIS)</p>
           </div>
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
             <p className="font-bold text-amber-400">POST /api/external/v2box-codes</p>
-            <p className="text-zinc-500">{'เพิ่ม/แก้/ลบโค้ด V2Box { action: "create"|"update"|"delete" }'}</p>
+            <p className="text-zinc-500">{'เพิ่ม/แก้/ลบ V2Box { action, name, code, logoUrl, carrier, ownerContact, expiryDate }'}</p>
           </div>
           <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3 space-y-1">
             <p className="font-bold text-zinc-300">Header ทุก request</p>

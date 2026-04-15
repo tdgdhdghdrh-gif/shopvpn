@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
           description: true,
           logoUrl: true,
           carrier: true,
+          ownerContact: true,
           expiryDate: true,
           sortOrder: true,
           createdAt: true,
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null
 
     if (action === 'create') {
-      const { name, code, description, logoUrl, carrier, expiryDate, sortOrder } = body
+      const { name, code, description, logoUrl, carrier, ownerContact, expiryDate, sortOrder } = body
       if (!name || !code || !expiryDate) {
         return NextResponse.json({ success: false, error: 'Required: name, code, expiryDate' }, { status: 400 })
       }
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
           description: description || null,
           logoUrl: logoUrl || null,
           carrier: carrier || null,
+          ownerContact: ownerContact || null,
           expiryDate: new Date(expiryDate),
           sortOrder: sortOrder ? parseInt(sortOrder) : 0,
           createdBy: `api:${apiKey.name}`,
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'update') {
-      const { id, name, code, description, logoUrl, carrier, expiryDate, sortOrder } = body
+      const { id, name, code, description, logoUrl, carrier, ownerContact, expiryDate, sortOrder } = body
       if (!id) return NextResponse.json({ success: false, error: 'Required: id' }, { status: 400 })
 
       const v2boxCode = await prisma.v2BoxCode.update({
@@ -101,6 +103,7 @@ export async function POST(request: NextRequest) {
           ...(description !== undefined && { description: description || null }),
           ...(logoUrl !== undefined && { logoUrl: logoUrl || null }),
           ...(carrier !== undefined && { carrier: carrier || null }),
+          ...(ownerContact !== undefined && { ownerContact: ownerContact || null }),
           ...(expiryDate !== undefined && { expiryDate: new Date(expiryDate) }),
           ...(sortOrder !== undefined && { sortOrder: parseInt(sortOrder) }),
         },

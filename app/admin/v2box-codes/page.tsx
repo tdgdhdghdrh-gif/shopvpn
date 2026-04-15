@@ -4,13 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Smartphone, Plus, Trash2, Search, Loader2,
   CheckCircle2, AlertCircle, Save, ToggleLeft, ToggleRight,
-  Calendar, Edit3, Upload, Copy, Clock, Wifi, X
+  Calendar, Edit3, Upload, Copy, Clock, Wifi, X, ExternalLink
 } from 'lucide-react'
 
 interface V2BoxItem {
   id: string; name: string; code: string; description: string | null
-  logoUrl: string | null; carrier: string | null; expiryDate: string
-  isActive: boolean; sortOrder: number; createdAt: string
+  logoUrl: string | null; carrier: string | null; ownerContact: string | null
+  expiryDate: string; isActive: boolean; sortOrder: number; createdAt: string
 }
 
 interface Stats {
@@ -31,7 +31,7 @@ export default function AdminV2BoxCodesPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [form, setForm] = useState({
-    name: '', code: '', description: '', logoUrl: '', carrier: '', expiryDate: '', sortOrder: '0',
+    name: '', code: '', description: '', logoUrl: '', carrier: '', ownerContact: '', expiryDate: '', sortOrder: '0',
   })
 
   useEffect(() => { fetchCodes() }, [])
@@ -49,7 +49,7 @@ export default function AdminV2BoxCodesPage() {
   }
 
   function resetForm() {
-    setForm({ name: '', code: '', description: '', logoUrl: '', carrier: '', expiryDate: '', sortOrder: '0' })
+    setForm({ name: '', code: '', description: '', logoUrl: '', carrier: '', ownerContact: '', expiryDate: '', sortOrder: '0' })
     setEditingId(null)
     setShowForm(false)
   }
@@ -58,6 +58,7 @@ export default function AdminV2BoxCodesPage() {
     setForm({
       name: c.name, code: c.code, description: c.description || '',
       logoUrl: c.logoUrl || '', carrier: c.carrier || '',
+      ownerContact: c.ownerContact || '',
       expiryDate: new Date(c.expiryDate).toISOString().slice(0, 16),
       sortOrder: c.sortOrder.toString(),
     })
@@ -293,6 +294,12 @@ export default function AdminV2BoxCodesPage() {
                 className="w-full mt-1 bg-black border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white" />
             </div>
             <div>
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">ลิงก์เฟส/ติดต่อเจ้าของค่าย</label>
+              <input value={form.ownerContact} onChange={e => setForm(f => ({ ...f, ownerContact: e.target.value }))}
+                placeholder="https://facebook.com/xxx หรือ LINE: @xxx"
+                className="w-full mt-1 bg-black border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-zinc-700" />
+            </div>
+            <div>
               <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">ลำดับแสดงผล</label>
               <input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: e.target.value }))}
                 placeholder="0" min="0"
@@ -360,6 +367,12 @@ export default function AdminV2BoxCodesPage() {
                 </div>
                 {c.description && (
                   <p className="text-[10px] text-zinc-600 mt-0.5 truncate">{c.description}</p>
+                )}
+                {c.ownerContact && (
+                  <a href={c.ownerContact.startsWith('http') ? c.ownerContact : '#'} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 mt-0.5 transition-colors">
+                    <ExternalLink className="w-3 h-3" /> {c.ownerContact.length > 40 ? c.ownerContact.substring(0, 40) + '...' : c.ownerContact}
+                  </a>
                 )}
               </div>
 

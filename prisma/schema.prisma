@@ -1162,6 +1162,7 @@ model V2BoxCode {
   description String?  @db.Text               // รายละเอียดโค้ด
   logoUrl     String?                         // URL โลโก้ค่าย
   carrier     String?                         // ชื่อค่าย เช่น AIS, TRUE, DTAC
+  ownerContact String?                        // ลิงก์เฟส/ช่องทางติดต่อเจ้าของค่าย
   expiryDate  DateTime                        // วันหมดอายุ (ลบอัตโนมัติเมื่อหมด)
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)

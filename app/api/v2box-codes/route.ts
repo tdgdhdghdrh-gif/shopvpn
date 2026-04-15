@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
           description: true,
           logoUrl: true,
           carrier: true,
+          ownerContact: true,
           expiryDate: true,
           sortOrder: true,
           createdAt: true,
