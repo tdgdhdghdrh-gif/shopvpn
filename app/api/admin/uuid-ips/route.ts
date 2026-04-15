@@ -42,9 +42,25 @@ export async function GET(req: NextRequest) {
       try {
         const ipResult = await adminGetClientIps(order.serverId, order.remark)
         if (ipResult?.success && ipResult.data) {
-          // data can be a string like "1.2.3.4\n5.6.7.8" or null
-          const ipStr = typeof ipResult.data === 'string' ? ipResult.data : ''
-          ips = ipStr.split('\n').map((ip: string) => ip.trim()).filter((ip: string) => ip && ip !== 'No IP Record')
+          const raw = ipResult.data
+          if (typeof raw === 'string') {
+            // Panel may return JSON array string like '["1.2.3.4","5.6.7.8"]' or newline-separated "1.2.3.4\n5.6.7.8"
+            const trimmed = raw.trim()
+            if (trimmed.startsWith('[')) {
+              try {
+                const parsed = JSON.parse(trimmed)
+                if (Array.isArray(parsed)) {
+                  ips = parsed.map((ip: string) => String(ip).trim()).filter((ip: string) => ip && ip !== 'No IP Record')
+                }
+              } catch {
+                ips = trimmed.split('\n').map((ip: string) => ip.trim()).filter((ip: string) => ip && ip !== 'No IP Record')
+              }
+            } else {
+              ips = trimmed.split('\n').map((ip: string) => ip.trim()).filter((ip: string) => ip && ip !== 'No IP Record')
+            }
+          } else if (Array.isArray(raw)) {
+            ips = raw.map((ip: string) => String(ip).trim()).filter((ip: string) => ip && ip !== 'No IP Record')
+          }
         }
       } catch (e) {
         console.error('Error fetching client IPs:', e)
@@ -53,7 +69,11 @@ export async function GET(req: NextRequest) {
       try {
         const onlineResult = await adminGetOnlineClients(order.serverId)
         if (onlineResult?.success && Array.isArray(onlineResult.data)) {
-          isOnline = onlineResult.data.some((email: string) => email === order.remark)
+          // Online list may contain full remark or remark with extra text
+          isOnline = onlineResult.data.some((entry: string) => {
+            const email = typeof entry === 'string' ? entry.split(/\s+/)[0] : ''
+            return email === order.remark
+          })
         }
       } catch (e) {
         console.error('Error fetching online clients:', e)
