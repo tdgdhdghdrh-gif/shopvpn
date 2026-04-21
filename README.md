@@ -125,3 +125,4 @@ npx prisma generate            # Generate Prisma Client
 - [PostgreSQL](https://postgresql.org/) - Database
 - [Lucide React](https://lucide.dev/) - Icons
 # vpnsas
+# shopvpn
