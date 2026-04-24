@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { getSession, updateBalance, checkImpersonation } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
+import { notifyTopup, notifyError } from '@/lib/telegram'
 
 // Check and give referral reward
 async function checkReferralReward(userId: string, amount: number) {
@@ -161,6 +162,10 @@ export async function POST(req: NextRequest) {
         await session.save()
       }
 
+      // Notify admin
+      const userInfo = await prisma.user.findUnique({ where: { id: session.userId }, select: { name: true } })
+      await notifyTopup(userInfo?.name || 'ไม่ทราบ', amount, 'TrueMoney Wallet', updatedUser?.balance || 0)
+
       return Response.json({ 
         success: true, 
         amount, 
@@ -277,6 +282,10 @@ export async function POST(req: NextRequest) {
         await session.save()
       }
 
+      // Notify admin
+      const userInfo2 = await prisma.user.findUnique({ where: { id: session.userId }, select: { name: true } })
+      await notifyTopup(userInfo2?.name || 'ไม่ทราบ', amount, 'สลิปธนาคาร', updatedUser?.balance || 0)
+
       return Response.json({ 
         success: true, 
         amount, 
@@ -290,6 +299,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Topup error:', error)
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
+    const errMsg = error instanceof Error ? error.message : 'Unknown error'
+    await notifyError('ระบบเติมเงิน', errMsg)
     return Response.json({ success: false, error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' })
   }
 }

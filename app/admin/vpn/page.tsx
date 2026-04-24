@@ -51,6 +51,9 @@ interface VpnServer {
   sni: string
   clientPort: number
   isActive: boolean
+  isHidden: boolean
+  healthStatus: string
+  lastHealthCheck: string | null
   ping: number
   load: number
   status: string
@@ -78,7 +81,7 @@ interface VpnServer {
   vlessTemplate: string | null
 }
 
-type FilterStatus = 'all' | 'online' | 'offline'
+type FilterStatus = 'all' | 'online' | 'offline' | 'hidden' | 'unhealthy'
 type FilterCategory = 'all' | 'general' | 'movie' | 'game' | 'streaming' | 'tiktok'
 
 const categoryLabels: Record<string, string> = {
@@ -195,6 +198,8 @@ export default function AdminVpnPage() {
   const [inboundOverrides, setInboundOverrides] = useState<Record<number, { customAddress: string; customWsHost: string; customPort: number | null }>>({})
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [healthChecking, setHealthChecking] = useState(false)
+  const [togglingVisibility, setTogglingVisibility] = useState<string | null>(null)
 
   useEffect(() => {
     fetchServers()
@@ -212,6 +217,63 @@ export default function AdminVpnPage() {
       setMessage({ type: 'error', text: 'โหลดข้อมูลเซิร์ฟเวอร์ไม่สำเร็จ' })
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function runHealthCheck() {
+    setHealthChecking(true)
+    setMessage({ type: '', text: '' })
+    try {
+      const res = await fetch('/api/admin/servers/health-check', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setMessage({
+          type: 'success',
+          text: `สแกนเสร็จแล้ว — ปกติ ${data.healthy} / มีปัญหา ${data.unhealthy} เครื่อง`,
+        })
+        fetchServers()
+      } else {
+        setMessage({ type: 'error', text: data.error || 'ตรวจสอบล้มเหลว' })
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'เกิดข้อผิดพลาดในการตรวจสอบ' })
+    } finally {
+      setHealthChecking(false)
+    }
+  }
+
+  async function toggleVisibility(serverId: string, field: 'isActive' | 'isHidden') {
+    setTogglingVisibility(serverId)
+    try {
+      const server = servers.find((s) => s.id === serverId)
+      if (!server) return
+      const newValue = !(server as any)[field]
+      const res = await fetch(`/api/admin/servers/${serverId}/visibility`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: newValue }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setMessage({
+          type: 'success',
+          text:
+            field === 'isActive'
+              ? newValue
+                ? 'เปิดใช้งานเซิร์ฟเวอร์แล้ว'
+                : 'ปิดใช้งานเซิร์ฟเวอร์แล้ว'
+              : newValue
+              ? 'ซ่อนเซิร์ฟเวอร์แล้ว'
+              : 'แสดงเซิร์ฟเวอร์แล้ว',
+        })
+        fetchServers()
+      } else {
+        setMessage({ type: 'error', text: data.error || 'อัปเดตไม่สำเร็จ' })
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'เกิดข้อผิดพลาด' })
+    } finally {
+      setTogglingVisibility(null)
     }
   }
 
@@ -524,6 +586,8 @@ export default function AdminVpnPage() {
   const stats = useMemo(() => {
     const active = servers.filter(s => s.isActive)
     const inactive = servers.filter(s => !s.isActive)
+    const hidden = servers.filter(s => s.isHidden)
+    const unhealthy = servers.filter(s => s.healthStatus === 'unhealthy')
     const avgPing = active.length > 0 
       ? Math.round(active.reduce((sum, s) => sum + (s.ping || 0), 0) / active.length) 
       : 0
@@ -531,7 +595,7 @@ export default function AdminVpnPage() {
       ? Math.round(active.reduce((sum, s) => sum + (s.load || 0), 0) / active.length) 
       : 0
     const categories = new Set(servers.map(s => s.category || 'general'))
-    return { total: servers.length, active: active.length, inactive: inactive.length, avgPing, avgLoad, categories: categories.size }
+    return { total: servers.length, active: active.length, inactive: inactive.length, hidden: hidden.length, unhealthy: unhealthy.length, avgPing, avgLoad, categories: categories.size }
   }, [servers])
 
   const filteredServers = useMemo(() => {
@@ -542,7 +606,9 @@ export default function AdminVpnPage() {
         s.flag.includes(search)
       const matchStatus = filterStatus === 'all' || 
         (filterStatus === 'online' && s.isActive) || 
-        (filterStatus === 'offline' && !s.isActive)
+        (filterStatus === 'offline' && !s.isActive) ||
+        (filterStatus === 'hidden' && s.isHidden) ||
+        (filterStatus === 'unhealthy' && s.healthStatus === 'unhealthy')
       const matchCategory = filterCategory === 'all' || s.category === filterCategory
       return matchSearch && matchStatus && matchCategory
     })
@@ -593,6 +659,14 @@ export default function AdminVpnPage() {
           
           <div className="flex items-center gap-2">
             <button 
+              onClick={runHealthCheck}
+              disabled={healthChecking}
+              className="h-10 px-4 flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-white/[0.08] hover:border-white/[0.12] transition-all active:scale-95 disabled:opacity-50"
+            >
+              <Activity className={`w-3.5 h-3.5 ${healthChecking ? 'animate-pulse' : ''}`} />
+              <span className="hidden sm:inline">สแกนสถานะ</span>
+            </button>
+            <button 
               onClick={fetchServers}
               className="h-10 px-4 flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-white/[0.08] hover:border-white/[0.12] transition-all active:scale-95"
             >
@@ -615,8 +689,8 @@ export default function AdminVpnPage() {
             { label: 'โหนดทั้งหมด', value: stats.total, icon: Server, color: 'cyan' },
             { label: 'ออนไลน์', value: stats.active, icon: Power, color: 'emerald' },
             { label: 'ออฟไลน์', value: stats.inactive, icon: XCircle, color: 'red' },
-            { label: 'Avg Ping', value: `${stats.avgPing}ms`, icon: Zap, color: stats.avgPing <= 50 ? 'emerald' : stats.avgPing <= 100 ? 'amber' : 'red' },
-            { label: 'Avg Load', value: `${stats.avgLoad}%`, icon: BarChart3, color: stats.avgLoad <= 50 ? 'emerald' : stats.avgLoad <= 75 ? 'amber' : 'red' },
+            { label: 'ซ่อน', value: stats.hidden, icon: EyeOff, color: 'amber' },
+            { label: 'มีปัญหา', value: stats.unhealthy, icon: AlertTriangle, color: 'red' },
             { label: 'หมวดหมู่', value: stats.categories, icon: Tag, color: 'violet' },
           ].map((stat, i) => {
             const colorMap: Record<string, string> = {
@@ -672,14 +746,19 @@ export default function AdminVpnPage() {
         {/* Filter row */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
           {/* Status pills */}
-          {(['all', 'online', 'offline'] as FilterStatus[]).map((status) => {
-            const count = status === 'all' ? stats.total : status === 'online' ? stats.active : stats.inactive
+          {(['all', 'online', 'offline', 'hidden', 'unhealthy'] as FilterStatus[]).map((status) => {
+            const count = status === 'all' ? stats.total : status === 'online' ? stats.active : status === 'offline' ? stats.inactive : status === 'hidden' ? stats.hidden : stats.unhealthy
             const isActive = filterStatus === status
             const activeStyle = status === 'online' 
               ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20 shadow-sm shadow-emerald-500/10' 
               : status === 'offline' 
                 ? 'bg-red-500/15 text-red-400 border-red-500/20 shadow-sm shadow-red-500/10'
+              : status === 'hidden'
+                ? 'bg-amber-500/15 text-amber-400 border-amber-500/20 shadow-sm shadow-amber-500/10'
+              : status === 'unhealthy'
+                ? 'bg-red-500/15 text-red-400 border-red-500/20 shadow-sm shadow-red-500/10'
                 : 'bg-white/10 text-white border-white/15 shadow-sm'
+            const label = status === 'all' ? 'ทั้งหมด' : status === 'online' ? 'ออนไลน์' : status === 'offline' ? 'ออฟไลน์' : status === 'hidden' ? 'ซ่อน' : 'มีปัญหา'
             return (
               <button
                 key={status}
@@ -688,7 +767,7 @@ export default function AdminVpnPage() {
                   isActive ? activeStyle : 'bg-zinc-900/60 text-zinc-500 border border-white/[0.04] hover:text-zinc-300 hover:bg-zinc-900'
                 }`}
               >
-                {status === 'all' ? 'ทั้งหมด' : status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}
+                {label}
                 {count > 0 && <span className="ml-1 opacity-70">{count}</span>}
               </button>
             )
@@ -835,6 +914,30 @@ export default function AdminVpnPage() {
                     {/* Actions */}
                     <div className="flex gap-1.5 flex-shrink-0">
                       <button
+                        onClick={() => toggleVisibility(server.id, 'isActive')}
+                        disabled={togglingVisibility === server.id}
+                        className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-95 ${
+                          server.isActive
+                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+                            : 'bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20'
+                        }`}
+                        title={server.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+                      >
+                        <Power className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => toggleVisibility(server.id, 'isHidden')}
+                        disabled={togglingVisibility === server.id}
+                        className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-95 ${
+                          server.isHidden
+                            ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20'
+                            : 'bg-white/[0.04] border border-white/[0.06] text-zinc-500 hover:text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/20'
+                        }`}
+                        title={server.isHidden ? 'แสดงเซิร์ฟเวอร์' : 'ซ่อนเซิร์ฟเวอร์'}
+                      >
+                        {server.isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
                         onClick={() => openEditModal(server)}
                         className="w-9 h-9 flex items-center justify-center bg-white/[0.04] border border-white/[0.06] rounded-xl text-zinc-500 hover:text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/20 transition-all active:scale-95"
                       >
@@ -880,6 +983,22 @@ export default function AdminVpnPage() {
                     {server.defaultIpLimit > 0 && (
                       <span className="inline-flex items-center gap-0.5 px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded-lg text-[9px] font-bold text-zinc-500">
                         IP:{server.defaultIpLimit}
+                      </span>
+                    )}
+                    {/* Health status */}
+                    {server.healthStatus === 'unhealthy' && (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-1 bg-red-500/10 border border-red-500/15 rounded-lg text-[9px] font-bold text-red-400">
+                        <AlertTriangle className="w-2.5 h-2.5" />มีปัญหา
+                      </span>
+                    )}
+                    {server.healthStatus === 'healthy' && (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/15 rounded-lg text-[9px] font-bold text-emerald-400">
+                        <CheckCircle2 className="w-2.5 h-2.5" />ปกติ
+                      </span>
+                    )}
+                    {server.isHidden && (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-1 bg-amber-500/10 border border-amber-500/15 rounded-lg text-[9px] font-bold text-amber-400">
+                        <EyeOff className="w-2.5 h-2.5" />ซ่อนอยู่
                       </span>
                     )}
                   </div>
@@ -941,6 +1060,18 @@ export default function AdminVpnPage() {
                         <Monitor className="w-2.5 h-2.5 text-zinc-600" />
                       </div>
                       <span className="text-[10px] text-zinc-400 font-mono">{server.host}:{server.port}</span>
+                    </div>
+                    {/* Health check info */}
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded bg-white/[0.04] flex items-center justify-center">
+                        <Activity className="w-2.5 h-2.5 text-zinc-600" />
+                      </div>
+                      <span className={`text-[10px] font-mono ${server.healthStatus === 'healthy' ? 'text-emerald-400' : server.healthStatus === 'unhealthy' ? 'text-red-400' : 'text-zinc-500'}`}>
+                        {server.healthStatus === 'healthy' ? 'สถานะ: ปกติ' : server.healthStatus === 'unhealthy' ? 'สถานะ: มีปัญหา' : 'สถานะ: ยังไม่ได้ตรวจสอบ'}
+                        {server.lastHealthCheck && (
+                          <span className="text-zinc-600 ml-1">({new Date(server.lastHealthCheck).toLocaleString('th-TH')})</span>
+                        )}
+                      </span>
                     </div>
                     {/* Package prices */}
                     {(server.priceWeekly || server.priceMonthly || (server.customPackages && (server.customPackages as any[]).length > 0)) && (

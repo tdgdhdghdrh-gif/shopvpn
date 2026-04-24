@@ -29,7 +29,7 @@ export default async function VpnPage({ searchParams }: PageProps) {
   const [userData, settings] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.userId! },
-      select: { discountExpiry: true, isAdmin: true, isSuperAdmin: true, isRevenueAdmin: true, promoDiscountPercent: true }
+      select: { balance: true, discountExpiry: true, isAdmin: true, isSuperAdmin: true, isRevenueAdmin: true, promoDiscountPercent: true }
     }),
     prisma.settings.findFirst()
   ])
@@ -37,7 +37,7 @@ export default async function VpnPage({ searchParams }: PageProps) {
   const user = {
     name: session.name || '',
     email: session.email || '',
-    balance: session.balance || 0,
+    balance: userData?.balance ?? session.balance ?? 0,
     hasDiscount: userData?.discountExpiry ? new Date(userData.discountExpiry) > new Date() : false
   }
   const isAdmin = !!(userData?.isSuperAdmin || userData?.isAdmin || userData?.isRevenueAdmin)

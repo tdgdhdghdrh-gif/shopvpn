@@ -47,6 +47,9 @@ import {
   CalendarClock,
   Crown,
   Smartphone,
+  Music,
+  Terminal,
+  Send,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -94,7 +97,12 @@ const superAdminMenuItems = [
   { name: 'จัดการ UI/Theme', href: '/admin/theme-editor', icon: Sliders },
   { name: 'reCAPTCHA', href: '/admin/recaptcha', icon: ShieldCheck },
   { name: 'ตั้งค่าระบบ', href: '/admin/settings', icon: Settings },
+  { name: 'ตั้งค่าเติมเงิน', href: '/admin/topup-settings', icon: Wallet },
+  { name: 'จัดการเพลง', href: '/admin/music', icon: Music },
+  { name: 'ดู Log ระบบ', href: '/admin/logs', icon: Terminal },
+  { name: 'แจ้งเตือน Telegram', href: '/admin/telegram-config', icon: Send },
   { name: 'จัดการเมนู', href: '/admin/menu-settings', icon: Construction },
+  { name: 'ระบบอัปเดต', href: '/admin/updates', icon: AlertTriangle },
   { name: 'อัพเดทเว็บ', href: '/admin/update-site', icon: Download },
   { name: 'ต่ออายุเว็บ', href: '/admin/site-license', icon: CalendarClock },
 ]

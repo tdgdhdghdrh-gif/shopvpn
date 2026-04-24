@@ -3,6 +3,7 @@ import { login } from '@/lib/session'
 import bcrypt from 'bcryptjs'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { notifyRegister } from '@/lib/telegram'
 
 function generateReferralCode(): string {
   return crypto.randomBytes(4).toString('hex').toUpperCase()
@@ -175,6 +176,9 @@ export async function POST(request: NextRequest) {
 
     // Login
     await login(user.id, user.email, user.name, user.balance)
+
+    // Notify admin
+    await notifyRegister(name, email)
 
     return NextResponse.json({ 
       success: true,

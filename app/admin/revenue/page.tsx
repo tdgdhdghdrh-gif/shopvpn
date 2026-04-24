@@ -16,6 +16,8 @@ import {
   ChevronDown,
   ChevronUp,
   Crown,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react'
 
 interface ServerRevenue {
@@ -47,6 +49,8 @@ export default function AdminRevenuePage() {
   const [loading, setLoading] = useState(true)
   const [sortKey, setSortKey] = useState<SortKey>('totalRevenue')
   const [sortAsc, setSortAsc] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -63,6 +67,25 @@ export default function AdminRevenuePage() {
       console.error('Failed to fetch revenue data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleReset() {
+    setResetting(true)
+    try {
+      const res = await fetch('/api/admin/revenue/reset', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setShowResetModal(false)
+        fetchData()
+        alert(data.message)
+      } else {
+        alert(data.error || 'รีเซ็ตไม่สำเร็จ')
+      }
+    } catch {
+      alert('เกิดข้อผิดพลาด')
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -114,13 +137,22 @@ export default function AdminRevenuePage() {
           </div>
         </div>
 
-        <button
-          onClick={fetchData}
-          disabled={loading}
-          className="p-2.5 bg-zinc-900 border border-white/5 rounded-xl text-zinc-400 hover:text-white hover:border-white/10 transition-all active:scale-95 disabled:opacity-50 shrink-0"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setShowResetModal(true)}
+            className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/20 hover:border-red-500/30 transition-all active:scale-95"
+            title="รีเซ็ตรายได้ทั้งหมด"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="p-2.5 bg-zinc-900 border border-white/5 rounded-xl text-zinc-400 hover:text-white hover:border-white/10 transition-all active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* ── Stat Cards ── */}
@@ -477,6 +509,48 @@ export default function AdminRevenuePage() {
             <p className="text-sm font-bold text-amber-400 truncate">
               {topServer ? `${topServer.flag} ${topServer.name}` : '-'}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reset Confirmation Modal ── */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+            onClick={() => !resetting && setShowResetModal(false)}
+          />
+          <div className="relative bg-zinc-950 border-t sm:border border-red-500/20 rounded-t-3xl sm:rounded-2xl w-full sm:max-w-sm p-6 space-y-5 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
+            <div className="sm:hidden w-10 h-1 bg-white/10 rounded-full mx-auto -mt-1 mb-2" />
+            
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">รีเซ็ตรายได้ทั้งหมด?</h3>
+                <p className="text-sm text-zinc-500 mt-2 leading-relaxed">
+                  การกระทำนี้จะลบคำสั่งซื้อ VPN ทั้งหมดและรีเซ็ตรายได้ทุกเซิร์ฟเวอร์เป็น <span className="text-white font-bold">0</span>
+                </p>
+                <p className="text-xs text-red-400/60 mt-1">ข้อมูลคำสั่งซื้อจะหายไปถาวรและไม่สามารถกู้คืนได้</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetModal(false)}
+                disabled={resetting}
+                className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold text-zinc-400 transition-all active:scale-95"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleReset}
+                disabled={resetting}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-xl text-sm font-bold text-white transition-all shadow-lg shadow-red-600/20 disabled:opacity-50 active:scale-95"
+              >
+                {resetting ? 'กำลังรีเซ็ต...' : 'ยืนยันรีเซ็ต'}
+              </button>
+            </div>
           </div>
         </div>
       )}

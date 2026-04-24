@@ -9,12 +9,21 @@ import {
 
 export default function TopupSelectPage() {
   const [minTopup, setMinTopup] = useState(60)
+  const [walletEnabled, setWalletEnabled] = useState(true)
+  const [slipEnabled, setSlipEnabled] = useState(true)
 
   useEffect(() => {
     fetch('/api/settings/public')
       .then(res => res.json())
       .then(data => {
         if (data.settings?.minTopupAmount) setMinTopup(data.settings.minTopupAmount)
+      })
+      .catch(() => {})
+    fetch('/api/topup-status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.walletEnabled !== undefined) setWalletEnabled(data.walletEnabled)
+        if (data.slipEnabled !== undefined) setSlipEnabled(data.slipEnabled)
       })
       .catch(() => {})
   }, [])
@@ -97,6 +106,7 @@ export default function TopupSelectPage() {
             </div>
 
             {/* Wallet Option */}
+            {walletEnabled && (
             <Link href="/topup/wallet" className="block group">
               <div className="relative overflow-hidden bg-zinc-900/50 border border-white/5 hover:border-red-500/30 rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/5 active:scale-[0.98] card-hover-glow">
                 <div className="absolute -top-16 -right-16 w-32 h-32 bg-red-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -120,8 +130,10 @@ export default function TopupSelectPage() {
                 </div>
               </div>
             </Link>
+            )}
 
             {/* Slip Option */}
+            {slipEnabled && (
             <Link href="/topup/slip" className="block group">
               <div className="relative overflow-hidden bg-zinc-900/50 border border-white/5 hover:border-blue-500/30 rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 active:scale-[0.98] card-hover-glow">
                 <div className="absolute -top-16 -right-16 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -145,6 +157,7 @@ export default function TopupSelectPage() {
                 </div>
               </div>
             </Link>
+            )}
           </div>
 
           {/* Right: Info sidebar */}

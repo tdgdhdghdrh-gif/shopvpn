@@ -624,10 +624,10 @@ class VpnPanelAPI {
 
 // ===== Server Actions =====
 
-// Get all active VPN servers
+// Get all active VPN servers (exclude hidden/unhealthy ones from user view)
 export async function getVpnServers() {
   return prisma.vpnServer.findMany({
-    where: { isActive: true },
+    where: { isActive: true, isHidden: false },
     orderBy: [{ sortOrder: 'asc' }, { ping: 'asc' }],
     select: {
       id: true,

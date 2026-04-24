@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const servers = await prisma.vpnServer.findMany({
-      where: { isActive: true },
+      where: { isActive: true, isHidden: false },
       orderBy: { ping: 'asc' },
       select: {
         id: true,

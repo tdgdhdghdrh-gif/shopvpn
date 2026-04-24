@@ -433,7 +433,7 @@ export default function PremiumAppsPage() {
                         <div className="relative w-full sm:w-20 h-28 sm:h-20 rounded-xl overflow-hidden bg-zinc-900 border border-white/5 shrink-0">
                           {order.app?.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={order.app.imageUrl} alt={order.appName} className="w-full h-full object-cover" />
+                            <img src={order.app.imageUrl} alt={order.appName} className="w-full h-full object-contain" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Package className="w-8 h-8 text-zinc-700" />
@@ -530,7 +530,7 @@ export default function PremiumAppsPage() {
               <div className="flex gap-4 items-start">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 flex-shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={confirmApp.imageUrl} alt={confirmApp.name} className="w-full h-full object-cover" />
+                  <img src={confirmApp.imageUrl} alt={confirmApp.name} className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-bold text-white truncate">{confirmApp.name}</h4>
@@ -623,7 +623,7 @@ export default function PremiumAppsPage() {
               <div className="flex gap-4 items-center">
                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 flex-shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={successData.app.imageUrl} alt={successData.app.name} className="w-full h-full object-cover" />
+                  <img src={successData.app.imageUrl} alt={successData.app.name} className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-bold text-white truncate">{successData.app.name}</h4>
@@ -774,12 +774,12 @@ function AppCard({ app, onBuy, featured = false }: { app: PremiumApp; onBuy: () 
       )}
 
       {/* Image */}
-      <div className={`relative overflow-hidden ${featured ? 'aspect-[2.5/1]' : 'aspect-[2/1]'}`}>
+      <div className={`relative overflow-hidden bg-zinc-900 ${featured ? 'aspect-[2.5/1]' : 'aspect-[2/1]'}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={app.imageUrl}
           alt={app.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 

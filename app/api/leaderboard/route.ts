@@ -1,26 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Public endpoint - no auth required
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Get top users by total topup amount (only SUCCESS topups)
-    const topUsers = await prisma.topUp.groupBy({
-      by: ['userId'],
-      where: { status: 'SUCCESS' },
-      _sum: { amount: true },
-      _count: { id: true },
-      orderBy: { _sum: { amount: 'desc' } },
+    // Get top users by data usage
+    const topUsers = await prisma.user.findMany({
+      where: { dataUsage: { gt: 0 } },
+      orderBy: { dataUsage: 'desc' },
       take: 20,
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        createdAt: true,
+        dataUsage: true,
+      },
     })
-
-    // Fetch user info for each top user
-    const userIds = topUsers.map(t => t.userId)
-    const users = await prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, name: true, avatar: true, createdAt: true },
-    })
-    const userMap = new Map(users.map(u => [u.id, u]))
 
     // Mask user names for privacy: show first 2 chars, mask the rest
     function maskName(name: string): string {
@@ -28,66 +24,31 @@ export async function GET(request: NextRequest) {
       return name.slice(0, 2) + '*'.repeat(Math.min(name.length - 2, 4))
     }
 
-    const leaderboard = topUsers.map((entry, index) => {
-      const user = userMap.get(entry.userId)
-      return {
-        rank: index + 1,
-        name: user ? maskName(user.name) : 'ไม่ทราบ',
-        avatar: user?.avatar || null,
-        totalAmount: entry._sum.amount || 0,
-        topupCount: entry._count.id,
-        joinedAt: user?.createdAt || null,
-      }
-    })
-
-    // Get recent slips (topups with slipUrl, last 30, SUCCESS only)
-    const recentSlips = await prisma.topUp.findMany({
-      where: {
-        status: 'SUCCESS',
-        slipUrl: { not: null },
-        method: 'SLIP',
-      },
-      select: {
-        id: true,
-        amount: true,
-        slipUrl: true,
-        createdAt: true,
-        user: {
-          select: { name: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 30,
-    })
-
-    const slips = recentSlips.map(slip => ({
-      id: slip.id,
-      amount: slip.amount,
-      slipUrl: slip.slipUrl,
-      createdAt: slip.createdAt,
-      userName: maskName(slip.user.name),
+    const leaderboard = topUsers.map((user, index) => ({
+      rank: index + 1,
+      name: maskName(user.name),
+      avatar: user.avatar || null,
+      dataUsage: user.dataUsage || 0,
+      joinedAt: user.createdAt || null,
     }))
 
     // Get summary stats
-    const totalTopups = await prisma.topUp.aggregate({
-      where: { status: 'SUCCESS' },
-      _sum: { amount: true },
+    const totalUsageAgg = await prisma.user.aggregate({
+      _sum: { dataUsage: true },
       _count: { id: true },
     })
 
-    const uniqueUsers = await prisma.topUp.groupBy({
-      by: ['userId'],
-      where: { status: 'SUCCESS' },
+    const activeUsers = await prisma.user.count({
+      where: { dataUsage: { gt: 0 } },
     })
 
     return NextResponse.json({
       success: true,
       leaderboard,
-      slips,
       stats: {
-        totalAmount: totalTopups._sum.amount || 0,
-        totalTransactions: totalTopups._count.id,
-        totalUsers: uniqueUsers.length,
+        totalUsage: totalUsageAgg._sum.dataUsage || 0,
+        totalUsers: totalUsageAgg._count.id,
+        activeUsers,
       },
     })
   } catch (error) {

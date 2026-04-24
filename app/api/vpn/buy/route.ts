@@ -4,6 +4,7 @@ import { getSession, updateBalance, checkImpersonation } from '@/lib/session'
 import https from 'https'
 import http from 'http'
 import crypto from 'crypto'
+import { notifyBuyVpn, notifyError } from '@/lib/telegram'
 
 // Simple in-memory rate limiter to prevent rapid repeated requests
 const requestTimestamps = new Map<string, number>()
@@ -460,6 +461,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'ไม่พบเซิร์ฟเวอร์' })
     }
 
+    // Prevent buying hidden servers
+    if (server.isHidden) {
+      return NextResponse.json({ success: false, error: 'เซิร์ฟเวอร์นี้ไม่พร้อมใช้งานในขณะนี้' })
+    }
+
     // Check maxClients limit (0 = unlimited)
     if (server.maxClients > 0 && server._count.orders >= server.maxClients) {
       return NextResponse.json({ success: false, error: 'เซิร์ฟเวอร์นี้เต็มแล้ว (ถึงจำนวนผู้ใช้สูงสุด)' })
@@ -656,9 +662,14 @@ export async function POST(request: Request) {
       await updateBalance(newBalance)
     }
 
+    // Notify admin
+    await notifyBuyVpn(user.name, server.name, totalPrice, isTrial ? 'ทดลองฟรี' : `${days} วัน`)
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Buy VPN error:', error)
+    const errMsg = error instanceof Error ? error.message : 'Unknown error'
+    await notifyError('ซื้อ VPN', errMsg)
     return NextResponse.json({ success: false, error: 'เกิดข้อผิดพลาด' })
   }
 }

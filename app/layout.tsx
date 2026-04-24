@@ -9,6 +9,8 @@ import DynamicBackground from "@/components/DynamicBackground";
 import WebEffectsBridge from "@/components/WebEffectsBridge";
 import GlobalClickEffect from "@/components/GlobalClickEffect";
 import ImpersonateBanner from "@/components/ImpersonateBanner";
+import SiteUpdateOverlay from "@/components/SiteUpdateOverlay";
+import SiteMusicPlayer from "@/components/SiteMusicPlayer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -162,6 +164,8 @@ export default function RootLayout({
           <WebEffectsBridge />
           <GlobalClickEffect />
           <ImpersonateBanner />
+          <SiteUpdateOverlay />
+          <SiteMusicPlayer />
           <div className="overflow-x-hidden relative z-10">
             {children}
           </div>

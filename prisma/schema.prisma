@@ -31,6 +31,7 @@ model User {
   referredBy          String?
   referredByIP        String?
   totalReferralEarned Float                @default(0)
+  dataUsage           Float                @default(0)
   showOnboarding      Boolean              @default(true)
   chatMessages        ChatMessage[]
   orders              Order[]
@@ -132,6 +133,9 @@ model Settings {
   globalAdDuration    Int      @default(5) // ระยะเวลาโฆษณา (วินาที)
   menuClickEffect     String   @default("none") // Menu click effect: none, ripple, glow, bounce, particle, shockwave, neon, slide, morphGlow, electricArc, hologram
   trialEnabled        Boolean  @default(true)  // เปิด/ปิดระบบทดลองฟรี
+  walletEnabled       Boolean  @default(true)  // เปิด/ปิดระบบเติมเงินวอลเล็ต
+  slipEnabled         Boolean  @default(true)  // เปิด/ปิดระบบเติมเงินสลิป
+  autoDisableTopup    Boolean  @default(true)  // ซ่อนช่องทางอัตโนมัติถ้าขัดข้องบ่อย
   trialDurationMinutes Int     @default(60)    // ระยะเวลาทดลองฟรี (นาที)
   serverListTemplate  String   @default("detailed") // รูปแบบหน้าเซิร์ฟเวอร์: detailed, image-card
   loginTemplate       String   @default("classic") // ธีมหน้าล็อกอิน: classic, minimal, gaming, corporate, premium, songkran
@@ -195,6 +199,11 @@ model VpnServer {
   // Limits
   maxClients     Int      @default(0) // 0 = unlimited
   defaultIpLimit Int      @default(0) // default IP limit for new orders
+
+  // Health check & visibility
+  isHidden       Boolean  @default(false) // ซ่อนจากหน้าเลือกเซิร์ฟเวอร์ของผู้ใช้
+  healthStatus   String   @default("unknown") // healthy, unhealthy, checking, unknown
+  lastHealthCheck DateTime?
 
   orders       VpnOrder[]
 }
@@ -1172,4 +1181,40 @@ model V2BoxCode {
 
   @@index([isActive, expiryDate])
   @@index([createdAt])
+}
+
+model SiteUpdate {
+  id          String   @id @default(cuid())
+  title       String   @default("กำลังอัปเดตระบบ")
+  htmlContent String   @default("<div class=\"text-center\"><h1>กำลังอัปเดตระบบ</h1><p>กรุณารอสักครู่...</p></div>") @map("htmlContent")
+  isEnabled   Boolean  @default(false)
+  showToUsers Boolean  @default(true)
+  showToAdmin Boolean  @default(false)
+  bypassIps   String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteMusic {
+  id        String   @id @default(cuid())
+  fileName  String
+  fileUrl   String
+  isEnabled Boolean  @default(false)
+  autoPlay  Boolean  @default(true)
+  volume    Float    @default(0.5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TelegramConfig {
+  id            String   @id @default(cuid())
+  botToken      String   @default("")
+  chatId        String   @default("")
+  notifyTopup   Boolean  @default(true)
+  notifyRegister Boolean @default(true)
+  notifyBuyVpn  Boolean  @default(true)
+  notifyError   Boolean  @default(true)
+  isEnabled     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
