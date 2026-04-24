@@ -18,7 +18,6 @@ let licenseCache: { valid: boolean; checkedAt: number; siteName?: string } | nul
 const LICENSE_CHECK_INTERVAL = 1 * 60 * 1000 // 1 minute
 
 async function checkLicenseWithServer(licenseKey: string, licenseApiUrl: string): Promise<{ valid: boolean; siteName?: string }> {
-  // ใช้ cache ถ้ายังไม่หมดเวลา
   const now = Date.now()
   if (licenseCache && (now - licenseCache.checkedAt) < LICENSE_CHECK_INTERVAL) {
     return { valid: licenseCache.valid, siteName: licenseCache.siteName }
@@ -37,16 +36,29 @@ async function checkLicenseWithServer(licenseKey: string, licenseApiUrl: string)
       return { valid: data.valid === true, siteName: data.siteName }
     }
     
-    // API error แต่มี cache เก่า -> ใช้ cache เก่า (graceful)
     if (licenseCache) return { valid: licenseCache.valid, siteName: licenseCache.siteName }
-    
-    // ไม่มี cache เลย + API error -> บล็อก (ไม่ปล่อยผ่าน ถ้าไม่สามารถตรวจสอบได้)
     return { valid: false }
   } catch {
-    // Network error -> ใช้ cache เก่า หรือบล็อก
     if (licenseCache) return { valid: licenseCache.valid, siteName: licenseCache.siteName }
     return { valid: false }
   }
+}
+
+// ถ้าไม่มี license cookie ให้เช็คกับ DB ว่ามี license key บันทึกไว้หรือไม่
+async function hasLicenseInDb(origin: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${origin}/api/license/activate`, {
+      next: { revalidate: 0 },
+      signal: AbortSignal.timeout(3000),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      return data.activated === true || data.isLicenseServer === true
+    }
+  } catch {
+    // ignore
+  }
+  return false
 }
 
 export async function middleware(request: NextRequest) {
@@ -71,24 +83,28 @@ export async function middleware(request: NextRequest) {
   // === License Check ===
   // ถ้าเป็นเว็บต้นทาง (license server) -> ไม่ต้องเช็ค
   if (process.env.IS_LICENSE_SERVER !== 'true') {
-    // อ่าน license key จาก cookie (set โดย /api/license/activate POST)
     const licenseKey = request.cookies.get('license_key')?.value
     const licenseApiUrl = request.cookies.get('license_api_url')?.value || 'https://simonvpn.darkx.shop'
 
     if (!licenseKey) {
-      // ยังไม่มี key ใน cookie -> redirect ไปหน้า setup
-      if (pathname !== '/setup') {
-        licenseCache = null
-        const setupUrl = request.nextUrl.clone()
-        setupUrl.pathname = '/setup'
-        return NextResponse.redirect(setupUrl)
+      // ไม่มี cookie -> เช็คกับ DB ก่อนว่ามี license หรือไม่
+      const hasLicense = await hasLicenseInDb(request.nextUrl.origin)
+      
+      if (!hasLicense) {
+        // ไม่มี license จริงๆ -> redirect ไป setup
+        if (pathname !== '/setup') {
+          licenseCache = null
+          const setupUrl = request.nextUrl.clone()
+          setupUrl.pathname = '/setup'
+          return NextResponse.redirect(setupUrl)
+        }
       }
+      // ถ้ามี license ใน DB แต่ cookie หาย -> ให้ผ่านไป (หน้า setup จะ set cookie ใหม่เองถ้าเข้าไป)
     } else {
       // มี key แล้ว -> เช็คกับ license server ว่ายัง valid ไหม
       const result = await checkLicenseWithServer(licenseKey, licenseApiUrl)
       
       if (!result.valid) {
-        // license หมดอายุ
         if (pathname !== '/expired') {
           licenseCache = null
           const expiredUrl = request.nextUrl.clone()
@@ -102,12 +118,9 @@ export async function middleware(request: NextRequest) {
   const ip = getClientIP(request)
   const userAgent = request.headers.get('user-agent') || ''
   const method = request.method
-
-  // ดึง session cookie เพื่อระบุ user (ถ้ามี)
   const sessionCookie = request.cookies.get('shop-session')?.value
 
   try {
-    // เรียก internal API เพื่อบันทึก IP log และเช็ค blocked
     const baseUrl = request.nextUrl.origin
     const logResponse = await fetch(`${baseUrl}/api/ip-log`, {
       method: 'POST',
@@ -127,7 +140,6 @@ export async function middleware(request: NextRequest) {
     if (logResponse.ok) {
       const data = await logResponse.json()
       
-      // ถ้า IP ถูกบล็อก -> ส่ง 403
       if (data.blocked) {
         return new NextResponse(
           JSON.stringify({ 
@@ -142,11 +154,9 @@ export async function middleware(request: NextRequest) {
       }
     }
   } catch (error) {
-    // ถ้า log API ล้มเหลว ให้ผ่านไปก่อน ไม่บล็อก user
     console.error('[IP Middleware] Error logging IP:', error)
   }
 
-  // เพิ่ม IP header เพื่อให้ API routes อื่นๆ ใช้ได้
   const response = NextResponse.next()
   response.headers.set('x-client-ip', ip)
   response.headers.set('x-pathname', pathname)
@@ -155,7 +165,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // จับทุก route ยกเว้น static files
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
