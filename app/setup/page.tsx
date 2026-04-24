@@ -20,17 +20,21 @@ export default function SetupPage() {
       .then(res => res.json())
       .then(data => {
         // ถ้าเป็น license server (เว็บต้นทาง) หรือ activate แล้ว -> ไม่ต้อง setup
-        // การเรียก GET จะ set cookie ให้ middleware อ่านได้อัตโนมัติ
         if (data.isLicenseServer || data.activated) {
-          // รอให้ cookie ถูก set แล้วค่อย redirect
-          setTimeout(() => { window.location.href = '/' }, 500)
+          // Set cookie client-side เพื่อให้ middleware เห็นทันที (บาง browser block httpOnly cookie)
+          if (data.licenseKey) {
+            document.cookie = `license_key=${data.licenseKey}; path=/; max-age=${365*24*60*60}; SameSite=Lax`
+          }
+          if (data.licenseApiUrl) {
+            document.cookie = `license_api_url=${data.licenseApiUrl}; path=/; max-age=${365*24*60*60}; SameSite=Lax`
+          }
+          setTimeout(() => { window.location.href = '/' }, 300)
           return
         }
         setChecking(false)
       })
       .catch(() => {
-        // ถ้า error ก็ redirect ไปหน้าหลัก
-        window.location.href = '/'
+        setChecking(false)
       })
   }, [])
 
