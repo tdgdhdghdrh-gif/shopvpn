@@ -11,6 +11,13 @@ import GlobalClickEffect from "@/components/GlobalClickEffect";
 import ImpersonateBanner from "@/components/ImpersonateBanner";
 import SiteUpdateOverlay from "@/components/SiteUpdateOverlay";
 import SiteMusicPlayer from "@/components/SiteMusicPlayer";
+import FloatingButton from "@/components/FloatingButton";
+import Preloader from "@/components/Preloader";
+import MarqueeBar from "@/components/MarqueeBar";
+import CountdownTimer from "@/components/CountdownTimer";
+import TopNotificationBar from "@/components/TopNotificationBar";
+import BackToTop from "@/components/BackToTop";
+import CustomCursor from "@/components/CustomCursor";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,7 +44,7 @@ export const viewport: Viewport = {
 async function getSettings() {
   try {
     const settings = await prisma.settings.findFirst({
-      select: { siteName: true, siteLogo: true, appLogo: true },
+      select: { siteName: true, siteLogo: true, appLogo: true, customCss: true, customJs: true },
     })
     return settings
   } catch {
@@ -146,18 +153,32 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const layoutSettings = await getSettings()
   return (
     <html lang="th" className="dark" style={{ backgroundColor: 'var(--theme-bg, #000000)' }}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{ color: 'var(--theme-text, #ffffff)', backgroundColor: 'var(--theme-bg, #000000)' }}
       >
+        {/* Custom CSS Injection */}
+        {layoutSettings?.customCss && (
+          <style dangerouslySetInnerHTML={{ __html: layoutSettings.customCss }} />
+        )}
+        {/* Custom JS Injection */}
+        {layoutSettings?.customJs && (
+          <script defer dangerouslySetInnerHTML={{ __html: layoutSettings.customJs }} />
+        )}
+        <Preloader />
+        <CustomCursor />
         <SettingsProvider>
+          <TopNotificationBar />
+          <MarqueeBar />
+          <CountdownTimer />
           <ChunkErrorHandler />
           <ServiceWorkerRegister />
           <DynamicBackground />
@@ -166,9 +187,11 @@ export default function RootLayout({
           <ImpersonateBanner />
           <SiteUpdateOverlay />
           <SiteMusicPlayer />
+          <FloatingButton />
           <div className="overflow-x-hidden relative z-10">
             {children}
           </div>
+          <BackToTop />
         </SettingsProvider>
       </body>
     </html>

@@ -118,6 +118,57 @@ export async function GET() {
         vpnTemplate: settings.vpnTemplate || 'classic',
         // Registration IP Check
         registrationIpCheck: settings.registrationIpCheck ?? true,
+        // Footer
+        footerText: settings.footerText || 'Nexus Shield',
+        footerLinks: settings.footerLinks || [],
+        footerSocialLinks: settings.footerSocialLinks || [],
+        footerShowCredit: settings.footerShowCredit ?? true,
+        // Floating Button
+        floatingButtonEnabled: settings.floatingButtonEnabled ?? false,
+        floatingButtonIcon: settings.floatingButtonIcon || null,
+        floatingButtonUrl: settings.floatingButtonUrl || null,
+        floatingButtonColor: settings.floatingButtonColor || '#06b6e4',
+        floatingButtonPosition: settings.floatingButtonPosition || 'bottom-right',
+        floatingButtonText: settings.floatingButtonText || null,
+        // Preloader
+        preloaderEnabled: settings.preloaderEnabled ?? false,
+        preloaderLogo: settings.preloaderLogo || null,
+        preloaderBgColor: settings.preloaderBgColor || '#000000',
+        preloaderText: settings.preloaderText || null,
+        preloaderAnimation: settings.preloaderAnimation || 'spin',
+        preloaderDuration: settings.preloaderDuration ?? 2000,
+        preloaderSkippable: settings.preloaderSkippable ?? true,
+        // Marquee Bar
+        marqueeEnabled: settings.marqueeEnabled ?? false,
+        marqueeText: settings.marqueeText || null,
+        marqueeBgColor: settings.marqueeBgColor || '#06b6e4',
+        marqueeTextColor: settings.marqueeTextColor || '#ffffff',
+        marqueeSpeed: settings.marqueeSpeed ?? 20,
+        marqueeLink: settings.marqueeLink || null,
+        // Countdown Timer
+        countdownEnabled: settings.countdownEnabled ?? false,
+        countdownTitle: settings.countdownTitle || null,
+        countdownEndDate: settings.countdownEndDate || null,
+        countdownStyle: settings.countdownStyle || 'boxed',
+        countdownBgColor: settings.countdownBgColor || null,
+        countdownTextColor: settings.countdownTextColor || null,
+        countdownExpiredText: settings.countdownExpiredText || 'หมดเวลาแล้ว',
+        // Top Notification Bar
+        topBarEnabled: settings.topBarEnabled ?? false,
+        topBarText: settings.topBarText || null,
+        topBarBgColor: settings.topBarBgColor || '#ef4444',
+        topBarTextColor: settings.topBarTextColor || '#ffffff',
+        topBarLink: settings.topBarLink || null,
+        topBarDismissible: settings.topBarDismissible ?? true,
+        // Back to Top Button
+        backToTopEnabled: settings.backToTopEnabled ?? false,
+        backToTopStyle: settings.backToTopStyle || 'circle',
+        backToTopColor: settings.backToTopColor || '#06b6e4',
+        backToTopPosition: settings.backToTopPosition || 'bottom-right',
+        // Custom Cursor
+        customCursorEnabled: settings.customCursorEnabled ?? false,
+        customCursorStyle: settings.customCursorStyle || 'glow',
+        customCursorColor: settings.customCursorColor || '#06b6e4',
       }
     })
   } catch (error) {

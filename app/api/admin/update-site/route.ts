@@ -37,6 +37,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Super Admin only' }, { status: 403 })
     }
 
+    const body = await request.json().catch(() => ({}))
+    const { createAnnouncement, announcementTitle, announcementContent } = body
+
     const projectDir = process.cwd()
     const logs: string[] = []
     const addLog = (step: string, output: string) => {
@@ -224,9 +227,37 @@ export async function POST(request: NextRequest) {
       username: user.username,
     })
 
+    // Create announcement if requested
+    let announcement = null
+    if (createAnnouncement) {
+      try {
+        const title = announcementTitle?.trim() || 'อัปเดทระบบ'
+        const content = announcementContent?.trim()
+          || changesSummary
+          || commitMessages
+          || 'ระบบได้รับการอัปเดทเรียบร้อยแล้ว'
+
+        announcement = await prisma.announcement.create({
+          data: {
+            title,
+            content,
+            category: 'update',
+            priority: 'normal',
+            isPinned: false,
+            isActive: true,
+            createdBy: user.id,
+          }
+        })
+        addLog('ANNOUNCEMENT', `Created announcement: ${title}`)
+      } catch (annErr: any) {
+        addLog('ANNOUNCEMENT ERROR', annErr.message || 'Failed to create announcement')
+      }
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: 'Site updated successfully!',
+      announcement: announcement ? { id: announcement.id, title: announcement.title } : undefined,
       logs 
     })
 

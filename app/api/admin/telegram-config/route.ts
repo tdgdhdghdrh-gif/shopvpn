@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
-import { sendTelegramNotification } from '@/lib/telegram'
+import { sendTelegramNotification, sendDiscordNotification } from '@/lib/telegram'
 
 // GET - fetch config
 export async function GET() {
@@ -58,6 +58,8 @@ export async function POST(request: NextRequest) {
       notifyBuyVpn,
       notifyError,
       isEnabled,
+      discordWebhookUrl,
+      discordEnabled,
     } = body
 
     let config = await prisma.telegramConfig.findFirst()
@@ -70,6 +72,8 @@ export async function POST(request: NextRequest) {
       notifyBuyVpn: notifyBuyVpn !== undefined ? notifyBuyVpn : config?.notifyBuyVpn ?? true,
       notifyError: notifyError !== undefined ? notifyError : config?.notifyError ?? true,
       isEnabled: isEnabled !== undefined ? isEnabled : config?.isEnabled ?? false,
+      discordWebhookUrl: discordWebhookUrl !== undefined ? discordWebhookUrl : config?.discordWebhookUrl ?? null,
+      discordEnabled: discordEnabled !== undefined ? discordEnabled : config?.discordEnabled ?? false,
     }
 
     if (config) {
@@ -86,6 +90,13 @@ export async function POST(request: NextRequest) {
       await sendTelegramNotification(
         `✅ <b>แจ้งเตือน Telegram เปิดใช้งานแล้ว!</b>\n\n` +
         `บอทจะแจ้งเตือนเหตุการณ์ต่างๆ ในระบบให้คุณทราบ\n` +
+        `⏰ ${new Date().toLocaleString('th-TH')}`
+      )
+    }
+    if (discordEnabled && discordWebhookUrl) {
+      await sendDiscordNotification(
+        `✅ **แจ้งเตือน Discord เปิดใช้งานแล้ว!**\n\n` +
+        `Webhook จะแจ้งเตือนเหตุการณ์ต่างๆ ในระบบให้คุณทราบ\n` +
         `⏰ ${new Date().toLocaleString('th-TH')}`
       )
     }

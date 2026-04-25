@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 }
 
 // Default role fallbacks (same as Sidebar.tsx)
-const ADMIN_FALLBACK = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/auth-template', '/admin/menu-click-effect', '/admin/topups', '/admin/resellers', '/admin/withdrawals', '/admin/v2box-codes']
+const ADMIN_FALLBACK = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/orders', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/auth-template', '/admin/menu-click-effect', '/admin/topups', '/admin/resellers', '/admin/withdrawals', '/admin/v2box-codes', '/admin/tune-site']
 const AGENT_FALLBACK = ['/admin', '/admin/vpn', '/admin/revenue']
 const REVENUE_FALLBACK = ['/admin', '/admin/revenue']
 
@@ -129,14 +129,6 @@ export default async function AdminLayout({
             </MaintenanceGuard>
           </div>
         </main>
-        
-        <footer className="py-3 px-3 text-center">
-          <div className="max-w-7xl mx-auto border-t border-white/5 pt-3">
-            <p className="text-[9px] text-zinc-700 font-medium uppercase tracking-[0.2em]">
-              Nexus Shield &bull; {new Date().getFullYear()}
-            </p>
-          </div>
-        </footer>
       </div>
 
       {/* Sidebar width management */}

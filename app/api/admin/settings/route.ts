@@ -140,6 +140,60 @@ export async function POST(request: NextRequest) {
       vpnTemplate: body.vpnTemplate !== undefined ? body.vpnTemplate : (settings?.vpnTemplate || 'classic'),
       // Registration IP Check
       registrationIpCheck: body.registrationIpCheck !== undefined ? Boolean(body.registrationIpCheck) : (settings?.registrationIpCheck ?? true),
+      // Custom CSS/JS
+      customCss: body.customCss !== undefined ? body.customCss : (settings?.customCss || null),
+      customJs: body.customJs !== undefined ? body.customJs : (settings?.customJs || null),
+      // Footer Editor
+      footerText: body.footerText !== undefined ? body.footerText : (settings?.footerText || 'Nexus Shield'),
+      footerLinks: body.footerLinks !== undefined ? body.footerLinks : (settings?.footerLinks || []),
+      footerSocialLinks: body.footerSocialLinks !== undefined ? body.footerSocialLinks : (settings?.footerSocialLinks || []),
+      footerShowCredit: body.footerShowCredit !== undefined ? Boolean(body.footerShowCredit) : (settings?.footerShowCredit ?? true),
+      // Floating Button
+      floatingButtonEnabled: body.floatingButtonEnabled !== undefined ? Boolean(body.floatingButtonEnabled) : (settings?.floatingButtonEnabled ?? false),
+      floatingButtonIcon: body.floatingButtonIcon !== undefined ? body.floatingButtonIcon : (settings?.floatingButtonIcon || null),
+      floatingButtonUrl: body.floatingButtonUrl !== undefined ? body.floatingButtonUrl : (settings?.floatingButtonUrl || null),
+      floatingButtonColor: body.floatingButtonColor !== undefined ? body.floatingButtonColor : (settings?.floatingButtonColor || '#06b6e4'),
+      floatingButtonPosition: body.floatingButtonPosition !== undefined ? body.floatingButtonPosition : (settings?.floatingButtonPosition || 'bottom-right'),
+      floatingButtonText: body.floatingButtonText !== undefined ? body.floatingButtonText : (settings?.floatingButtonText || null),
+      // Preloader
+      preloaderEnabled: body.preloaderEnabled !== undefined ? Boolean(body.preloaderEnabled) : (settings?.preloaderEnabled ?? false),
+      preloaderLogo: body.preloaderLogo !== undefined ? body.preloaderLogo : (settings?.preloaderLogo || null),
+      preloaderBgColor: body.preloaderBgColor !== undefined ? body.preloaderBgColor : (settings?.preloaderBgColor || '#000000'),
+      preloaderText: body.preloaderText !== undefined ? body.preloaderText : (settings?.preloaderText || null),
+      preloaderAnimation: body.preloaderAnimation !== undefined ? body.preloaderAnimation : (settings?.preloaderAnimation || 'spin'),
+      preloaderDuration: body.preloaderDuration !== undefined ? parseInt(body.preloaderDuration) || 2000 : (settings?.preloaderDuration ?? 2000),
+      preloaderSkippable: body.preloaderSkippable !== undefined ? Boolean(body.preloaderSkippable) : (settings?.preloaderSkippable ?? true),
+      // Marquee Bar
+      marqueeEnabled: body.marqueeEnabled !== undefined ? Boolean(body.marqueeEnabled) : (settings?.marqueeEnabled ?? false),
+      marqueeText: body.marqueeText !== undefined ? body.marqueeText : (settings?.marqueeText || null),
+      marqueeBgColor: body.marqueeBgColor !== undefined ? body.marqueeBgColor : (settings?.marqueeBgColor || '#06b6e4'),
+      marqueeTextColor: body.marqueeTextColor !== undefined ? body.marqueeTextColor : (settings?.marqueeTextColor || '#ffffff'),
+      marqueeSpeed: body.marqueeSpeed !== undefined ? parseInt(body.marqueeSpeed) || 20 : (settings?.marqueeSpeed ?? 20),
+      marqueeLink: body.marqueeLink !== undefined ? body.marqueeLink : (settings?.marqueeLink || null),
+      // Countdown Timer
+      countdownEnabled: body.countdownEnabled !== undefined ? Boolean(body.countdownEnabled) : (settings?.countdownEnabled ?? false),
+      countdownTitle: body.countdownTitle !== undefined ? body.countdownTitle : (settings?.countdownTitle || null),
+      countdownEndDate: body.countdownEndDate !== undefined ? (body.countdownEndDate ? new Date(body.countdownEndDate) : null) : (settings?.countdownEndDate || null),
+      countdownStyle: body.countdownStyle !== undefined ? body.countdownStyle : (settings?.countdownStyle || 'boxed'),
+      countdownBgColor: body.countdownBgColor !== undefined ? body.countdownBgColor : (settings?.countdownBgColor || null),
+      countdownTextColor: body.countdownTextColor !== undefined ? body.countdownTextColor : (settings?.countdownTextColor || null),
+      countdownExpiredText: body.countdownExpiredText !== undefined ? body.countdownExpiredText : (settings?.countdownExpiredText || 'หมดเวลาแล้ว'),
+      // Top Notification Bar
+      topBarEnabled: body.topBarEnabled !== undefined ? Boolean(body.topBarEnabled) : (settings?.topBarEnabled ?? false),
+      topBarText: body.topBarText !== undefined ? body.topBarText : (settings?.topBarText || null),
+      topBarBgColor: body.topBarBgColor !== undefined ? body.topBarBgColor : (settings?.topBarBgColor || '#ef4444'),
+      topBarTextColor: body.topBarTextColor !== undefined ? body.topBarTextColor : (settings?.topBarTextColor || '#ffffff'),
+      topBarLink: body.topBarLink !== undefined ? body.topBarLink : (settings?.topBarLink || null),
+      topBarDismissible: body.topBarDismissible !== undefined ? Boolean(body.topBarDismissible) : (settings?.topBarDismissible ?? true),
+      // Back to Top Button
+      backToTopEnabled: body.backToTopEnabled !== undefined ? Boolean(body.backToTopEnabled) : (settings?.backToTopEnabled ?? false),
+      backToTopStyle: body.backToTopStyle !== undefined ? body.backToTopStyle : (settings?.backToTopStyle || 'circle'),
+      backToTopColor: body.backToTopColor !== undefined ? body.backToTopColor : (settings?.backToTopColor || '#06b6e4'),
+      backToTopPosition: body.backToTopPosition !== undefined ? body.backToTopPosition : (settings?.backToTopPosition || 'bottom-right'),
+      // Custom Cursor
+      customCursorEnabled: body.customCursorEnabled !== undefined ? Boolean(body.customCursorEnabled) : (settings?.customCursorEnabled ?? false),
+      customCursorStyle: body.customCursorStyle !== undefined ? body.customCursorStyle : (settings?.customCursorStyle || 'glow'),
+      customCursorColor: body.customCursorColor !== undefined ? body.customCursorColor : (settings?.customCursorColor || '#06b6e4'),
       updatedAt: new Date()
     }
 

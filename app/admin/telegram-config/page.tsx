@@ -15,6 +15,7 @@ import {
   Bot,
   Hash,
   MessageSquare,
+  Link2,
 } from 'lucide-react'
 
 interface TelegramConfig {
@@ -26,6 +27,8 @@ interface TelegramConfig {
   notifyBuyVpn: boolean
   notifyError: boolean
   isEnabled: boolean
+  discordWebhookUrl: string | null
+  discordEnabled: boolean
 }
 
 export default function AdminTelegramPage() {
@@ -37,6 +40,8 @@ export default function AdminTelegramPage() {
   const [notifyBuyVpn, setNotifyBuyVpn] = useState(true)
   const [notifyError, setNotifyError] = useState(true)
   const [isEnabled, setIsEnabled] = useState(false)
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState('')
+  const [discordEnabled, setDiscordEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -54,6 +59,8 @@ export default function AdminTelegramPage() {
           setNotifyBuyVpn(d.config.notifyBuyVpn)
           setNotifyError(d.config.notifyError)
           setIsEnabled(d.config.isEnabled)
+          setDiscordWebhookUrl(d.config.discordWebhookUrl || '')
+          setDiscordEnabled(d.config.discordEnabled)
         }
         setLoading(false)
       })
@@ -75,6 +82,8 @@ export default function AdminTelegramPage() {
           notifyBuyVpn,
           notifyError,
           isEnabled,
+          discordWebhookUrl,
+          discordEnabled,
         }),
       })
       const data = await res.json()
@@ -105,6 +114,8 @@ export default function AdminTelegramPage() {
           notifyBuyVpn,
           notifyError,
           isEnabled: true,
+          discordWebhookUrl,
+          discordEnabled,
         }),
       })
       const data = await res.json()
@@ -219,9 +230,41 @@ export default function AdminTelegramPage() {
           </div>
         </div>
         <p className="text-[10px] text-zinc-600 leading-relaxed">
-          1. สร้างบอทผ่าน @BotFather ใน Telegram → รับ Token\n
-          2. เพิ่มบอทเข้ากลุ่ม/แชต → ส่งข้อความใดๆ\n
+          1. สร้างบอทผ่าน @BotFather ใน Telegram → รับ Token
+          2. เพิ่มบอทเข้ากลุ่ม/แชต → ส่งข้อความใดๆ
           3. เปิด https://api.telegram.org/bot&lt;token&gt;/getUpdates → หา chat.id
+        </p>
+      </div>
+
+      {/* Discord Webhook */}
+      <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-4 sm:p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white">Discord Webhook</h3>
+          <button
+            type="button"
+            onClick={() => setDiscordEnabled(!discordEnabled)}
+            className={`relative w-14 h-8 rounded-full transition-all duration-300 flex-shrink-0 ${discordEnabled ? 'bg-indigo-500 shadow-inner shadow-indigo-600/50' : 'bg-zinc-800 border border-zinc-700'}`}
+          >
+            <div className={`absolute top-0.5 w-7 h-7 rounded-full bg-white shadow-sm transition-all duration-300 ${discordEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'}`} />
+          </button>
+        </div>
+        <div>
+          <label className="text-xs text-zinc-500 mb-1.5 block">Webhook URL</label>
+          <div className="relative">
+            <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <input
+              type="text"
+              value={discordWebhookUrl}
+              onChange={(e) => setDiscordWebhookUrl(e.target.value)}
+              placeholder="https://discord.com/api/webhooks/123456789/abcdefghij..."
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/60 border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all text-sm font-mono"
+            />
+          </div>
+        </div>
+        <p className="text-[10px] text-zinc-600 leading-relaxed">
+          1. ไปที่ Discord Server → Channel Settings → Integrations → Webhooks
+          2. สร้าง Webhook → Copy Webhook URL
+          3. วาง URL ด้านบน → เปิดสวิตช์
         </p>
       </div>
 

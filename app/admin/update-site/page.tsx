@@ -5,7 +5,7 @@ import {
   RefreshCw, GitBranch, CheckCircle2, XCircle, Loader2, 
   AlertTriangle, ArrowDownCircle, CloudDownload, Clock, 
   GitCommit, Zap, Terminal, ChevronDown, Shield,
-  History, FileText, User, ChevronRight
+  History, FileText, User, ChevronRight, Megaphone, Bell
 } from 'lucide-react'
 
 interface UpdateHistoryItem {
@@ -47,6 +47,9 @@ export default function UpdateSitePage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [showLogs, setShowLogs] = useState(false)
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
+  const [createAnnouncement, setCreateAnnouncement] = useState(false)
+  const [announcementTitle, setAnnouncementTitle] = useState('')
+  const [announcementContent, setAnnouncementContent] = useState('')
   const logsEndRef = useRef<HTMLDivElement>(null)
 
   const fetchStatus = async () => {
@@ -69,6 +72,13 @@ export default function UpdateSitePage() {
     }
   }, [showLogs, result])
 
+  // Auto-fill announcement content from pending changes
+  useEffect(() => {
+    if (createAnnouncement && !announcementContent && status?.remoteCommit) {
+      setAnnouncementContent(status.remoteCommit)
+    }
+  }, [createAnnouncement, status?.remoteCommit])
+
   const handleUpdate = async () => {
     if (updating) return
     
@@ -88,7 +98,15 @@ export default function UpdateSitePage() {
         }
       })
 
-      const res = await fetch('/api/admin/update-site', { method: 'POST' })
+      const res = await fetch('/api/admin/update-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          createAnnouncement,
+          announcementTitle: announcementTitle.trim() || undefined,
+          announcementContent: announcementContent.trim() || undefined,
+        }),
+      })
       
       timers.forEach(t => clearTimeout(t))
       const data = await res.json()
@@ -199,6 +217,72 @@ export default function UpdateSitePage() {
         </div>
       </div>
 
+      {/* Announcement Settings Card */}
+      <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.06] rounded-2xl sm:rounded-3xl overflow-hidden mb-4 sm:mb-5">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/[0.04] flex items-center gap-2">
+          <Megaphone className="w-4 h-4 text-amber-400" />
+          <span className="font-bold text-sm text-white">แจ้งเตือนอัปเดตให้ผู้ใช้</span>
+        </div>
+        <div className="p-4 sm:p-6 space-y-4">
+          {/* Toggle */}
+          <button
+            onClick={() => setCreateAnnouncement(!createAnnouncement)}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
+              createAnnouncement
+                ? 'bg-amber-500/10 border-amber-500/30'
+                : 'bg-zinc-800/40 border-white/[0.04] hover:bg-zinc-800/60'
+            }`}
+          >
+            <div className={`w-10 h-6 rounded-full p-1 transition-colors ${createAnnouncement ? 'bg-amber-500' : 'bg-zinc-700'}`}>
+              <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${createAnnouncement ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
+            <div className="text-left">
+              <div className={`text-sm font-semibold ${createAnnouncement ? 'text-amber-400' : 'text-zinc-400'}`}>
+                {createAnnouncement ? 'สร้างประกาศอัตโนมัติ' : 'ไม่สร้างประกาศ'}
+              </div>
+              <div className="text-[11px] text-zinc-600">
+                {createAnnouncement
+                  ? 'ระบบจะโพสต์ประกาศให้ผู้ใช้เห็นหลังอัปเดทสำเร็จ'
+                  : 'ผู้ใช้จะไม่เห็นประกาศใดๆ หลังอัปเดท'}
+              </div>
+            </div>
+          </button>
+
+          {/* Form fields */}
+          {createAnnouncement && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-zinc-600 font-bold mb-1.5">
+                  หัวข้อประกาศ
+                </label>
+                <input
+                  type="text"
+                  value={announcementTitle}
+                  onChange={(e) => setAnnouncementTitle(e.target.value)}
+                  placeholder="อัปเดทระบบ"
+                  className="w-full bg-zinc-800/60 border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-zinc-600 font-bold mb-1.5">
+                  รายละเอียดการอัปเดต
+                </label>
+                <textarea
+                  value={announcementContent}
+                  onChange={(e) => setAnnouncementContent(e.target.value)}
+                  placeholder="เช่น แก้ไขบัคการเติมเงิน, เพิ่มฟีเจอร์ใหม่..."
+                  rows={4}
+                  className="w-full bg-zinc-800/60 border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition-all resize-none"
+                />
+                <p className="text-[11px] text-zinc-600 mt-1.5">
+                  ถ้าเว้นว่าง ระบบจะใช้สรุปการเปลี่ยนแปลงจาก commit อัตโนมัติ
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Update Action Card */}
       <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.06] rounded-2xl sm:rounded-3xl overflow-hidden mb-4 sm:mb-5">
         <div className="p-4 sm:p-6">
@@ -294,6 +378,12 @@ export default function UpdateSitePage() {
                 </h3>
                 {result.error && <p className="text-xs text-red-400/70 mt-0.5">{result.error}</p>}
                 {result.success && <p className="text-xs text-emerald-400/50 mt-0.5">เว็บจะรีสตาร์ทอัตโนมัติภายในไม่กี่วินาที</p>}
+              {result.announcement && (
+                <p className="text-xs text-amber-400/70 mt-0.5 flex items-center gap-1">
+                  <Bell className="w-3 h-3" />
+                  สร้างประกาศ "{result.announcement.title}" เรียบร้อยแล้ว
+                </p>
+              )}
               </div>
             </div>
 

@@ -144,6 +144,69 @@ model Settings {
   registrationIpCheck Boolean  @default(true) // เปิด/ปิดเช็ค IP ซ้ำตอนสมัครสมาชิก (true = 1 IP สมัครได้ 1 คน)
   licenseKey          String?  // License key สำหรับเช็คอายุเว็บ (ได้จากเว็บต้นทาง)
   licenseApiUrl       String?  // URL ของเว็บต้นทาง เช่น https://simonvpn.darkx.shop
+
+  // Custom CSS/JS injection
+  customCss           String?  @db.Text
+  customJs            String?  @db.Text
+
+  // Footer Editor
+  footerText          String?  @default("Nexus Shield")
+  footerLinks         Json?    @default("[]")    // [{ label, href }]
+  footerSocialLinks   Json?    @default("[]")    // [{ platform, url, icon }]
+  footerShowCredit    Boolean  @default(true)
+
+  // Floating Button
+  floatingButtonEnabled   Boolean  @default(false)
+  floatingButtonIcon      String?  // lucide icon name
+  floatingButtonUrl       String?
+  floatingButtonColor     String?  @default("#06b6e4")
+  floatingButtonPosition  String?  @default("bottom-right") // bottom-right, bottom-left
+  floatingButtonText      String?  // tooltip/label
+
+  // Preloader / Loading Screen
+  preloaderEnabled        Boolean  @default(false)
+  preloaderLogo           String?  // URL รูปโลโก้
+  preloaderBgColor        String?  @default("#000000")
+  preloaderText           String?
+  preloaderAnimation      String?  @default("spin") // spin, pulse, bounce, none
+  preloaderDuration       Int?     @default(2000) // milliseconds
+  preloaderSkippable      Boolean  @default(true)
+
+  // Marquee Bar
+  marqueeEnabled          Boolean  @default(false)
+  marqueeText             String?
+  marqueeBgColor          String?  @default("#06b6e4")
+  marqueeTextColor        String?  @default("#ffffff")
+  marqueeSpeed            Int?     @default(20) // seconds for one loop
+  marqueeLink             String?
+
+  // Countdown Timer
+  countdownEnabled        Boolean  @default(false)
+  countdownTitle          String?
+  countdownEndDate        DateTime?
+  countdownStyle          String?  @default("boxed") // boxed, minimal, large
+  countdownBgColor        String?
+  countdownTextColor      String?
+  countdownExpiredText    String?  @default("หมดเวลาแล้ว")
+
+  // Top Notification Bar
+  topBarEnabled           Boolean  @default(false)
+  topBarText              String?
+  topBarBgColor           String?  @default("#ef4444")
+  topBarTextColor         String?  @default("#ffffff")
+  topBarLink              String?
+  topBarDismissible       Boolean  @default(true)
+
+  // Back to Top Button
+  backToTopEnabled        Boolean  @default(false)
+  backToTopStyle          String?  @default("circle") // circle, pill, arrow
+  backToTopColor          String?  @default("#06b6e4")
+  backToTopPosition       String?  @default("bottom-right")
+
+  // Custom Cursor
+  customCursorEnabled     Boolean  @default(false)
+  customCursorStyle       String?  @default("glow") // glow, trail, dot
+  customCursorColor       String?  @default("#06b6e4")
 }
 
 model VpnServer {
@@ -1215,6 +1278,9 @@ model TelegramConfig {
   notifyBuyVpn  Boolean  @default(true)
   notifyError   Boolean  @default(true)
   isEnabled     Boolean  @default(false)
+  // Discord webhook support
+  discordWebhookUrl String? @db.Text
+  discordEnabled    Boolean @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

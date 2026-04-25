@@ -50,6 +50,8 @@ import {
   Music,
   Terminal,
   Send,
+  ArrowRightLeft,
+  ShoppingCart,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -58,6 +60,7 @@ const menuItems = [
   { name: 'โหนดเครือข่าย', href: '/admin/vpn', icon: Globe },
   { name: 'จัดการ Panel', href: '/admin/panel', icon: Monitor },
   { name: 'ผู้ใช้ระบบ', href: '/admin/users', icon: Users },
+  { name: 'คำสั่งซื้อ', href: '/admin/orders', icon: ShoppingCart },
   { name: 'ธุรกรรมการเงิน', href: '/admin/topups', icon: PieChart },
   { name: 'รายได้เซิร์ฟเวอร์', href: '/admin/revenue', icon: TrendingUp },
   { name: 'อีเวนท์ลดราคา', href: '/admin/events', icon: Tag },
@@ -87,6 +90,7 @@ const menuItems = [
   { name: 'รูปแบบหน้าเซิร์ฟเวอร์', href: '/admin/server-template', icon: Image },
   { name: 'IP ที่อนุญาต', href: '/admin/allowed-ips', icon: ShieldCheck },
   { name: 'แจกโค้ด V2Box', href: '/admin/v2box-codes', icon: Smartphone },
+  { name: 'ตกแต่งเว็บ', href: '/admin/tune-site', icon: Palette },
 ]
 
 const superAdminMenuItems = [
@@ -101,6 +105,7 @@ const superAdminMenuItems = [
   { name: 'จัดการเพลง', href: '/admin/music', icon: Music },
   { name: 'ดู Log ระบบ', href: '/admin/logs', icon: Terminal },
   { name: 'แจ้งเตือน Telegram', href: '/admin/telegram-config', icon: Send },
+  { name: 'ย้ายข้อมูล', href: '/admin/migrate-data', icon: ArrowRightLeft },
   { name: 'จัดการเมนู', href: '/admin/menu-settings', icon: Construction },
   { name: 'ระบบอัปเดต', href: '/admin/updates', icon: AlertTriangle },
   { name: 'อัพเดทเว็บ', href: '/admin/update-site', icon: Download },

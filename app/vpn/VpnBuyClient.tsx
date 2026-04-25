@@ -18,7 +18,9 @@ import {
   Tag,
   CreditCard,
   ArrowUpRight,
-  Signal
+  Signal,
+  X,
+  AlertTriangle
 } from 'lucide-react'
 
 interface InboundOption {
@@ -139,6 +141,8 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   const [successData, setSuccessData] = useState({ message: '', subMessage: '', redirect: '' })
   const [trialEnabled, setTrialEnabled] = useState(true)
   const [trialDurationMinutes, setTrialDurationMinutes] = useState(60)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // Fetch trial settings from public API
   useEffect(() => {
@@ -230,8 +234,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const doPurchase = async () => {
     setIsSubmitting(true)
     setMessage('')
     
@@ -265,6 +268,22 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await doPurchase()
+  }
+
+  const openConfirmModal = () => {
+    setAgreedToTerms(false)
+    setShowConfirmModal(true)
+  }
+
+  const handleConfirmPurchase = async () => {
+    if (!agreedToTerms) return
+    setShowConfirmModal(false)
+    await doPurchase()
   }
 
   // Helper to format package price with discount
@@ -689,7 +708,8 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
         {/* === SUBMIT BUTTON === */}
         <div className="pt-1 pb-4">
           <button
-            type="submit"
+            type="button"
+            onClick={openConfirmModal}
             disabled={isSubmitting || !canAfford || (needsSelection && selectedInboundId === null)}
             className={`w-full py-4 sm:py-4.5 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2.5 active:scale-[0.98] disabled:cursor-not-allowed ${
               !canAfford
@@ -732,6 +752,110 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
           )}
         </div>
       </form>
+
+      {/* === CONFIRMATION MODAL === */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div 
+            className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="relative p-6 pb-4">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-zinc-900 hover:bg-zinc-800 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4 text-zinc-500" />
+              </button>
+              
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-7 h-7 text-amber-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-1.5">ยืนยันการสั่งซื้อ</h2>
+              <p className="text-sm text-zinc-500">
+                กรุณาตรวจสอบรายละเอียดก่อนยืนยัน
+              </p>
+            </div>
+
+            {/* Order Summary */}
+            <div className="px-6 py-4 bg-zinc-900/50 border-y border-zinc-800/60 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">เซิร์ฟเวอร์</span>
+                <span className="text-sm text-white font-medium">{server.flag} {server.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">ระยะเวลา</span>
+                <span className="text-sm text-white font-medium">{days} วัน</span>
+              </div>
+              {customName && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-zinc-500">ชื่อบัญชี</span>
+                  <span className="text-sm text-white font-medium">{customName}</span>
+                </div>
+              )}
+              {ipLimit > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-zinc-500">จำกัดอุปกรณ์</span>
+                  <span className="text-sm text-white font-medium">{ipLimit} เครื่อง</span>
+                </div>
+              )}
+              <div className="h-px bg-zinc-800/60" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-zinc-400">รวมทั้งสิ้น</span>
+                <span className="text-xl font-bold text-white">{totalPrice} ฿</span>
+              </div>
+            </div>
+
+            {/* Terms Checkbox */}
+            <div className="p-6 space-y-4">
+              <button
+                onClick={() => setAgreedToTerms(!agreedToTerms)}
+                className="w-full flex items-start gap-3 text-left group"
+              >
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                  agreedToTerms 
+                    ? 'bg-emerald-500 border-emerald-500' 
+                    : 'border-zinc-600 group-hover:border-zinc-500'
+                }`}>
+                  {agreedToTerms && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span className={`text-sm leading-relaxed ${agreedToTerms ? 'text-zinc-300' : 'text-zinc-500'}`}>
+                  ฉันยอมรับเงื่อนไข <span className="text-red-400 font-medium">ไม่คืนเงินทุกกรณี</span> และเข้าใจว่าบริการ VPN เป็นลักษณะดิจิทัลที่ไม่สามารถยกเลิกหรือขอคืนเงินได้หลังจากเปิดใช้งาน
+                </span>
+              </button>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 py-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-sm font-bold transition-all active:scale-[0.98] border border-zinc-800"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleConfirmPurchase}
+                  disabled={!agreedToTerms || isSubmitting}
+                  className={`flex-1 py-3.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98] disabled:cursor-not-allowed ${
+                    agreedToTerms && !isSubmitting
+                      ? 'bg-gradient-to-r from-white to-zinc-100 text-black hover:shadow-lg hover:shadow-white/10'
+                      : 'bg-zinc-800 text-zinc-600'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                      กำลังดำเนินการ...
+                    </span>
+                  ) : (
+                    'ยืนยันการสั่งซื้อ'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
