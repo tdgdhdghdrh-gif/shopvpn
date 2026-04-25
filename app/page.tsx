@@ -1,8 +1,25 @@
+import type { Metadata } from 'next'
 import { getSession } from '@/lib/session'
 import { getVpnServers } from '@/lib/vpn-api'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { getSiteUrl } from '@/lib/server-utils'
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const settings = await prisma.settings.findFirst({
+      select: { siteName: true },
+    })
+    const siteName = settings?.siteName || 'SimonVPN'
+    return {
+      title: `${siteName} - บริการ VPN ความเร็วสูง`,
+    }
+  } catch {
+    return {
+      title: 'SimonVPN - บริการ VPN ความเร็วสูง',
+    }
+  }
+}
 import Navbar from '@/components/Navbar'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 import PromoBannerCarousel from '@/components/PromoBannerCarousel'
@@ -672,16 +689,32 @@ export default async function HomePage() {
         return <LandingPremium />
       case 'songkran':
         return <LandingSongkran />
-      case 'customHtml':
-        if (siteSettings?.landingCustomHtml) {
-          return <div dangerouslySetInnerHTML={{ __html: siteSettings.landingCustomHtml }} />
-        }
-        return <LandingClassic />
       case 'classic':
       default:
         return <LandingClassic />
     }
   })()
+
+  // Custom HTML full page (no navbar, no layout)
+  if (landingTemplate === 'customHtml' && siteSettings?.landingCustomHtml) {
+    // Inject script to fix links inside iframe: relative links navigate parent, absolute same-domain also navigate parent
+    const linkFixScript = `<script>(function(){document.addEventListener('click',function(e){var a=e.target.closest('a');if(!a)return;var h=a.getAttribute('href');if(!h||h.startsWith('#')||h.startsWith('javascript:')||h.startsWith('mailto:'))return;if(h.startsWith('http://')||h.startsWith('https://')){var u=new URL(h);if(u.hostname===location.hostname){window.top.location.href=h;e.preventDefault();}return;}window.top.location.href=h;e.preventDefault();});})();</script>`
+    const html = siteSettings.landingCustomHtml
+    const htmlWithScript = html.includes('</body>')
+      ? html.replace('</body>', linkFixScript + '</body>')
+      : html + linkFixScript
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', zIndex: 99999, overflow: 'hidden', background: '#000' }}>
+        <iframe
+          srcDoc={htmlWithScript}
+          title="Custom Landing"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+          style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-transparent text-white font-sans">
