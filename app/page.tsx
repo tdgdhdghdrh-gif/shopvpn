@@ -31,6 +31,10 @@ import LandingGaming from '@/components/landing/LandingGaming'
 import LandingCorporate from '@/components/landing/LandingCorporate'
 import LandingPremium from '@/components/landing/LandingPremium'
 import LandingSongkran from '@/components/landing/LandingSongkran'
+import LandingOcean from '@/components/landing/LandingOcean'
+import LandingSunset from '@/components/landing/LandingSunset'
+import LandingMidnight from '@/components/landing/LandingMidnight'
+import LandingSakura from '@/components/landing/LandingSakura'
 import {
   OrganizationJsonLd,
   WebSiteJsonLd,
@@ -689,6 +693,14 @@ export default async function HomePage() {
         return <LandingPremium />
       case 'songkran':
         return <LandingSongkran />
+      case 'ocean':
+        return <LandingOcean />
+      case 'sunset':
+        return <LandingSunset />
+      case 'midnight':
+        return <LandingMidnight />
+      case 'sakura':
+        return <LandingSakura />
       case 'classic':
       default:
         return <LandingClassic />

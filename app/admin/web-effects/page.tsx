@@ -16,7 +16,7 @@ type EffectId = 'none' | 'snow' | 'rain' | 'fireflies' | 'sakura' | 'bubbles' | 
   | 'aurora' | 'lightning' | 'smoke' | 'embers' | 'leaves' | 'diamonds' | 'neon' | 'galaxy' | 'thunder' | 'goldDust'
   | 'jellyfish' | 'meteor' | 'dna' | 'pixel' | 'plasma' | 'lanterns' | 'dandelion' | 'glitch' | 'comet' | 'ripple'
   | 'crystals' | 'zodiac' | 'roses' | 'sparkle' | 'geometric' | 'feathers' | 'musicNotes' | 'butterflies' | 'fog' | 'fireworks'
-  | 'songkran'
+  | 'songkran' | 'money'
   | 'customHtml'
 
 interface EffectInfo {
@@ -445,6 +445,16 @@ const effects: EffectInfo[] = [
     previewBg: 'bg-gradient-to-b from-sky-950 to-blue-950',
   },
   {
+    id: 'money',
+    name: 'Money Rain',
+    nameTh: 'เงินตกลงมา',
+    desc: 'ธนบัตรสีเขียวทองตกลงมาอย่างต่อเนื่อง บรรยากาศร่ำรวย โชคดี',
+    icon: Coins,
+    gradient: 'from-emerald-400 to-yellow-500',
+    border: 'border-emerald-400',
+    previewBg: 'bg-gradient-to-b from-emerald-950 to-green-950',
+  },
+  {
     id: 'customHtml',
     name: 'Custom HTML',
     nameTh: 'HTML กำหนดเอง',
@@ -524,6 +534,19 @@ function EffectPreview({ effectId, bgClass }: { effectId: EffectId; bgClass: str
         if (st < 0.75) return { ...base, vx: 0.2 + Math.random() * 0.5, vy: 0.3 + Math.random() * 0.6, size: 3 + Math.random() * 4, rotation: Math.random() * 360, rSpeed: (Math.random() - 0.5) * 2, opacity: 0.4 + Math.random() * 0.4, color: ['#fbbf24', '#fb923c', '#ff6b9d', '#c084fc'][Math.floor(Math.random() * 4)], phase: 1 }
         const emojis = ['💦', '🌊', '🐘', '🌸', '🏖️', '🎉', '💧']; return { ...base, vx: (Math.random() - 0.5) * 0.3, vy: 0.2 + Math.random() * 0.5, size: 8 + Math.random() * 5, opacity: 0.4 + Math.random() * 0.3, char: emojis[Math.floor(Math.random() * emojis.length)], phase: 2 }
       }
+      case 'money': {
+        return {
+          ...base,
+          vy: 0.8 + Math.random() * 1.5,
+          size: 5 + Math.random() * 6,
+          opacity: 0.5 + Math.random() * 0.5,
+          rotation: Math.random() * 360,
+          rSpeed: (Math.random() - 0.5) * 3,
+          color: ['#22c55e', '#16a34a', '#15803d', '#eab308', '#ca8a04'][Math.floor(Math.random() * 5)],
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpeed: 0.02 + Math.random() * 0.03,
+        }
+      }
       default: return base
     }
   }, [effectId])
@@ -547,8 +570,8 @@ function EffectPreview({ effectId, bgClass }: { effectId: EffectId; bgClass: str
       goldDust: 20, jellyfish: 4, meteor: 6, plasma: 6, lanterns: 6,
       dandelion: 15, glitch: 8, comet: 4, ripple: 5, crystals: 15,
       zodiac: 10, roses: 12, sparkle: 18, geometric: 10, feathers: 10,
-      musicNotes: 8, butterflies: 6, fog: 5, fireworks: 6,
-      songkran: 20,
+      musicNotes: 8, butterflies: 6,       fog: 5, fireworks: 6,
+      songkran: 20, money: 15,
     }
     const count = countMap[effectId] || 15
     for (let i = 0; i < count; i++) particles.push(createMini(w, h, false))
@@ -770,6 +793,14 @@ function EffectPreview({ effectId, bgClass }: { effectId: EffectId; bgClass: str
               p.wobble += 0.015; p.x += p.vx + Math.sin(p.wobble) * 0.3; p.y += p.vy
               if (p.y > h + 15) dead = true
             }
+            break
+          }
+          case 'money': {
+            p.wobble += 0.02
+            p.x += Math.sin(p.wobble) * 0.8
+            p.y += p.vy
+            p.rotation += p.rSpeed
+            if (p.y > h + 10) dead = true
             break
           }
         }
@@ -1116,6 +1147,22 @@ function EffectPreview({ effectId, bgClass }: { effectId: EffectId; bgClass: str
                 ctx.font = `${p.size}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
                 ctx.fillText(p.char || '💦', p.x, p.y)
               }
+              break
+            }
+            case 'money': {
+              ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180)
+              const mw = p.size * 0.8, mh = p.size * 0.45
+              // Bill body
+              ctx.fillStyle = p.color + '70'
+              ctx.beginPath(); ctx.roundRect(-mw, -mh, mw * 2, mh * 2, 2); ctx.fill()
+              ctx.strokeStyle = p.color; ctx.lineWidth = 0.4; ctx.stroke()
+              // Inner border
+              ctx.strokeStyle = p.color + '60'; ctx.lineWidth = 0.2
+              ctx.beginPath(); ctx.roundRect(-mw * 0.75, -mh * 0.7, mw * 1.5, mh * 1.4, 1); ctx.stroke()
+              // Baht symbol
+              ctx.fillStyle = '#fff'; ctx.globalAlpha = p.opacity * 0.9
+              ctx.font = `${p.size * 0.7}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+              ctx.fillText('฿', 0, 0)
               break
             }
           }

@@ -52,6 +52,7 @@ import {
   Send,
   ArrowRightLeft,
   ShoppingCart,
+  Bot,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -65,8 +66,7 @@ const menuItems = [
   { name: 'รายได้เซิร์ฟเวอร์', href: '/admin/revenue', icon: TrendingUp },
   { name: 'อีเวนท์ลดราคา', href: '/admin/events', icon: Tag },
   { name: 'ลิงก์ลดราคา', href: '/admin/promo-links', icon: Link2 },
-  { name: 'ตัวแทนขาย', href: '/admin/resellers', icon: Store },
-  { name: 'คำขอถอนเงิน', href: '/admin/withdrawals', icon: Wallet },
+
   { name: 'Ticket', href: '/admin/tickets', icon: Ticket },
   { name: 'รายงานเน็ตช้า', href: '/admin/slow-reports', icon: AlertTriangle },
   { name: 'ประกาศข่าวสาร', href: '/admin/announcements', icon: Megaphone },
@@ -110,6 +110,7 @@ const superAdminMenuItems = [
   { name: 'ระบบอัปเดต', href: '/admin/updates', icon: AlertTriangle },
   { name: 'อัพเดทเว็บ', href: '/admin/update-site', icon: Download },
   { name: 'ต่ออายุเว็บ', href: '/admin/site-license', icon: CalendarClock },
+  { name: 'AI ผู้ช่วย', href: '/admin/ai-assistant', icon: Bot },
 ]
 
 interface SidebarProps {

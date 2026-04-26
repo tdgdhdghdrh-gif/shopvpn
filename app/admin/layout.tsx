@@ -16,12 +16,12 @@ export const metadata: Metadata = {
 }
 
 // Default role fallbacks (same as Sidebar.tsx)
-const ADMIN_FALLBACK = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/orders', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/auth-template', '/admin/menu-click-effect', '/admin/topups', '/admin/resellers', '/admin/withdrawals', '/admin/v2box-codes', '/admin/tune-site']
+const ADMIN_FALLBACK = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/orders', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/auth-template', '/admin/menu-click-effect', '/admin/topups', '/admin/v2box-codes', '/admin/tune-site']
 const AGENT_FALLBACK = ['/admin', '/admin/vpn', '/admin/revenue']
 const REVENUE_FALLBACK = ['/admin', '/admin/revenue']
 
 // Super admin exclusive pages — only superAdmin can access these regardless of config
-const SUPER_ADMIN_PAGES = ['/admin/server-info', '/admin/super-revenue', '/admin/api-keys', '/admin/branding', '/admin/theme-editor', '/admin/recaptcha', '/admin/settings', '/admin/menu-settings', '/admin/update-site', '/admin/site-license']
+const SUPER_ADMIN_PAGES = ['/admin/server-info', '/admin/super-revenue', '/admin/api-keys', '/admin/branding', '/admin/theme-editor', '/admin/recaptcha', '/admin/settings', '/admin/menu-settings', '/admin/update-site', '/admin/site-license', '/admin/ai-assistant']
 
 function matchesPath(pathname: string, href: string): boolean {
   if (href === '/admin') return pathname === '/admin'

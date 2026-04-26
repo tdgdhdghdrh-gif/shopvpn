@@ -269,8 +269,7 @@ const defaultSections: SectionConfig[] = [
     label: 'ตลาดซื้อขาย',
     color: 'text-emerald-500/60',
     items: [
-      { href: '/reseller/register', label: 'ลงทะเบียนฝากขาย', iconName: 'Store', color: 'text-emerald-400', section: 'marketplace', visible: true, isNew: false },
-      { href: '/reseller/panel', label: 'จัดการร้านค้า', iconName: 'LayoutDashboard', color: 'text-emerald-400', section: 'marketplace', visible: true, isNew: false },
+
       { href: '/ads', label: 'ลงโฆษณา', iconName: 'Megaphone', color: 'text-orange-400', section: 'marketplace', visible: true, isNew: true },
     ],
   },

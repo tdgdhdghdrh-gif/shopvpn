@@ -219,7 +219,7 @@ const adminMenuItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'แดชบอร์ดแอดมิน', color: 'text-purple-400', description: 'ภาพรวมระบบ ดูสถิติต่างๆ', menuId: 'menu-admin' },
   { href: '/admin/vpn', icon: Server, label: 'จัดการเซิร์ฟเวอร์', color: 'text-purple-400', description: 'เพิ่ม แก้ไข ลบเซิร์ฟเวอร์', menuId: 'menu-admin-vpn' },
   { href: '/admin/users', icon: Users, label: 'จัดการสมาชิก', color: 'text-purple-400', description: 'ดูและจัดการผู้ใช้งาน', menuId: 'menu-admin-users' },
-  { href: '/admin/withdrawals', icon: Wallet, label: 'คำขอถอนเงิน', color: 'text-purple-400', description: 'อนุมัติ/ปฏิเสธการถอนเงิน', menuId: 'menu-admin-withdrawals' },
+
   { href: '/admin/blog', icon: FileText, label: 'จัดการบทความ', color: 'text-purple-400', description: 'เขียน แก้ไข จัดการบทความ Blog', menuId: 'menu-admin-blog' },
   { href: '/admin/banners', icon: ImageIcon, label: 'แบนเนอร์โปรโมชั่น', color: 'text-purple-400', description: 'จัดการป้ายโปรโมทหน้าแรก', menuId: 'menu-admin-banners' },
   { href: '/admin/popups', icon: Maximize2, label: 'Popup โปรโมชั่น', color: 'text-purple-400', description: 'จัดการป๊อปอัพเต็มจอตอนเข้าเว็บ', menuId: 'menu-admin-popups' },

@@ -45,7 +45,7 @@ const allAdminMenuItems: MenuItem[] = [
   { name: 'อีเวนท์ลดราคา', href: '/admin/events', icon: Tag, section: 'admin', description: 'จัดการอีเวนท์ส่วนลด' },
   { name: 'ลิงก์ลดราคา', href: '/admin/promo-links', icon: Link2, section: 'admin', description: 'จัดการลิงก์โปรโมชั่น' },
   { name: 'ตัวแทนขาย', href: '/admin/resellers', icon: Store, section: 'admin', description: 'จัดการตัวแทนจำหน่าย' },
-  { name: 'คำขอถอนเงิน', href: '/admin/withdrawals', icon: Wallet, section: 'admin', description: 'อนุมัติ/ปฏิเสธการถอนเงิน' },
+
   { name: 'Ticket', href: '/admin/tickets', icon: Ticket, section: 'admin', description: 'ระบบ Ticket ช่วยเหลือ' },
   { name: 'รายงานเน็ตช้า', href: '/admin/slow-reports', icon: AlertTriangle, section: 'admin', description: 'รายงานปัญหาเครือข่าย' },
   { name: 'ประกาศข่าวสาร', href: '/admin/announcements', icon: Megaphone, section: 'admin', description: 'จัดการประกาศ' },

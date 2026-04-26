@@ -33,7 +33,7 @@ type EffectType = 'none' | 'snow' | 'rain' | 'fireflies' | 'sakura' | 'bubbles' 
   | 'aurora' | 'lightning' | 'smoke' | 'embers' | 'leaves' | 'diamonds' | 'neon' | 'galaxy' | 'thunder' | 'goldDust'
   | 'jellyfish' | 'meteor' | 'dna' | 'pixel' | 'plasma' | 'lanterns' | 'dandelion' | 'glitch' | 'comet' | 'ripple'
   | 'crystals' | 'zodiac' | 'roses' | 'sparkle' | 'geometric' | 'feathers' | 'musicNotes' | 'butterflies' | 'fog' | 'fireworks'
-  | 'songkran'
+  | 'songkran' | 'money'
 
 interface Props {
   effect: EffectType
@@ -81,6 +81,7 @@ const PARTICLE_COUNTS: Record<EffectType, number> = {
   fog: 12,
   fireworks: 15,
   songkran: 50,
+  money: 30,
 }
 
 export default function WebEffectsRenderer({ effect }: Props) {
@@ -791,6 +792,25 @@ export default function WebEffectsRenderer({ effect }: Props) {
             wobbleSpeed: 0.01 + Math.random() * 0.02,
             phase: 2, // 2 = emoji
           }
+        }
+      }
+
+      case 'money': {
+        return {
+          x: Math.random() * w,
+          y: fromTop ? -30 : Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: 1.5 + Math.random() * 2.5,
+          size: 14 + Math.random() * 10,
+          opacity: 0.5 + Math.random() * 0.5,
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 2,
+          life: 0, maxLife: 9999,
+          color: ['#22c55e', '#16a34a', '#15803d', '#eab308', '#ca8a04'][Math.floor(Math.random() * 5)],
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpeed: 0.015 + Math.random() * 0.02,
+          swing: Math.random() * Math.PI * 2,
+          swingSpeed: 0.01 + Math.random() * 0.015,
         }
       }
 
@@ -1639,6 +1659,43 @@ export default function WebEffectsRenderer({ effect }: Props) {
         }
         break
       }
+
+      case 'money': {
+        ctx.translate(p.x, p.y)
+        ctx.rotate((p.rotation * Math.PI) / 180)
+        const bw = p.size * 0.6
+        const bh = p.size * 0.3
+        // Bill body with rounded rect
+        ctx.fillStyle = p.color + '90'
+        ctx.beginPath()
+        ctx.roundRect(-bw, -bh, bw * 2, bh * 2, 3)
+        ctx.fill()
+        // Border
+        ctx.strokeStyle = p.color
+        ctx.lineWidth = 1
+        ctx.stroke()
+        // Inner decorative border
+        ctx.strokeStyle = '#ffffff40'
+        ctx.lineWidth = 0.5
+        ctx.beginPath()
+        ctx.roundRect(-bw * 0.8, -bh * 0.75, bw * 1.6, bh * 1.5, 2)
+        ctx.stroke()
+        // Corner decorations
+        ctx.fillStyle = '#ffffff60'
+        const cd = bw * 0.15
+        ctx.beginPath(); ctx.arc(-bw + cd, -bh + cd, cd * 0.5, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(bw - cd, -bh + cd, cd * 0.5, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(-bw + cd, bh - cd, cd * 0.5, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(bw - cd, bh - cd, cd * 0.5, 0, Math.PI * 2); ctx.fill()
+        // Center symbol
+        ctx.fillStyle = '#ffffff'
+        ctx.globalAlpha = p.opacity * 0.95
+        ctx.font = `bold ${p.size * 0.35}px serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('฿', 0, 0)
+        break
+      }
     }
 
     ctx.restore()
@@ -2087,6 +2144,16 @@ export default function WebEffectsRenderer({ effect }: Props) {
           p.rotation += p.rotationSpeed * 0.3
           if (p.y > h + 30) return false
         }
+        break
+      }
+
+      case 'money': {
+        p.wobble = (p.wobble || 0) + (p.wobbleSpeed || 0.015)
+        p.swing = (p.swing || 0) + (p.swingSpeed || 0.01)
+        p.x += p.vx + Math.sin(p.wobble) * 0.8 + Math.sin(p.swing) * 0.3
+        p.y += p.vy
+        p.rotation += p.rotationSpeed
+        if (p.y > h + 40) return false
         break
       }
     }

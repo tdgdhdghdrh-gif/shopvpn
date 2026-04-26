@@ -6,9 +6,11 @@ import {
   Monitor, Smartphone, Eye, Save, ArrowRight, Shield, Zap, Globe,
   Star, Trophy, Building2, Sword, ChevronRight, Diamond, Gem, Code,
   Droplets, Sun, Waves,
+  Rocket, Orbit, TreePine, Mountain,
+  Sunrise, Moon, Flower2,
 } from 'lucide-react'
 
-type TemplateId = 'classic' | 'minimal' | 'gaming' | 'corporate' | 'premium' | 'songkran' | 'customHtml'
+type TemplateId = 'classic' | 'minimal' | 'gaming' | 'corporate' | 'premium' | 'songkran' | 'aurora' | 'neonNight' | 'space' | 'fantasy' | 'ocean' | 'sunset' | 'midnight' | 'sakura' | 'customHtml'
 
 interface TemplateInfo {
   id: TemplateId
@@ -109,6 +111,118 @@ const templates: TemplateInfo[] = [
     accent: 'sky',
     heroTitle: 'สาดความเร็ว VPN',
     heroSub: 'เร็วแรงดั่งสายน้ำสงกรานต์',
+  },
+  {
+    id: 'aurora',
+    name: 'Aurora',
+    subtitle: 'แสงเหนือ ละมุนตา',
+    desc: 'ธีมแสงเหนือ - Gradient ม่วง-ชมพู-ฟ้า ละมุนตา ดูฝันๆ พร้อม Glass Cards และ Glow Effects',
+    features: ['Aurora Hero', 'Gradient Glow', 'Glass Cards', '6 Features', 'Pricing', 'Testimonials', 'FAQ', 'CTA'],
+    icon: Star,
+    gradient: 'from-violet-500 via-fuchsia-500 to-cyan-500',
+    border: 'border-violet-500',
+    bg: 'bg-violet-500',
+    accent: 'violet',
+    heroTitle: 'VPN แสงเหนือ',
+    heroSub: 'เชื่อมต่อลื่นไหลดั่งแสงออโรรา',
+  },
+  {
+    id: 'neonNight',
+    name: 'Neon Night',
+    subtitle: 'Cyberpunk Neon',
+    desc: 'ธีมไซเบอร์พังค์ - Grid Background, Neon Glow สีชมพู-น้ำเงิน ดูทันสมัย ดูเท่',
+    features: ['Neon Hero', 'Grid Background', 'Glow Effects', 'Speed Stats', 'Pricing', 'FAQ', 'CTA'],
+    icon: Zap,
+    gradient: 'from-fuchsia-500 via-purple-500 to-cyan-500',
+    border: 'border-fuchsia-500',
+    bg: 'bg-fuchsia-500',
+    accent: 'fuchsia',
+    heroTitle: 'NEON VPN',
+    heroSub: 'เชื่อมต่อด้วยแสง Neon ทะลุทุกขีดจำกัด',
+  },
+  {
+    id: 'space',
+    name: 'Space',
+    subtitle: 'อวกาศ ล้ำยุค',
+    desc: 'ธีมอวกาศ - โทนสีน้ำเงินลึก ดวงดาว ดาวเคราะห์ แสงดาวระยิบ พร้อม Glow Effects',
+    features: ['Cosmic Hero', 'Starfield', 'Planet Glow', '6 Features', 'Pricing', 'Testimonials', 'FAQ', 'CTA'],
+    icon: Rocket,
+    gradient: 'from-indigo-600 via-blue-600 to-cyan-500',
+    border: 'border-indigo-500',
+    bg: 'bg-indigo-600',
+    accent: 'indigo',
+    heroTitle: 'VPN ระดับจักรวาล',
+    heroSub: 'เชื่อมต่อเร็วทะลุทุกดวงดาว',
+  },
+  {
+    id: 'fantasy',
+    name: 'Fantasy',
+    subtitle: 'ต่างโลก เวทมนตร์',
+    desc: 'ธีมต่างโลกแฟนตาซี - ภูเขา ต้นไม้ เวทมนตร์ โทนสีม่วง-เขียว-ทอง ลึกลับ ตื่นตาตื่นใจ',
+    features: ['Fantasy Hero', 'Magic Glow', 'Nature Vibes', '6 Features', 'Pricing', 'Testimonials', 'FAQ', 'CTA'],
+    icon: TreePine,
+    gradient: 'from-emerald-500 via-teal-500 to-violet-500',
+    border: 'border-emerald-500',
+    bg: 'bg-emerald-500',
+    accent: 'emerald',
+    heroTitle: 'VPN ต่างโลก',
+    heroSub: 'เชื่อมต่อด้วยพลังเวทมนตร์',
+  },
+  {
+    id: 'ocean',
+    name: 'Ocean',
+    subtitle: 'มหาสมุทร ลึกลับ',
+    desc: 'ธีมทะเล - คลื่น ฟองน้ำ โทนสีฟ้า-น้ำเงิน-เขียวมรกต สดชื่น ลึกลับ ดั่งใต้ท้องทะเล',
+    features: ['Ocean Hero', 'Wave Effects', 'Bubble Animation', '6 Features', 'Pricing', 'Testimonials', 'FAQ', 'CTA'],
+    icon: Waves,
+    gradient: 'from-cyan-400 via-teal-500 to-emerald-500',
+    border: 'border-cyan-500',
+    bg: 'bg-cyan-500',
+    accent: 'cyan',
+    heroTitle: 'VPN ดั่งมหาสมุทร',
+    heroSub: 'เชื่อมต่อลึกลับ ไร้ขีดจำกัด',
+  },
+  {
+    id: 'sunset',
+    name: 'Sunset',
+    subtitle: 'พระอาทิตย์ตก อบอุ่น',
+    desc: 'ธีมพระอาทิตย์ตก - โทนสีส้ม-ชมพู-ม่วง-แดง อบอุ่น โรแมนติก สวยงามดั่งแสงอาทิตย์อัสดง',
+    features: ['Sunset Hero', 'Gradient Glow', 'Warm Colors', '6 Features', 'Pricing', 'Testimonials', 'FAQ', 'CTA'],
+    icon: Sunrise,
+    gradient: 'from-orange-400 via-pink-500 to-purple-500',
+    border: 'border-orange-500',
+    bg: 'bg-orange-500',
+    accent: 'orange',
+    heroTitle: 'VPN ยามพระอาทิตย์ตก',
+    heroSub: 'อบอุ่น สวยงาม ไร้ขีดจำกัด',
+  },
+  {
+    id: 'midnight',
+    name: 'Midnight',
+    subtitle: 'กลางคืน หรูหรา',
+    desc: 'ธีมกลางคืน - ดวงดาว แสงจันทร์ โทนสีน้ำเงินเข้ม-ทอง-ม่วง หรูหรา ลึกลับ ดั่งดาวเคราะห์',
+    features: ['Midnight Hero', 'Starfield', 'Gold Accents', '6 Features', 'Pricing', 'Testimonials', 'FAQ', 'CTA'],
+    icon: Moon,
+    gradient: 'from-indigo-600 via-purple-600 to-amber-500',
+    border: 'border-indigo-500',
+    bg: 'bg-indigo-600',
+    accent: 'indigo',
+    heroTitle: 'VPN ยามเที่ยงคืน',
+    heroSub: 'หรูหรา ลึกลับ ดั่งดวงดาว',
+  },
+  {
+    id: 'sakura',
+    name: 'Sakura',
+    subtitle: 'ซากุระ ละมุนละไม',
+    desc: 'ธีมซากุระญี่ปุ่น - กลีบดอกไม้ โทนสีชมพูอ่อน-ขาว-ม่วง อ่อนโยน สวยงาม ละมุนตา',
+    features: ['Sakura Hero', 'Falling Petals', 'Pink Glow', '6 Features', 'Pricing', 'Testimonials', 'FAQ', 'CTA'],
+    icon: Flower2,
+    gradient: 'from-pink-300 via-rose-400 to-fuchsia-400',
+    border: 'border-pink-400',
+    bg: 'bg-pink-400',
+    accent: 'pink',
+    heroTitle: 'VPN ดั่งกลีบซากุระ',
+    heroSub: 'อ่อนโยน สวยงาม แข็งแกร่ง',
   },
   {
     id: 'customHtml',
@@ -502,6 +616,411 @@ function SongkranPreview({ isMobile = false }: { isMobile?: boolean }) {
   )
 }
 
+function AuroraPreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-gradient-to-b from-[#0f0518] via-[#1a0b2e] to-[#0d1f3c] text-white relative overflow-hidden">
+      {/* Aurora glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-24 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-cyan-500/20 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 right-0 w-24 h-24 bg-cyan-500/8 blur-2xl rounded-full" />
+      <div className="absolute top-1/2 left-0 w-20 h-20 bg-fuchsia-500/8 blur-2xl rounded-full" />
+      {/* Navbar */}
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-white/5">
+        <div className="flex items-center gap-1">
+          <Star className="w-3 h-3 text-violet-400" />
+          <span className="text-[6px] font-bold text-violet-300">VPN</span>
+        </div>
+        {!isMobile && <div className="w-14 h-3 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 text-[5px] text-center leading-[12px] font-bold text-white">Aurora</div>}
+      </div>
+      {/* Hero */}
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-5' : 'px-4 py-7'}`}>
+        <div className="flex gap-0.5 mb-1.5">
+          <span className="text-[5px] px-1.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300">Aurora</span>
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black mb-0.5`}>
+          <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">VPN แสงเหนือ</span>
+        </p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>เชื่อมต่อลื่นไหลดั่งแสงออโรรา</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 text-[5px] text-center leading-[12px] font-bold text-white flex items-center justify-center`}>เริ่มต้นใช้งาน</div>
+      </div>
+      {/* Features */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[
+          { icon: Zap, label: '10Gbps', color: 'text-violet-400' },
+          { icon: Shield, label: 'AES-256', color: 'text-fuchsia-400' },
+          { icon: Globe, label: 'Global', color: 'text-cyan-400' },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col items-center py-1.5 rounded border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+            <f.icon className={`w-3 h-3 ${f.color} mb-0.5`} />
+            <span className="text-[4px] text-zinc-500">{f.label}</span>
+          </div>
+        ))}
+      </div>
+      {/* Glass pricing hint */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[50, 100, 200].map((p, i) => (
+          <div key={i} className="text-center py-1 rounded border border-white/5 bg-white/[0.02]">
+            <p className="text-[6px] font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">{p}฿</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function NeonNightPreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-black text-white relative overflow-hidden">
+      {/* Cyberpunk grid */}
+      <div className="absolute inset-0 opacity-[0.05]" style={{
+        backgroundImage: 'linear-gradient(rgba(217,70,239,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(217,70,239,0.4) 1px, transparent 1px)',
+        backgroundSize: '14px 14px',
+      }} />
+      {/* Neon glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-16 bg-fuchsia-500/10 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 right-0 w-24 h-24 bg-cyan-500/8 blur-2xl rounded-full" />
+      {/* Navbar */}
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-fuchsia-500/10">
+        <div className="flex items-center gap-1">
+          <Zap className="w-3 h-3 text-fuchsia-400" />
+          <span className="text-[6px] font-bold text-fuchsia-400">VPN</span>
+        </div>
+        {!isMobile && <div className="w-12 h-3 rounded bg-fuchsia-500 text-[5px] text-center leading-[12px] font-bold">START</div>}
+      </div>
+      {/* Hero */}
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-6' : 'px-4 py-8'}`}>
+        <div className="w-8 h-8 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center mb-2">
+          <Sword className="w-4 h-4 text-fuchsia-400" />
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black text-fuchsia-400 mb-0.5 tracking-widest`}>NEON VPN</p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>ทะลุทุกขีดจำกัดด้วยแสง Neon</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-500 text-[5px] text-center leading-[12px] font-bold flex items-center justify-center`}>CONNECT NOW</div>
+      </div>
+      {/* Stats */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[
+          { val: '<5ms', label: 'PING', color: 'text-fuchsia-400' },
+          { val: '10Gbps', label: 'SPEED', color: 'text-purple-400' },
+          { val: '99.9%', label: 'UPTIME', color: 'text-cyan-400' },
+        ].map((s, i) => (
+          <div key={i} className="text-center py-1.5 rounded border border-fuchsia-500/10 bg-fuchsia-500/[0.03]">
+            <p className={`text-[7px] font-bold ${s.color}`}>{s.val}</p>
+            <p className="text-[4px] text-zinc-600">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      {/* Neon bars decoration */}
+      <div className={`flex justify-center gap-1.5 ${isMobile ? 'mt-3' : 'mt-4'}`}>
+        {[1, 2, 3, 4].map((d) => (
+          <div key={d} className="w-1.5 rounded-full bg-gradient-to-t from-fuchsia-500/40 to-cyan-500/40" style={{ height: `${d * 3 + 4}px` }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SpacePreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-gradient-to-b from-[#050a1f] via-[#0a1128] to-[#020617] text-white relative overflow-hidden">
+      {/* Stars */}
+      <div className="absolute inset-0" style={{
+        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)',
+        backgroundSize: '16px 16px',
+      }} />
+      {/* Planet glows */}
+      <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-blue-500/20 blur-sm" />
+      <div className="absolute bottom-6 left-3 w-4 h-4 rounded-full bg-indigo-400/15 blur-sm" />
+      {/* Nebula glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-24 bg-indigo-500/15 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 right-0 w-24 h-24 bg-cyan-500/8 blur-2xl rounded-full" />
+      {/* Navbar */}
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-white/5">
+        <div className="flex items-center gap-1">
+          <Rocket className="w-3 h-3 text-indigo-400" />
+          <span className="text-[6px] font-bold text-indigo-300">VPN</span>
+        </div>
+        {!isMobile && <div className="w-14 h-3 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-500 text-[5px] text-center leading-[12px] font-bold text-white">Space</div>}
+      </div>
+      {/* Hero */}
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-5' : 'px-4 py-7'}`}>
+        <div className="flex gap-0.5 mb-1.5">
+          <Orbit className="w-2.5 h-2.5 text-indigo-400" />
+          <span className="text-[5px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">Cosmic</span>
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black mb-0.5`}>
+          <span className="bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">VPN ระดับจักรวาล</span>
+        </p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>เชื่อมต่อเร็วทะลุทุกดวงดาว</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 text-[5px] text-center leading-[12px] font-bold text-white flex items-center justify-center`}>บินไปด้วยกัน</div>
+      </div>
+      {/* Features */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[
+          { icon: Zap, label: 'Lightning', color: 'text-indigo-400' },
+          { icon: Shield, label: 'Shield', color: 'text-blue-400' },
+          { icon: Globe, label: 'Global', color: 'text-cyan-400' },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col items-center py-1.5 rounded border border-white/5 bg-white/[0.02]">
+            <f.icon className={`w-3 h-3 ${f.color} mb-0.5`} />
+            <span className="text-[4px] text-zinc-500">{f.label}</span>
+          </div>
+        ))}
+      </div>
+      {/* Planet dots */}
+      <div className={`flex justify-center gap-2 ${isMobile ? 'px-2 mb-2' : 'px-3 mb-2'}`}>
+        {['bg-indigo-500/30', 'bg-blue-400/30', 'bg-cyan-400/20'].map((c, i) => (
+          <div key={i} className={`w-2.5 h-2.5 rounded-full ${c}`} />
+        ))}
+      </div>
+      {/* Pricing hint */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[50, 100, 200].map((p, i) => (
+          <div key={i} className="text-center py-1 rounded border border-white/5 bg-white/[0.02]">
+            <p className="text-[6px] font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">{p}฿</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FantasyPreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-gradient-to-b from-[#0a0f0a] via-[#0f1a12] to-[#0d1218] text-white relative overflow-hidden">
+      {/* Nature glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-20 bg-emerald-500/10 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 left-0 w-20 h-20 bg-violet-500/8 blur-2xl rounded-full" />
+      <div className="absolute top-1/3 right-0 w-16 h-16 bg-teal-500/8 blur-2xl rounded-full" />
+      {/* Navbar */}
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-white/5">
+        <div className="flex items-center gap-1">
+          <TreePine className="w-3 h-3 text-emerald-400" />
+          <span className="text-[6px] font-bold text-emerald-300">VPN</span>
+        </div>
+        {!isMobile && <div className="w-14 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-violet-500 text-[5px] text-center leading-[12px] font-bold text-white">Fantasy</div>}
+      </div>
+      {/* Hero */}
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-5' : 'px-4 py-7'}`}>
+        <div className="flex gap-0.5 mb-1.5">
+          <Mountain className="w-2.5 h-2.5 text-emerald-400" />
+          <span className="text-[5px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">Magic</span>
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black mb-0.5`}>
+          <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-violet-400 bg-clip-text text-transparent">VPN ต่างโลก</span>
+        </p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>เชื่อมต่อด้วยพลังเวทมนตร์</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-violet-500 text-[5px] text-center leading-[12px] font-bold text-white flex items-center justify-center`}>เปิดประตูมิติ</div>
+      </div>
+      {/* Features */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[
+          { icon: Zap, label: 'Mana', color: 'text-emerald-400' },
+          { icon: Shield, label: 'Barrier', color: 'text-teal-400' },
+          { icon: Globe, label: 'Realm', color: 'text-violet-400' },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col items-center py-1.5 rounded border border-white/5 bg-white/[0.02]">
+            <f.icon className={`w-3 h-3 ${f.color} mb-0.5`} />
+            <span className="text-[4px] text-zinc-500">{f.label}</span>
+          </div>
+        ))}
+      </div>
+      {/* Forest dots decoration */}
+      <div className={`flex justify-center gap-2 ${isMobile ? 'px-2 mb-2' : 'px-3 mb-2'}`}>
+        {['bg-emerald-500/30', 'bg-teal-400/30', 'bg-violet-400/20'].map((c, i) => (
+          <div key={i} className={`w-2 h-3 rounded-full ${c}`} style={{ borderRadius: '50% 50% 50% 50% / 40% 40% 60% 60%' }} />
+        ))}
+      </div>
+      {/* Pricing hint */}
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[50, 100, 200].map((p, i) => (
+          <div key={i} className="text-center py-1 rounded border border-white/5 bg-white/[0.02]">
+            <p className="text-[6px] font-bold bg-gradient-to-r from-emerald-400 to-violet-400 bg-clip-text text-transparent">{p}฿</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function OceanPreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-[#020c1b] text-white relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 bg-cyan-500/10 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 right-0 w-20 h-20 bg-teal-500/5 blur-2xl rounded-full" />
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-cyan-500/10">
+        <div className="flex items-center gap-1">
+          <Waves className="w-3 h-3 text-cyan-400" />
+          <span className="text-[6px] font-bold text-cyan-400">VPN</span>
+        </div>
+        {!isMobile && <div className="w-14 h-3 rounded-full bg-gradient-to-r from-cyan-400 to-teal-500 text-[5px] text-center leading-[12px] font-bold text-white">Ocean</div>}
+      </div>
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-5' : 'px-4 py-7'}`}>
+        <div className="flex gap-0.5 mb-1.5">
+          <span className="text-[5px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">Deep Sea</span>
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black mb-0.5`}>
+          <span className="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">VPN ดั่งมหาสมุทร</span>
+        </p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>เชื่อมต่อลึกลับ ไร้ขีดจำกัด</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-[5px] text-center leading-[12px] font-bold text-white flex items-center justify-center`}>ดำดิ่งเลย</div>
+      </div>
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[
+          { icon: Zap, label: '10Gbps', color: 'text-cyan-400' },
+          { icon: Shield, label: 'AES-256', color: 'text-teal-400' },
+          { icon: Globe, label: 'Global', color: 'text-emerald-400' },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col items-center py-1.5 rounded border border-cyan-500/10 bg-cyan-500/[0.03]">
+            <f.icon className={`w-3 h-3 ${f.color} mb-0.5`} />
+            <span className="text-[4px] text-zinc-500">{f.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[50, 100, 200].map((p, i) => (
+          <div key={i} className="text-center py-1 rounded border border-cyan-500/10 bg-cyan-500/[0.03]">
+            <p className="text-[6px] font-bold text-cyan-400">{p}฿</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SunsetPreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-[#1a0a00] text-white relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 bg-orange-500/10 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 right-0 w-20 h-20 bg-pink-500/5 blur-2xl rounded-full" />
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-orange-500/10">
+        <div className="flex items-center gap-1">
+          <Sunrise className="w-3 h-3 text-orange-400" />
+          <span className="text-[6px] font-bold text-orange-400">VPN</span>
+        </div>
+        {!isMobile && <div className="w-14 h-3 rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 text-[5px] text-center leading-[12px] font-bold text-white">Sunset</div>}
+      </div>
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-5' : 'px-4 py-7'}`}>
+        <div className="flex gap-0.5 mb-1.5">
+          <span className="text-[5px] px-1.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-300">Golden Hour</span>
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black mb-0.5`}>
+          <span className="bg-gradient-to-r from-orange-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">VPN ยามอาทิตย์ตก</span>
+        </p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>อบอุ่น สวยงาม ไร้ขีดจำกัด</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 text-[5px] text-center leading-[12px] font-bold text-white flex items-center justify-center`}>เริ่มเลย</div>
+      </div>
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[
+          { icon: Zap, label: '10Gbps', color: 'text-orange-400' },
+          { icon: Shield, label: 'AES-256', color: 'text-pink-400' },
+          { icon: Globe, label: 'Global', color: 'text-purple-400' },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col items-center py-1.5 rounded border border-orange-500/10 bg-orange-500/[0.03]">
+            <f.icon className={`w-3 h-3 ${f.color} mb-0.5`} />
+            <span className="text-[4px] text-zinc-500">{f.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[50, 100, 200].map((p, i) => (
+          <div key={i} className="text-center py-1 rounded border border-orange-500/10 bg-orange-500/[0.03]">
+            <p className="text-[6px] font-bold text-orange-400">{p}฿</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MidnightPreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-[#030308] text-white relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 bg-indigo-500/10 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 right-0 w-20 h-20 bg-amber-500/5 blur-2xl rounded-full" />
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-indigo-500/10">
+        <div className="flex items-center gap-1">
+          <Moon className="w-3 h-3 text-indigo-400" />
+          <span className="text-[6px] font-bold text-indigo-400">VPN</span>
+        </div>
+        {!isMobile && <div className="w-14 h-3 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-amber-500 text-[5px] text-center leading-[12px] font-bold text-white">Midnight</div>}
+      </div>
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-5' : 'px-4 py-7'}`}>
+        <div className="flex gap-0.5 mb-1.5">
+          <span className="text-[5px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">Luxury</span>
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black mb-0.5`}>
+          <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">VPN ยามเที่ยงคืน</span>
+        </p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>หรูหรา ลึกลับ ดั่งดวงดาว</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-amber-500 text-[5px] text-center leading-[12px] font-bold text-white flex items-center justify-center`}>เข้าสู่โลกกลางคืน</div>
+      </div>
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[
+          { icon: Zap, label: '10Gbps', color: 'text-indigo-400' },
+          { icon: Shield, label: 'AES-256', color: 'text-purple-400' },
+          { icon: Globe, label: 'Global', color: 'text-amber-400' },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col items-center py-1.5 rounded border border-indigo-500/10 bg-indigo-500/[0.03]">
+            <f.icon className={`w-3 h-3 ${f.color} mb-0.5`} />
+            <span className="text-[4px] text-zinc-500">{f.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[50, 100, 200].map((p, i) => (
+          <div key={i} className="text-center py-1 rounded border border-indigo-500/10 bg-indigo-500/[0.03]">
+            <p className="text-[6px] font-bold text-indigo-400">{p}฿</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SakuraPreview({ isMobile = false }: { isMobile?: boolean }) {
+  return (
+    <div className="w-full h-full bg-[#1a0a12] text-white relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 bg-pink-500/10 blur-2xl rounded-full" />
+      <div className="absolute bottom-0 right-0 w-20 h-20 bg-rose-500/5 blur-2xl rounded-full" />
+      <div className="relative flex items-center justify-between px-2 py-1.5 border-b border-pink-500/10">
+        <div className="flex items-center gap-1">
+          <Flower2 className="w-3 h-3 text-pink-400" />
+          <span className="text-[6px] font-bold text-pink-400">VPN</span>
+        </div>
+        {!isMobile && <div className="w-14 h-3 rounded-full bg-gradient-to-r from-pink-400 via-rose-400 to-fuchsia-400 text-[5px] text-center leading-[12px] font-bold text-white">Sakura</div>}
+      </div>
+      <div className={`relative flex flex-col items-center justify-center text-center ${isMobile ? 'px-3 py-5' : 'px-4 py-7'}`}>
+        <div className="flex gap-0.5 mb-1.5">
+          <span className="text-[5px] px-1.5 py-0.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-300">Japan</span>
+        </div>
+        <p className={`${isMobile ? 'text-[9px]' : 'text-[11px]'} font-black mb-0.5`}>
+          <span className="bg-gradient-to-r from-pink-300 via-rose-300 to-fuchsia-300 bg-clip-text text-transparent">VPN ดั่งกลีบซากุระ</span>
+        </p>
+        <p className={`${isMobile ? 'text-[5px]' : 'text-[6px]'} text-zinc-500 mb-2`}>อ่อนโยน สวยงาม แข็งแกร่ง</p>
+        <div className={`${isMobile ? 'w-16 h-3' : 'w-20 h-4'} rounded-full bg-gradient-to-r from-pink-400 via-rose-400 to-fuchsia-400 text-[5px] text-center leading-[12px] font-bold text-white flex items-center justify-center`}>บานสะพรั่ง</div>
+      </div>
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'} mb-2`}>
+        {[
+          { icon: Zap, label: '10Gbps', color: 'text-pink-400' },
+          { icon: Shield, label: 'AES-256', color: 'text-rose-400' },
+          { icon: Globe, label: 'Global', color: 'text-fuchsia-400' },
+        ].map((f, i) => (
+          <div key={i} className="flex flex-col items-center py-1.5 rounded border border-pink-500/10 bg-pink-500/[0.03]">
+            <f.icon className={`w-3 h-3 ${f.color} mb-0.5`} />
+            <span className="text-[4px] text-zinc-500">{f.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className={`grid grid-cols-3 gap-1 ${isMobile ? 'px-2' : 'px-3'}`}>
+        {[50, 100, 200].map((p, i) => (
+          <div key={i} className="text-center py-1 rounded border border-pink-500/10 bg-pink-500/[0.03]">
+            <p className="text-[6px] font-bold text-pink-400">{p}฿</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function CustomHtmlPreview({ isMobile = false }: { isMobile?: boolean }) {
   return (
     <div className="w-full h-full bg-zinc-950 text-white relative overflow-hidden">
@@ -553,6 +1072,14 @@ const previewComponents: Record<TemplateId, React.FC<{ isMobile?: boolean }>> = 
   corporate: CorporatePreview,
   premium: PremiumPreview,
   songkran: SongkranPreview,
+  aurora: AuroraPreview,
+  neonNight: NeonNightPreview,
+  space: SpacePreview,
+  fantasy: FantasyPreview,
+  ocean: OceanPreview,
+  sunset: SunsetPreview,
+  midnight: MidnightPreview,
+  sakura: SakuraPreview,
   customHtml: CustomHtmlPreview,
 }
 

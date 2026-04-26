@@ -8,7 +8,7 @@ type EffectType = 'none' | 'snow' | 'rain' | 'fireflies' | 'sakura' | 'bubbles' 
   | 'aurora' | 'lightning' | 'smoke' | 'embers' | 'leaves' | 'diamonds' | 'neon' | 'galaxy' | 'thunder' | 'goldDust'
   | 'jellyfish' | 'meteor' | 'dna' | 'pixel' | 'plasma' | 'lanterns' | 'dandelion' | 'glitch' | 'comet' | 'ripple'
   | 'crystals' | 'zodiac' | 'roses' | 'sparkle' | 'geometric' | 'feathers' | 'musicNotes' | 'butterflies' | 'fog' | 'fireworks'
-  | 'songkran'
+  | 'songkran' | 'money'
   | 'customHtml'
 
 const validEffects: EffectType[] = [
@@ -16,7 +16,7 @@ const validEffects: EffectType[] = [
   'aurora', 'lightning', 'smoke', 'embers', 'leaves', 'diamonds', 'neon', 'galaxy', 'thunder', 'goldDust',
   'jellyfish', 'meteor', 'dna', 'pixel', 'plasma', 'lanterns', 'dandelion', 'glitch', 'comet', 'ripple',
   'crystals', 'zodiac', 'roses', 'sparkle', 'geometric', 'feathers', 'musicNotes', 'butterflies', 'fog', 'fireworks',
-  'songkran',
+  'songkran', 'money',
   'customHtml',
 ]
 
