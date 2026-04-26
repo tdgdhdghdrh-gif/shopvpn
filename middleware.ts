@@ -27,19 +27,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // === License Check ===
-  if (process.env.IS_LICENSE_SERVER !== 'true') {
-    const licenseKey = request.cookies.get('license_key')?.value
-
-    // No license cookie -> redirect to setup
-    if (!licenseKey) {
-      const setupUrl = request.nextUrl.clone()
-      setupUrl.pathname = '/setup'
-      return NextResponse.redirect(setupUrl)
-    }
-
-    // Has cookie -> pass through (validation happens on setup/api if needed)
-  }
+  // === License Check (DISABLED) ===
+  // License check bypassed - all sites are now fully activated
 
   // === IP Logging ===
   const ip = getClientIP(request)
