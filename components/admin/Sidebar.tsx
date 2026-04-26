@@ -109,7 +109,6 @@ const superAdminMenuItems = [
   { name: 'จัดการเมนู', href: '/admin/menu-settings', icon: Construction },
   { name: 'ระบบอัปเดต', href: '/admin/updates', icon: AlertTriangle },
   { name: 'อัพเดทเว็บ', href: '/admin/update-site', icon: Download },
-  { name: 'ต่ออายุเว็บ', href: '/admin/site-license', icon: CalendarClock },
   { name: 'AI ผู้ช่วย', href: '/admin/ai-assistant', icon: Bot },
 ]
 
@@ -302,8 +301,6 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
                 )}
                 {isCollapsed && <div className="pt-2 border-t border-amber-500/20 mt-2" />}
                 {superAdminMenuItems.filter(item => {
-                  // ซ่อนเมนู "ต่ออายุเว็บ" ถ้าไม่ใช่ license server (เว็บต้นทาง)
-                  if (item.href === '/admin/site-license' && !isLicenseServer) return false
                   return true
                 }).map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(item.href)

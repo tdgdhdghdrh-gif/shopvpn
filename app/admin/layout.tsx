@@ -21,7 +21,7 @@ const AGENT_FALLBACK = ['/admin', '/admin/vpn', '/admin/revenue']
 const REVENUE_FALLBACK = ['/admin', '/admin/revenue']
 
 // Super admin exclusive pages — only superAdmin can access these regardless of config
-const SUPER_ADMIN_PAGES = ['/admin/server-info', '/admin/super-revenue', '/admin/api-keys', '/admin/branding', '/admin/theme-editor', '/admin/recaptcha', '/admin/settings', '/admin/menu-settings', '/admin/update-site', '/admin/site-license', '/admin/ai-assistant']
+const SUPER_ADMIN_PAGES = ['/admin/server-info', '/admin/super-revenue', '/admin/api-keys', '/admin/branding', '/admin/theme-editor', '/admin/recaptcha', '/admin/settings', '/admin/menu-settings', '/admin/update-site', '/admin/ai-assistant']
 
 function matchesPath(pathname: string, href: string): boolean {
   if (href === '/admin') return pathname === '/admin'

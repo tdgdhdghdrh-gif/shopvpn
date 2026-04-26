@@ -98,7 +98,6 @@ export async function POST(request: NextRequest) {
     await importTable('customPages', data.customPages, (d) => prisma.customPage.create({ data: d }))
     await importTable('formSubmissions', data.formSubmissions, (d) => prisma.formSubmission.create({ data: d }))
     await importTable('pageDatabaseRecords', data.pageDatabaseRecords, (d) => prisma.pageDatabaseRecord.create({ data: d }))
-    await importTable('siteLicenses', data.siteLicenses, (d) => prisma.siteLicense.create({ data: d }))
     await importTable('siteUpdateLogs', data.siteUpdateLogs, (d) => prisma.siteUpdateLog.create({ data: d }))
     await importTable('v2BoxCodes', data.v2BoxCodes, (d) => prisma.v2BoxCode.create({ data: d }))
     await importTable('siteUpdates', data.siteUpdates, (d) => prisma.siteUpdate.create({ data: d }))
