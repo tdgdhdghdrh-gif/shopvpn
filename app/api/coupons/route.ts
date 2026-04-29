@@ -40,6 +40,18 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'คุณใช้คูปองนี้ครบจำนวนแล้ว' }, { status: 400 })
       }
 
+      // เช็คระยะเวลาที่ใช้ได้ (ถ้ามีส่งมา)
+      const durationParam = searchParams.get('duration')
+      if (durationParam && coupon.applicableDurations && coupon.applicableDurations.length > 0) {
+        if (!coupon.applicableDurations.includes(durationParam)) {
+          const durationLabels: Record<string, string> = {
+            '1': '1 วัน', '7': '7 วัน', '30': '1 เดือน', '90': '3 เดือน', '180': '6 เดือน', '365': '1 ปี'
+          }
+          const allowedLabels = coupon.applicableDurations.map(d => durationLabels[d] || `${d} วัน`).join(', ')
+          return NextResponse.json({ error: `คูปองนี้ใช้ได้เฉพาะซื้อ ${allowedLabels} เท่านั้น` }, { status: 400 })
+        }
+      }
+
       return NextResponse.json({
         coupon: {
           code: coupon.code,
@@ -49,6 +61,7 @@ export async function GET(req: NextRequest) {
           value: coupon.value,
           minPurchase: coupon.minPurchase,
           maxDiscount: coupon.maxDiscount,
+          applicableDurations: coupon.applicableDurations,
           expiresAt: coupon.expiresAt,
         },
       })
@@ -71,7 +84,8 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST - ใช้คูปอง (redeem)
+// POST - ใช้คูปอง (DEPRECATED: คูปองเปลี่ยนเป็น purchase-time เท่านั้น)
+// ผู้ใช้ต้องใส่รหัสคูปองตอนซื้อ VPN ที่หน้า /vpn เท่านั้น
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
@@ -79,12 +93,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 })
     }
 
-    // Block impersonation
-    const impBlock = await checkImpersonation()
-    if (impBlock) return impBlock
-
     const body = await req.json()
-    const { code } = body
+    const { code, duration } = body
 
     if (!code) {
       return NextResponse.json({ error: 'กรุณากรอกรหัสคูปอง' }, { status: 400 })
@@ -115,53 +125,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'คุณใช้คูปองนี้ครบจำนวนแล้ว' }, { status: 400 })
     }
 
-    // คำนวณส่วนลด (ใช้เป็นเครดิตเข้ากระเป๋า)
-    let discount = 0
-    if (coupon.type === 'fixed') {
-      discount = coupon.value
-    } else {
-      // percent — ให้เครดิตตามเปอร์เซ็นต์ของ value (ใช้ value เป็นจำนวนเครดิต)
-      discount = coupon.value
-      if (coupon.maxDiscount && discount > coupon.maxDiscount) {
-        discount = coupon.maxDiscount
+    // เช็คระยะเวลาที่ใช้ได้ (ถ้ามีส่งมา)
+    if (duration && coupon.applicableDurations && coupon.applicableDurations.length > 0) {
+      if (!coupon.applicableDurations.includes(String(duration))) {
+        const durationLabels: Record<string, string> = {
+          '1': '1 วัน', '7': '7 วัน', '30': '1 เดือน', '90': '3 เดือน', '180': '6 เดือน', '365': '1 ปี'
+        }
+        const allowedLabels = coupon.applicableDurations.map(d => durationLabels[d] || `${d} วัน`).join(', ')
+        return NextResponse.json({ error: `คูปองนี้ใช้ได้เฉพาะซื้อ ${allowedLabels} เท่านั้น` }, { status: 400 })
       }
     }
 
-    // Transaction: เพิ่มเครดิต + สร้าง redemption + อัปเดตจำนวนใช้
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: session.userId },
-        data: { balance: { increment: discount } },
-      }),
-      prisma.couponRedemption.create({
-        data: {
-          couponId: coupon.id,
-          userId: session.userId,
-          discount,
-        },
-      }),
-      prisma.coupon.update({
-        where: { id: coupon.id },
-        data: { usageCount: { increment: 1 } },
-      }),
-      // สร้าง notification
-      prisma.notification.create({
-        data: {
-          userId: session.userId,
-          type: 'coupon',
-          title: 'ใช้คูปองสำเร็จ!',
-          message: `คูปอง ${coupon.code} — ได้รับเครดิต ${discount} บาท`,
-          icon: 'Ticket',
-          linkUrl: '/coupons',
-        },
-      }),
-    ])
-
+    // คูปองเป็นระบบ purchase-time — ไม่เติมเครดิตเข้ากระเป๋า แต่ให้ไปใช้ตอนซื้อ VPN
     return NextResponse.json({
       success: true,
-      discount,
-      couponName: coupon.name,
-      message: `ได้รับเครดิต ${discount} บาทจากคูปอง "${coupon.name}"`,
+      purchaseTimeOnly: true,
+      coupon: {
+        code: coupon.code,
+        name: coupon.name,
+        description: coupon.description,
+        type: coupon.type,
+        value: coupon.value,
+        maxDiscount: coupon.maxDiscount,
+        applicableDurations: coupon.applicableDurations,
+      },
+      message: `คูปอง "${coupon.name}" พร้อมใช้งาน! กรุณาใส่รหัสนี้ตอนซื้อ VPN เพื่อรับส่วนลด`,
     })
   } catch (error) {
     console.error('Coupon POST error:', error)

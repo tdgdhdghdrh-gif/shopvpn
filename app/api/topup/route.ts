@@ -91,17 +91,39 @@ export async function POST(req: NextRequest) {
         return Response.json({ success: false, error: 'ซองเล็ทนี้ถูกใช้งานแล้ว' })
       }
 
-      // Call API
+      // Call API with timing
       const apiUrl = `https://api.darkx.shop/tools/truemoney?code=${voucherCode}&phone=${settings.truemoneyPhone}`
+      const apiStartTime = Date.now()
       const apiRes = await fetch(apiUrl, {
         headers: { 'x-api-key': settings.truemoneyApiKey }
       })
+      const apiDuration = Date.now() - apiStartTime
+
+      const apiData = await apiRes.json()
+
+      // Log API call
+      try {
+        await prisma.apiCallLog.create({
+          data: {
+            apiType: 'truemoney',
+            endpoint: apiUrl,
+            method: 'GET',
+            requestBody: JSON.stringify({ code: voucherCode, phone: settings.truemoneyPhone }),
+            responseBody: JSON.stringify(apiData),
+            statusCode: apiRes.status,
+            success: !!apiData.status,
+            durationMs: apiDuration,
+            error: !apiData.status ? (apiData.msg || apiData.error || 'API returned false status') : null,
+            userId: session.userId,
+          }
+        })
+      } catch (logErr) {
+        console.error('ApiCallLog error:', logErr)
+      }
       
       if (!apiRes.ok) {
         return Response.json({ success: false, error: 'ไม่สามารถตรวจสอบซองเล็ทได้' })
       }
-
-      const apiData = await apiRes.json()
       console.log('TrueMoney API Response:', JSON.stringify(apiData, null, 2))
 
       // API response format: { status: true/false, msg: "...", amount: "60.00", raw_data: { voucher: { amount_baht: "60.00" } } }
@@ -187,17 +209,39 @@ export async function POST(req: NextRequest) {
         return Response.json({ success: false, error: 'สลิปนี้ถูกใช้งานแล้ว' })
       }
 
-      // Call SlipCheck API
+      // Call SlipCheck API with timing
       const apiUrl = `https://api.darkx.shop/tools/slipcheck?image=${encodeURIComponent(imageUrl)}`
+      const apiStartTime = Date.now()
       const apiRes = await fetch(apiUrl, {
         headers: { 'x-api-key': settings.slipApiKey }
       })
+      const apiDuration = Date.now() - apiStartTime
+
+      const apiData = await apiRes.json()
+
+      // Log API call
+      try {
+        await prisma.apiCallLog.create({
+          data: {
+            apiType: 'slipcheck',
+            endpoint: apiUrl,
+            method: 'GET',
+            requestBody: JSON.stringify({ imageUrl }),
+            responseBody: JSON.stringify(apiData),
+            statusCode: apiRes.status,
+            success: !!(apiData.status && apiData.data),
+            durationMs: apiDuration,
+            error: (!apiData.status || !apiData.data) ? (apiData.msg || apiData.error || 'Slip check failed') : null,
+            userId: session.userId,
+          }
+        })
+      } catch (logErr) {
+        console.error('ApiCallLog error:', logErr)
+      }
       
       if (!apiRes.ok) {
         return Response.json({ success: false, error: 'ไม่สามารถตรวจสอบสลิปได้' })
       }
-
-      const apiData = await apiRes.json()
 
       if (!apiData.status || !apiData.data) {
         return Response.json({ success: false, error: apiData.msg || 'ตรวจสอบสลิปไม่สำเร็จ' })

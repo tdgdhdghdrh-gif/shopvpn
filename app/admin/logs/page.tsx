@@ -68,7 +68,7 @@ export default function AdminLogsPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${logs.current.file}.txt`
+    a.download = `${logs.current?.file || selectedFile}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -179,14 +179,14 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Info bar */}
-      {logs && (
+      {logs && logs.current && (
         <div className="flex items-center gap-4 text-[11px] text-zinc-500">
           <span className="flex items-center gap-1.5">
             <FileText className="w-3 h-3" />
-            {logs.current.file}
+            {logs.current?.file || selectedFile}
           </span>
-          <span>{logs.lines.toLocaleString()} บรรทัด</span>
-          <span>{(logs.size / 1024 / 1024).toFixed(2)} MB</span>
+          <span>{(logs.lines ?? 0).toLocaleString()} บรรทัด</span>
+          <span>{((logs.size ?? 0) / 1024 / 1024).toFixed(2)} MB</span>
         </div>
       )}
 

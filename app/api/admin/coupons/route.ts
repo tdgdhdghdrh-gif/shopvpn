@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const { action } = body
 
     if (action === 'create') {
-      const { code, name, description, type, value, minPurchase, maxDiscount, usageLimit, perUserLimit, expiresAt } = body
+      const { code, name, description, type, value, minPurchase, maxDiscount, usageLimit, perUserLimit, applicableDurations, expiresAt } = body
       if (!code || !name || !type || !value) {
         return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบ' }, { status: 400 })
       }
@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
           maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null,
           usageLimit: usageLimit ? parseInt(usageLimit) : null,
           perUserLimit: parseInt(perUserLimit || '1'),
+          applicableDurations: Array.isArray(applicableDurations) ? applicableDurations.map(String) : [],
           expiresAt: expiresAt ? new Date(expiresAt) : null,
           createdBy: admin.id,
         },
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'update') {
-      const { id, name, description, type, value, minPurchase, maxDiscount, usageLimit, perUserLimit, isActive, expiresAt } = body
+      const { id, name, description, type, value, minPurchase, maxDiscount, usageLimit, perUserLimit, applicableDurations, isActive, expiresAt } = body
       if (!id) return NextResponse.json({ error: 'ไม่พบ ID คูปอง' }, { status: 400 })
 
       const coupon = await prisma.coupon.update({
@@ -101,6 +102,7 @@ export async function POST(req: NextRequest) {
           ...(maxDiscount !== undefined && { maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null }),
           ...(usageLimit !== undefined && { usageLimit: usageLimit ? parseInt(usageLimit) : null }),
           ...(perUserLimit !== undefined && { perUserLimit: parseInt(perUserLimit) }),
+          ...(applicableDurations !== undefined && { applicableDurations: Array.isArray(applicableDurations) ? applicableDurations.map(String) : [] }),
           ...(isActive !== undefined && { isActive }),
           ...(expiresAt !== undefined && { expiresAt: expiresAt ? new Date(expiresAt) : null }),
         },

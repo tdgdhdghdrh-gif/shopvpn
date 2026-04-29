@@ -18,21 +18,28 @@ interface Order {
   isActive: boolean
   ipLimit: number
   createdAt: string
-  user: { username: string; email: string }
+  user: { name: string; email: string }
   server: { name: string; flag: string }
 }
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'expired'>('all')
 
   useEffect(() => {
     fetch('/api/admin/orders')
       .then(r => r.json())
-      .then(d => { if (d.orders) setOrders(d.orders) })
-      .catch(console.error)
+      .then(d => {
+        if (d.orders) {
+          setOrders(d.orders)
+        } else if (d.error) {
+          setError(d.error)
+        }
+      })
+      .catch(() => setError('ไม่สามารถโหลดข้อมูลได้'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -43,7 +50,7 @@ export default function AdminOrdersPage() {
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(o =>
-        o.user?.username?.toLowerCase().includes(q) ||
+        o.user?.name?.toLowerCase().includes(q) ||
         o.server?.name?.toLowerCase().includes(q) ||
         o.remark?.toLowerCase().includes(q)
       )
@@ -68,7 +75,16 @@ export default function AdminOrdersPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
         <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-        <p className="text-sm text-zinc-500">กำลังโหลด...</p>
+        <p className="text-sm text-zinc-500">กำลังโหลดคำสั่งซื้อ...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
+        <XCircle className="w-10 h-10 text-red-400" />
+        <p className="text-sm text-red-400">{error}</p>
       </div>
     )
   }
@@ -82,7 +98,7 @@ export default function AdminOrdersPage() {
             <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">คำสั่งซื้อ</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">คำสั่งซื้อ VPN</h1>
             <p className="text-xs sm:text-sm text-zinc-500">ดูคำสั่งซื้อ VPN ทั้งหมดในระบบ</p>
           </div>
         </div>
@@ -167,7 +183,7 @@ export default function AdminOrdersPage() {
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{order.user?.username || 'ไม่ทราบ'}</p>
+                    <p className="text-sm font-semibold text-white truncate">{order.user?.name || 'ไม่ทราบ'}</p>
                     <p className="text-[11px] text-zinc-500 truncate">{order.remark || order.user?.email || '-'}</p>
                   </div>
                 </div>

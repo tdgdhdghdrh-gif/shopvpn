@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Ticket, Search, CheckCircle2, AlertCircle, Gift, Clock, Loader2, History, Sparkles, Copy, Check } from 'lucide-react'
+import { Ticket, Search, CheckCircle2, AlertCircle, Gift, Clock, Loader2, History, Sparkles, Copy, Check, ArrowRight, ShoppingCart } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 
 interface Redemption {
@@ -22,7 +22,6 @@ export default function CouponsPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
-  const [checking, setChecking] = useState(false)
   const [couponInfo, setCouponInfo] = useState<CouponInfo | null>(null)
   const [redemptions, setRedemptions] = useState<Redemption[]>([])
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -51,24 +50,7 @@ export default function CouponsPage() {
     } catch {} finally { setLoadingHistory(false) }
   }
 
-  async function checkCoupon() {
-    if (!code.trim()) return
-    setChecking(true)
-    setCouponInfo(null)
-    try {
-      const res = await fetch(`/api/coupons?code=${encodeURIComponent(code.trim())}`)
-      const data = await res.json()
-      if (data.error) {
-        setMessage({ type: 'error', text: data.error })
-      } else {
-        setCouponInfo(data.coupon)
-      }
-    } catch {
-      setMessage({ type: 'error', text: 'ไม่สามารถเช็คคูปองได้' })
-    } finally { setChecking(false) }
-  }
-
-  async function redeemCoupon() {
+  async function previewCoupon() {
     if (!code.trim()) return
     setLoading(true)
     try {
@@ -79,10 +61,8 @@ export default function CouponsPage() {
       })
       const data = await res.json()
       if (data.success) {
+        setCouponInfo(data.coupon)
         setMessage({ type: 'success', text: data.message })
-        setCode('')
-        setCouponInfo(null)
-        fetchHistory()
       } else {
         setMessage({ type: 'error', text: data.error })
       }
@@ -112,7 +92,7 @@ export default function CouponsPage() {
             <Ticket className="w-8 h-8 text-amber-400" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">คูปองส่วนลด</h1>
-          <p className="text-zinc-500 text-sm">กรอกรหัสคูปองเพื่อรับเครดิตฟรีหรือส่วนลดพิเศษ</p>
+          <p className="text-zinc-500 text-sm">ตรวจสอบคูปองของคุณ แล้วใช้ตอนซื้อ VPN เพื่อรับส่วนลดทันที</p>
         </div>
 
         {/* Input Section */}
@@ -124,18 +104,18 @@ export default function CouponsPage() {
                 type="text"
                 value={code}
                 onChange={(e) => { setCode(e.target.value.toUpperCase()); setCouponInfo(null) }}
-                onKeyDown={(e) => e.key === 'Enter' && checkCoupon()}
+                onKeyDown={(e) => e.key === 'Enter' && previewCoupon()}
                 placeholder="กรอกรหัสคูปอง..."
                 className="w-full bg-black border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-sm font-bold text-white placeholder:text-zinc-700 focus:border-amber-500/50 transition-all tracking-widest uppercase"
                 maxLength={30}
               />
             </div>
             <button
-              onClick={checkCoupon}
-              disabled={checking || !code.trim()}
+              onClick={previewCoupon}
+              disabled={loading || !code.trim()}
               className="px-5 py-3.5 bg-zinc-800 border border-white/10 rounded-xl text-sm font-bold text-white hover:bg-zinc-700 transition-all disabled:opacity-40 shrink-0"
             >
-              {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             </button>
           </div>
 
@@ -168,17 +148,19 @@ export default function CouponsPage() {
                 )}
               </div>
 
-              <button
-                onClick={redeemCoupon}
-                disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 border border-amber-500/30 rounded-xl text-sm font-black text-white hover:from-amber-500 hover:to-orange-500 transition-all active:scale-[0.98] disabled:opacity-50"
+              <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl text-xs text-emerald-400 flex items-start gap-2">
+                <ShoppingCart className="w-4 h-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">คูปองนี้ใช้ตอนซื้อ VPN เท่านั้น</p>
+                  <p className="text-emerald-500/70 mt-0.5">กรุณาไปที่หน้าซื้อ VPN แล้วใส่รหัสคูปองในช่อง "คูปองส่วนลด" เพื่อรับส่วนลดทันที</p>
+                </div>
+              </div>
+              <a
+                href="/vpn"
+                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 border border-emerald-500/30 rounded-xl text-sm font-black text-white hover:from-emerald-500 hover:to-teal-500 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> กำลังใช้คูปอง...</span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2"><Gift className="w-4 h-4" /> ใช้คูปองนี้</span>
-                )}
-              </button>
+                <ShoppingCart className="w-4 h-4" /> ไปซื้อ VPN <ArrowRight className="w-4 h-4" />
+              </a>
             </div>
           )}
         </div>

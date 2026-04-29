@@ -396,6 +396,7 @@ export async function POST(request: Request) {
     const ipLimit = ipLimitRaw ? Math.max(0, Math.min(10, parseInt(ipLimitRaw) || 0)) : 0
     const selectedInboundIdRaw = formData.get('selectedInboundId') as string || ''
     const selectedInboundId = selectedInboundIdRaw ? parseInt(selectedInboundIdRaw) : null
+    const couponCode = (formData.get('couponCode') as string || '').trim()
 
     if (!serverId) {
       return NextResponse.json({ success: false, error: 'ไม่พบเซิร์ฟเวอร์' })
@@ -526,9 +527,52 @@ export async function POST(request: Request) {
       totalPrice += (effectiveIpLimit > 0 ? effectiveIpLimit * 1 : 0)
     }
 
+    // ===== COUPON DISCOUNT (purchase-time) =====
+    let couponDiscount = 0
+    let appliedCoupon: { id: string; code: string; name: string } | null = null
+
+    if (!isTrial && couponCode) {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: couponCode.toUpperCase() },
+      })
+
+      if (coupon && coupon.isActive) {
+        const now = new Date()
+        const notExpired = !coupon.expiresAt || coupon.expiresAt > now
+        const notExhausted = !coupon.usageLimit || coupon.usageCount < coupon.usageLimit
+
+        if (notExpired && notExhausted) {
+          // Check per-user limit
+          const userRedemptions = await prisma.couponRedemption.count({
+            where: { couponId: coupon.id, userId: session.userId },
+          })
+
+          if (userRedemptions < coupon.perUserLimit) {
+            // Check applicable duration
+            const daysStr = String(days)
+            const durationMatch = !coupon.applicableDurations || coupon.applicableDurations.length === 0 || coupon.applicableDurations.includes(daysStr)
+
+            if (durationMatch) {
+              // Calculate discount
+              if (coupon.type === 'fixed') {
+                couponDiscount = Math.min(coupon.value, totalPrice)
+              } else {
+                couponDiscount = Math.round(totalPrice * (coupon.value / 100) * 100) / 100
+                if (coupon.maxDiscount && couponDiscount > coupon.maxDiscount) {
+                  couponDiscount = coupon.maxDiscount
+                }
+              }
+              totalPrice = Math.max(0, totalPrice - couponDiscount)
+              appliedCoupon = { id: coupon.id, code: coupon.code, name: coupon.name }
+            }
+          }
+        }
+      }
+    }
+
     // Check balance (only for paid orders)
     if (!isTrial && user.balance < totalPrice) {
-      return NextResponse.json({ success: false, error: `เครดิตไม่เพียงพอ (ต้องการ ${totalPrice} ฿)` })
+      return NextResponse.json({ success: false, error: `เครดิตไม่เพียงพอ (ต้องการ ${totalPrice} ฿${couponDiscount > 0 ? ` หลังหักส่วนลด ${couponDiscount} ฿` : ''})` })
     }
 
     // Detect protocol and connect to panel
@@ -653,7 +697,24 @@ export async function POST(request: Request) {
         })
       )
     }
-    
+
+    // Record coupon redemption if applied
+    if (appliedCoupon && !isTrial) {
+      transactionOps.push(
+        prisma.couponRedemption.create({
+          data: {
+            couponId: appliedCoupon.id,
+            userId: session.userId,
+            discount: couponDiscount,
+          },
+        }),
+        prisma.coupon.update({
+          where: { id: appliedCoupon.id },
+          data: { usageCount: { increment: 1 } },
+        })
+      )
+    }
+
     await prisma.$transaction(transactionOps)
 
     // Update session balance (only if not trial)
@@ -665,7 +726,14 @@ export async function POST(request: Request) {
     // Notify admin
     await notifyBuyVpn(user.name, server.name, totalPrice, isTrial ? 'ทดลองฟรี' : `${days} วัน`)
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      success: true,
+      couponApplied: appliedCoupon ? {
+        code: appliedCoupon.code,
+        name: appliedCoupon.name,
+        discount: couponDiscount,
+      } : undefined,
+    })
   } catch (error) {
     console.error('Buy VPN error:', error)
     const errMsg = error instanceof Error ? error.message : 'Unknown error'

@@ -20,7 +20,7 @@ export async function GET() {
 
     const orders = await prisma.vpnOrder.findMany({
       include: {
-        user: { select: { username: true, email: true } },
+        user: { select: { name: true, email: true } },
         server: { select: { name: true, flag: true } },
       },
       orderBy: { createdAt: 'desc' },

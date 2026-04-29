@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/server-utils";
@@ -18,6 +20,7 @@ import CountdownTimer from "@/components/CountdownTimer";
 import TopNotificationBar from "@/components/TopNotificationBar";
 import BackToTop from "@/components/BackToTop";
 import CustomCursor from "@/components/CustomCursor";
+import DesktopPet from "@/components/DesktopPet";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -44,7 +47,7 @@ export const viewport: Viewport = {
 async function getSettings() {
   try {
     const settings = await prisma.settings.findFirst({
-      select: { siteName: true, siteLogo: true, appLogo: true, customCss: true, customJs: true },
+      select: { siteName: true, siteLogo: true, appLogo: true, customCss: true, customJs: true, siteExpiryDate: true },
     })
     return settings
   } catch {
@@ -159,6 +162,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const layoutSettings = await getSettings()
+
+  // === Site Expiry Check ===
+  // Get current pathname from middleware header
+  const headerList = await headers()
+  const pathname = headerList.get('x-pathname') || '/'
+
+  // Check if site is expired (skip for site-expired page and site-expiry admin page)
+  const isExcludedPath = pathname === '/site-expired' || pathname === '/admin/site-expiry' || pathname.startsWith('/api/')
+  if (!isExcludedPath && layoutSettings?.siteExpiryDate) {
+    const expiryDate = new Date(layoutSettings.siteExpiryDate)
+    if (expiryDate < new Date()) {
+      redirect('/site-expired')
+    }
+  }
+
   return (
     <html lang="th" className="dark" style={{ backgroundColor: 'var(--theme-bg, #000000)' }}>
       <body
@@ -188,6 +206,7 @@ export default async function RootLayout({
           <SiteUpdateOverlay />
           <SiteMusicPlayer />
           <FloatingButton />
+          <DesktopPet />
           <div className="overflow-x-hidden relative z-10">
             {children}
           </div>

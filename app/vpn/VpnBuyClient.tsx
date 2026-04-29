@@ -144,6 +144,21 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
+  // Coupon states
+  const [couponCode, setCouponCode] = useState('')
+  const [couponInfo, setCouponInfo] = useState<{
+    code: string
+    name: string
+    description: string | null
+    type: string
+    value: number
+    maxDiscount: number | null
+    applicableDurations: string[]
+  } | null>(null)
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [couponChecking, setCouponChecking] = useState(false)
+  const [couponError, setCouponError] = useState('')
+
   // Fetch trial settings from public API
   useEffect(() => {
     fetch('/api/settings/public')
@@ -189,8 +204,70 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   }
   
   const totalPrice = baseCost + ipCost
-  const canAfford = totalPrice <= user.balance
+  const finalPrice = Math.max(0, Math.round((totalPrice - couponDiscount) * 100) / 100)
+  const canAfford = finalPrice <= user.balance
   const isPackagePrice = packagePrice != null
+
+  // Clear coupon if days change and coupon no longer applicable
+  useEffect(() => {
+    if (couponInfo && couponInfo.applicableDurations && couponInfo.applicableDurations.length > 0) {
+      if (!couponInfo.applicableDurations.includes(String(days))) {
+        setCouponInfo(null)
+        setCouponDiscount(0)
+        setCouponError('')
+      }
+    }
+  }, [days, couponInfo])
+
+  // Recalculate coupon discount when price changes
+  useEffect(() => {
+    if (couponInfo) {
+      let discount = 0
+      if (couponInfo.type === 'fixed') {
+        discount = Math.min(couponInfo.value, totalPrice)
+      } else {
+        discount = Math.round(totalPrice * (couponInfo.value / 100) * 100) / 100
+        if (couponInfo.maxDiscount && discount > couponInfo.maxDiscount) {
+          discount = couponInfo.maxDiscount
+        }
+      }
+      setCouponDiscount(discount)
+    }
+  }, [totalPrice, couponInfo])
+
+  const checkCoupon = async () => {
+    if (!couponCode.trim()) return
+    setCouponChecking(true)
+    setCouponError('')
+    setCouponInfo(null)
+    setCouponDiscount(0)
+
+    try {
+      const res = await fetch(`/api/coupons?code=${encodeURIComponent(couponCode.trim())}&duration=${days}`)
+      const data = await res.json()
+
+      if (!res.ok) {
+        setCouponError(data.error || 'ตรวจสอบคูปองไม่สำเร็จ')
+      } else if (data.coupon) {
+        setCouponInfo(data.coupon)
+        // Calculate initial discount
+        let discount = 0
+        if (data.coupon.type === 'fixed') {
+          discount = Math.min(data.coupon.value, totalPrice)
+        } else {
+          discount = Math.round(totalPrice * (data.coupon.value / 100) * 100) / 100
+          if (data.coupon.maxDiscount && discount > data.coupon.maxDiscount) {
+            discount = data.coupon.maxDiscount
+          }
+        }
+        setCouponDiscount(discount)
+      }
+    } catch {
+      setCouponError('เกิดข้อผิดพลาดในการตรวจสอบคูปอง')
+    } finally {
+      setCouponChecking(false)
+    }
+  }
 
   const handleDecrease = () => setDays(prev => Math.max(1, prev - 1))
   const maxDays = server.customPackages.length > 0 ? Math.max(365, ...server.customPackages.map(p => p.days)) : 365
@@ -245,6 +322,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
       formData.append('customName', customName)
       formData.append('ipLimit', ipLimit.toString())
       if (selectedInboundId !== null) formData.append('selectedInboundId', selectedInboundId.toString())
+      if (couponInfo && couponCode.trim()) formData.append('couponCode', couponCode.trim())
       
       const res = await fetch('/api/vpn/buy', {
         method: 'POST',
@@ -642,6 +720,71 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
         </div>
         )}
 
+        {/* === SECTION 4.5: Coupon === */}
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">
+          <div className="p-5">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/10 flex items-center justify-center">
+                <Tag className="w-3.5 h-3.5 text-amber-400" />
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-zinc-200 block leading-tight">คูปองส่วนลด</span>
+                <span className="text-[11px] text-zinc-600">ใส่รหัสคูปองเพื่อรับส่วนลดทันทีตอนซื้อ</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value)
+                  if (couponError) setCouponError('')
+                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); checkCoupon() } }}
+                placeholder="เช่น WELCOME50"
+                className="flex-1 px-4 py-3 rounded-xl bg-black/60 border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm uppercase"
+                disabled={couponChecking}
+              />
+              <button
+                type="button"
+                onClick={checkCoupon}
+                disabled={couponChecking || !couponCode.trim()}
+                className="px-5 py-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-sm font-bold border border-amber-500/20 hover:border-amber-500/30 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {couponChecking ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+                    ตรวจสอบ
+                  </span>
+                ) : 'ใช้คูปอง'}
+              </button>
+            </div>
+
+            {/* Coupon error */}
+            {couponError && (
+              <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                {couponError}
+              </div>
+            )}
+
+            {/* Coupon success */}
+            {couponInfo && (
+              <div className="mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
+                <div className="flex items-center gap-2 mb-1">
+                  <Check className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="font-semibold">{couponInfo.name}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-[10px] font-bold uppercase">{couponInfo.code}</span>
+                </div>
+                {couponInfo.description && (
+                  <p className="text-emerald-500/80 ml-5.5">{couponInfo.description}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* === SECTION 5: Price Summary === */}
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">
           <div className="p-5">
@@ -690,14 +833,26 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
                   <span className="text-sm text-emerald-400 font-medium">Active</span>
                 </div>
               )}
-              
+              {couponDiscount > 0 && (
+                <div className="flex justify-between items-center py-2.5">
+                  <span className="text-sm text-amber-500 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5" />
+                    คูปอง {couponInfo?.name}
+                  </span>
+                  <span className="text-sm text-amber-400 font-medium">-{couponDiscount} ฿</span>
+                </div>
+              )}
+
               <div className="h-px bg-zinc-800/50" />
-              
+
               {/* Total */}
               <div className="flex justify-between items-center pt-3 pb-1">
                 <span className="text-sm font-medium text-zinc-300">รวมทั้งสิ้น</span>
                 <div className="text-right">
-                  <span className="text-3xl font-bold text-white tabular-nums tracking-tight">{totalPrice}</span>
+                  {couponDiscount > 0 && (
+                    <span className="text-sm text-zinc-600 line-through mr-2">{totalPrice} ฿</span>
+                  )}
+                  <span className="text-3xl font-bold text-white tabular-nums tracking-tight">{finalPrice}</span>
                   <span className="text-sm text-zinc-500 ml-1">฿</span>
                 </div>
               </div>
@@ -730,7 +885,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
             ) : (
               <>
                 <CreditCard className="w-4.5 h-4.5" />
-                สั่งซื้อ VPN &bull; {totalPrice} ฿
+                สั่งซื้อ VPN &bull; {finalPrice} ฿
                 <ChevronRight className="w-4 h-4 opacity-60" />
               </>
             )}
@@ -739,7 +894,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
           {!canAfford && (
             <div className="text-center mt-3">
               <p className="text-xs text-zinc-600 mb-1.5">
-                ยอดขาด {(totalPrice - user.balance).toLocaleString()} ฿
+                ยอดขาด {(finalPrice - user.balance).toLocaleString()} ฿
               </p>
               <a 
                 href="/topup" 
@@ -800,10 +955,21 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
                   <span className="text-sm text-white font-medium">{ipLimit} เครื่อง</span>
                 </div>
               )}
+              {couponDiscount > 0 && couponInfo && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-amber-500">คูปอง {couponInfo.name}</span>
+                  <span className="text-sm text-amber-400 font-medium">-{couponDiscount} ฿</span>
+                </div>
+              )}
               <div className="h-px bg-zinc-800/60" />
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-zinc-400">รวมทั้งสิ้น</span>
-                <span className="text-xl font-bold text-white">{totalPrice} ฿</span>
+                <div className="text-right">
+                  {couponDiscount > 0 && (
+                    <span className="text-xs text-zinc-600 line-through mr-2">{totalPrice} ฿</span>
+                  )}
+                  <span className="text-xl font-bold text-white">{finalPrice} ฿</span>
+                </div>
               </div>
             </div>
 

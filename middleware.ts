@@ -21,6 +21,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/uploads') ||
     pathname.startsWith('/api/') ||
     pathname === '/expired' ||
+    pathname === '/site-expired' ||
     pathname === '/setup' ||
     pathname.match(/\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot)$/)
   ) {

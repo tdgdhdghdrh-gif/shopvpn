@@ -144,6 +144,7 @@ model Settings {
   registrationIpCheck Boolean  @default(true) // เปิด/ปิดเช็ค IP ซ้ำตอนสมัครสมาชิก (true = 1 IP สมัครได้ 1 คน)
   licenseKey          String?  // License key สำหรับเช็คอายุเว็บ (ได้จากเว็บต้นทาง)
   licenseApiUrl       String?  // URL ของเว็บต้นทาง เช่น https://simonvpn.darkx.shop
+  siteExpiryDate      DateTime? // วันหมดอายุเว็บ (ตั้งโดยเจ้าของเว็บโดยตรง ไม่เปลี่ยนเมื่ออัปเดทเว็บ)
 
   // Custom CSS/JS injection
   customCss           String?  @db.Text
@@ -171,6 +172,14 @@ model Settings {
   preloaderAnimation      String?  @default("spin") // spin, pulse, bounce, none
   preloaderDuration       Int?     @default(2000) // milliseconds
   preloaderSkippable      Boolean  @default(true)
+
+  // Desktop Pet (ตัวละครวิ่งในหน้าจอ)
+  desktopPetEnabled       Boolean  @default(false)
+  desktopPetImageUrl      String?  // URL ของ GIF ตัวละคร
+  desktopPetSize          Int      @default(60)    // ขนาด pixel
+  desktopPetSpeed         Float    @default(2)     // ความเร็ว
+  desktopPetGravity       Float    @default(0.4)   // แรงโน้มถ่วง
+  desktopPetJumpPower     Float    @default(10)    // แรงกระโดด
 
   // Marquee Bar
   marqueeEnabled          Boolean  @default(false)
@@ -948,11 +957,12 @@ model Coupon {
   value           Float    // จำนวนเงิน หรือ %
   minPurchase     Float    @default(0) // ยอดขั้นต่ำที่ใช้ได้
   maxDiscount     Float?   // ส่วนลดสูงสุด (สำหรับ percent)
-  usageLimit      Int?     // จำกัดจำนวนครั้งทั้งหมด (null = ไม่จำกัด)
-  usageCount      Int      @default(0) // ใช้ไปแล้วกี่ครั้ง
-  perUserLimit    Int      @default(1) // จำกัดต่อผู้ใช้ 1 คน
-  isActive        Boolean  @default(true)
-  expiresAt       DateTime? // วันหมดอายุ (null = ไม่หมด)
+  usageLimit          Int?     // จำกัดจำนวนครั้งทั้งหมด (null = ไม่จำกัด)
+  usageCount          Int      @default(0) // ใช้ไปแล้วกี่ครั้ง
+  perUserLimit        Int      @default(1) // จำกัดต่อผู้ใช้ 1 คน
+  applicableDurations String[] @default([]) // ใช้ได้เฉพาะระยะเวลาใดบ้าง เช่น ["30"] = ใช้ได้เฉพาะซื้อ 30 วัน (1 เดือน) ถ้าว่าง = ใช้ได้ทุกระยะเวลา
+  isActive            Boolean  @default(true)
+  expiresAt           DateTime? // วันหมดอายุ (null = ไม่หมด)
   createdBy       String   // admin userId
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1301,4 +1311,27 @@ model AiChat {
   messages  Json     @default("[]")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ==========================================
+// API Call Log - บันทึกการเรียก API ภายนอก
+// ==========================================
+
+model ApiCallLog {
+  id           String   @id @default(cuid())
+  apiType      String   // "truemoney" | "slipcheck"
+  endpoint     String   // full URL
+  method       String   // GET | POST
+  requestBody  String?  // JSON string
+  responseBody String?  // JSON string
+  statusCode   Int?
+  success      Boolean  @default(false)
+  durationMs   Int?     // response time in ms
+  error        String?
+  userId       String?  // user who initiated
+  createdAt    DateTime @default(now())
+
+  @@index([apiType])
+  @@index([createdAt])
+  @@index([success])
 }

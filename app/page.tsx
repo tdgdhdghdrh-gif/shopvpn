@@ -35,6 +35,14 @@ import LandingOcean from '@/components/landing/LandingOcean'
 import LandingSunset from '@/components/landing/LandingSunset'
 import LandingMidnight from '@/components/landing/LandingMidnight'
 import LandingSakura from '@/components/landing/LandingSakura'
+import LandingAurora from '@/components/landing/LandingAurora'
+import LandingNeonNight from '@/components/landing/LandingNeonNight'
+import LandingSpace from '@/components/landing/LandingSpace'
+import LandingFantasy from '@/components/landing/LandingFantasy'
+import LandingZenGarden from '@/components/landing/LandingZenGarden'
+import LandingCyberTokyo from '@/components/landing/LandingCyberTokyo'
+import LandingRetroWave from '@/components/landing/LandingRetroWave'
+import LandingForestSpirit from '@/components/landing/LandingForestSpirit'
 import {
   OrganizationJsonLd,
   WebSiteJsonLd,
@@ -701,6 +709,22 @@ export default async function HomePage() {
         return <LandingMidnight />
       case 'sakura':
         return <LandingSakura />
+      case 'aurora':
+        return <LandingAurora />
+      case 'neonNight':
+        return <LandingNeonNight />
+      case 'space':
+        return <LandingSpace />
+      case 'fantasy':
+        return <LandingFantasy />
+      case 'zenGarden':
+        return <LandingZenGarden />
+      case 'cyberTokyo':
+        return <LandingCyberTokyo />
+      case 'retroWave':
+        return <LandingRetroWave />
+      case 'forestSpirit':
+        return <LandingForestSpirit />
       case 'classic':
       default:
         return <LandingClassic />

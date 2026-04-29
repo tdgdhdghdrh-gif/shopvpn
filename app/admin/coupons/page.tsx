@@ -11,6 +11,7 @@ interface CouponItem {
   id: string; code: string; name: string; description: string | null
   type: string; value: number; minPurchase: number; maxDiscount: number | null
   usageLimit: number | null; usageCount: number; perUserLimit: number
+  applicableDurations: string[]
   isActive: boolean; expiresAt: string | null
   createdAt: string; _count: { redemptions: number }
 }
@@ -31,7 +32,7 @@ export default function AdminCouponsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState({
     code: '', name: '', description: '', type: 'fixed', value: '',
-    minPurchase: '0', maxDiscount: '', usageLimit: '', perUserLimit: '1', expiresAt: '',
+    minPurchase: '0', maxDiscount: '', usageLimit: '', perUserLimit: '1', applicableDurations: [] as string[], expiresAt: '',
   })
 
   useEffect(() => { fetchCoupons() }, [])
@@ -49,7 +50,7 @@ export default function AdminCouponsPage() {
   }
 
   function resetForm() {
-    setForm({ code: '', name: '', description: '', type: 'fixed', value: '', minPurchase: '0', maxDiscount: '', usageLimit: '', perUserLimit: '1', expiresAt: '' })
+    setForm({ code: '', name: '', description: '', type: 'fixed', value: '', minPurchase: '0', maxDiscount: '', usageLimit: '', perUserLimit: '1', applicableDurations: [], expiresAt: '' })
     setEditingId(null)
     setShowForm(false)
   }
@@ -60,6 +61,7 @@ export default function AdminCouponsPage() {
       value: c.value.toString(), minPurchase: c.minPurchase.toString(),
       maxDiscount: c.maxDiscount?.toString() || '', usageLimit: c.usageLimit?.toString() || '',
       perUserLimit: c.perUserLimit.toString(),
+      applicableDurations: c.applicableDurations || [],
       expiresAt: c.expiresAt ? new Date(c.expiresAt).toISOString().slice(0, 16) : '',
     })
     setEditingId(c.id)
@@ -157,7 +159,7 @@ export default function AdminCouponsPage() {
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">จัดการคูปอง</h2>
           </div>
-          <p className="text-zinc-500 text-xs sm:text-sm font-medium">สร้างและจัดการคูปองส่วนลดสำหรับผู้ใช้</p>
+          <p className="text-zinc-500 text-xs sm:text-sm font-medium">คูปองใช้ได้เฉพาะตอนซื้อ VPN (purchase-time) — ผู้ใช้ต้องใส่โค้ดที่หน้าซื้อ VPN เท่านั้น</p>
         </div>
         <button onClick={() => { resetForm(); setShowForm(true) }}
           className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 border border-amber-500/30 rounded-xl text-sm font-bold text-white hover:bg-amber-500 transition-all active:scale-95">
@@ -244,6 +246,39 @@ export default function AdminCouponsPage() {
                 placeholder="1" min="1"
                 className="w-full mt-1 bg-black border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-zinc-700" />
             </div>
+            <div className="sm:col-span-2">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">ใช้ได้เฉพาะระยะเวลา (ไม่เลือก = ใช้ได้ทุกระยะเวลา)</label>
+              <div className="flex flex-wrap gap-2 mt-1.5">
+                {[
+                  { value: '1', label: '1 วัน' },
+                  { value: '7', label: '7 วัน' },
+                  { value: '30', label: '1 เดือน' },
+                  { value: '90', label: '3 เดือน' },
+                  { value: '180', label: '6 เดือน' },
+                  { value: '365', label: '1 ปี' },
+                ].map(d => {
+                  const isSelected = form.applicableDurations.includes(d.value)
+                  return (
+                    <button
+                      key={d.value}
+                      onClick={() => setForm(f => ({
+                        ...f,
+                        applicableDurations: isSelected
+                          ? f.applicableDurations.filter(v => v !== d.value)
+                          : [...f.applicableDurations, d.value]
+                      }))}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                        isSelected
+                          ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                          : 'bg-zinc-900 border-white/10 text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
             {form.type === 'percent' && (
               <div>
                 <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">ส่วนลดสูงสุด (฿)</label>
@@ -305,6 +340,12 @@ export default function AdminCouponsPage() {
                 <span>{c.type === 'fixed' ? `${c.value}฿` : `${c.value}%`}</span>
                 <span>ใช้แล้ว {c.usageCount}{c.usageLimit ? `/${c.usageLimit}` : ''} ครั้ง</span>
                 {c.expiresAt && <span>หมด {new Date(c.expiresAt).toLocaleDateString('th-TH')}</span>}
+                {c.applicableDurations && c.applicableDurations.length > 0 && (
+                  <span className="text-amber-400">เฉพาะ {c.applicableDurations.map(d => {
+                    const labels: Record<string, string> = { '1': '1วัน', '7': '7วัน', '30': '1ด', '90': '3ด', '180': '6ด', '365': '1ป' }
+                    return labels[d] || `${d}วัน`
+                  }).join(', ')}</span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-1 shrink-0">

@@ -44,6 +44,7 @@ import {
   Code2,
   Wand2,
   Download,
+  Calendar,
   CalendarClock,
   Crown,
   Smartphone,
@@ -53,6 +54,8 @@ import {
   ArrowRightLeft,
   ShoppingCart,
   Bot,
+  Activity,
+  Cat,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -61,7 +64,7 @@ const menuItems = [
   { name: 'โหนดเครือข่าย', href: '/admin/vpn', icon: Globe },
   { name: 'จัดการ Panel', href: '/admin/panel', icon: Monitor },
   { name: 'ผู้ใช้ระบบ', href: '/admin/users', icon: Users },
-  { name: 'คำสั่งซื้อ', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'คำสั่งซื้อ VPN', href: '/admin/orders', icon: ShoppingCart },
   { name: 'ธุรกรรมการเงิน', href: '/admin/topups', icon: PieChart },
   { name: 'รายได้เซิร์ฟเวอร์', href: '/admin/revenue', icon: TrendingUp },
   { name: 'อีเวนท์ลดราคา', href: '/admin/events', icon: Tag },
@@ -97,6 +100,7 @@ const superAdminMenuItems = [
   { name: 'ข้อมูลเซิร์ฟเวอร์', href: '/admin/server-info', icon: Server },
   { name: 'จัดการรายได้เซิฟ', href: '/admin/super-revenue', icon: Shield },
   { name: 'API Keys', href: '/admin/api-keys', icon: Key },
+  { name: 'การใช้งาน API', href: '/admin/api-usage', icon: Activity },
   { name: 'Branding & Theme', href: '/admin/branding', icon: Palette },
   { name: 'จัดการ UI/Theme', href: '/admin/theme-editor', icon: Sliders },
   { name: 'reCAPTCHA', href: '/admin/recaptcha', icon: ShieldCheck },
@@ -109,6 +113,8 @@ const superAdminMenuItems = [
   { name: 'จัดการเมนู', href: '/admin/menu-settings', icon: Construction },
   { name: 'ระบบอัปเดต', href: '/admin/updates', icon: AlertTriangle },
   { name: 'อัพเดทเว็บ', href: '/admin/update-site', icon: Download },
+  { name: 'วันหมดอายุเว็บ', href: '/admin/site-expiry', icon: Calendar },
+  { name: 'ตัวละครวิ่ง', href: '/admin/desktop-pet', icon: Cat },
   { name: 'AI ผู้ช่วย', href: '/admin/ai-assistant', icon: Bot },
 ]
 
@@ -200,13 +206,23 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
 
   return (
     <>
-      {/* Mobile Toggle - integrated into header area */}
+      {/* Mobile Toggle - hidden when sidebar is open */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-3 left-3 z-[60] p-2 bg-zinc-900/90 backdrop-blur-sm border border-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-95"
+        className={`lg:hidden fixed top-3 left-3 z-[60] p-2 bg-zinc-900/90 backdrop-blur-sm border border-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-95 ${isOpen ? 'hidden' : ''}`}
       >
-        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        <Menu className="w-5 h-5" />
       </button>
+
+      {/* Mobile Close Button - inside sidebar header */}
+      {isOpen && (
+        <button
+          onClick={() => setIsOpen(false)}
+          className="lg:hidden fixed top-3 left-[248px] z-[70] p-2 bg-zinc-900/90 backdrop-blur-sm border border-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-95"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Overlay */}
       {isOpen && (
@@ -269,6 +285,7 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => setIsOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                     ${isCollapsed ? 'justify-center px-2' : ''}
                     ${isActive 
@@ -311,6 +328,7 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={() => setIsOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                         ${isCollapsed ? 'justify-center px-2' : ''}
                         ${isActive 
@@ -342,6 +360,7 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
             {!isCollapsed && (
               <Link 
                 href="/" 
+                onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 hover:text-white hover:bg-white/5 transition-all"
               >
                 <ExternalLink className="w-[18px] h-[18px] flex-shrink-0" />

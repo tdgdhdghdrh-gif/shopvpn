@@ -169,6 +169,13 @@ export async function GET() {
         customCursorEnabled: settings.customCursorEnabled ?? false,
         customCursorStyle: settings.customCursorStyle || 'glow',
         customCursorColor: settings.customCursorColor || '#06b6e4',
+        // Desktop Pet
+        desktopPetEnabled: settings.desktopPetEnabled ?? false,
+        desktopPetImageUrl: settings.desktopPetImageUrl || null,
+        desktopPetSize: settings.desktopPetSize ?? 60,
+        desktopPetSpeed: settings.desktopPetSpeed ?? 2,
+        desktopPetGravity: settings.desktopPetGravity ?? 0.4,
+        desktopPetJumpPower: settings.desktopPetJumpPower ?? 10,
       }
     })
   } catch (error) {
