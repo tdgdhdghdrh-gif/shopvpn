@@ -1025,22 +1025,22 @@ const previewComponents: Record<TemplateId, React.FC<{ isMobile?: boolean }>> = 
 // ===== Main Page =====
 
 export default function LandingTemplatePage() {
-  const [current, setCurrent] = useState<TemplateId>('classic')
-  const [selected, setSelected] = useState<TemplateId>('classic')
+  const [current, setCurrent] = useState<string>('classic')
+  const [selected, setSelected] = useState<string>('classic')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [previewTemplate, setPreviewTemplate] = useState<TemplateId | null>(null)
+  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null)
   const [customHtml, setCustomHtml] = useState('')
   const [savedCustomHtml, setSavedCustomHtml] = useState('')
 
   // Fetch current template
   useEffect(() => {
     fetch('/api/admin/settings')
-      .then(res => res.json())
-      .then(data => {
-        const s = data.settings
-        const tmpl = (s?.landingTemplate || 'classic') as TemplateId
+      .then(r => r.json())
+      .then((settingsData) => {
+        const s = settingsData.settings
+        const tmpl = s?.landingTemplate || 'classic'
         setCurrent(tmpl)
         setSelected(tmpl)
         setCustomHtml(s?.landingCustomHtml || '')
@@ -1050,18 +1050,15 @@ export default function LandingTemplatePage() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Save template
   async function handleSave() {
     setSaving(true)
     setSaved(false)
     try {
-      // First fetch current settings, then update with new template
       const getRes = await fetch('/api/admin/settings')
       const getData = await getRes.json()
       const currentSettings = getData.settings || {}
 
       const payload: Record<string, unknown> = { ...currentSettings, landingTemplate: selected }
-      // Always send customHtml if selected or if it has changed
       if (selected === 'customHtml' || customHtml !== savedCustomHtml) {
         payload.landingCustomHtml = customHtml
       }
@@ -1086,6 +1083,11 @@ export default function LandingTemplatePage() {
 
   const hasChanges = current !== selected || (selected === 'customHtml' && customHtml !== savedCustomHtml)
   const activePreview = previewTemplate || selected
+
+  // Get current template name
+  function getCurrentTemplateName() {
+    return templates.find(t => t.id === current)?.name || 'Classic'
+  }
 
   if (loading) {
     return (
@@ -1141,7 +1143,7 @@ export default function LandingTemplatePage() {
         </div>
         <div>
           <p className="text-[11px] text-zinc-500">กำลังใช้งานอยู่</p>
-          <p className="text-sm font-bold text-white">{templates.find(t => t.id === current)?.name} Template</p>
+          <p className="text-sm font-bold text-white">{getCurrentTemplateName()} Template</p>
         </div>
         {hasChanges && (
           <div className="ml-auto flex items-center gap-1.5 text-amber-400">
@@ -1166,7 +1168,7 @@ export default function LandingTemplatePage() {
               onMouseLeave={() => setPreviewTemplate(null)}
               className={`relative text-left rounded-2xl border-2 transition-all overflow-hidden group ${
                 isActive
-                  ? `${tmpl.border}/40 bg-white/[0.03] shadow-lg shadow-${tmpl.accent}-500/5`
+                  ? `${tmpl.border}/40 bg-white/[0.03]`
                   : 'border-white/[0.06] hover:border-white/[0.15] bg-white/[0.01] hover:bg-white/[0.02]'
               }`}
             >
@@ -1284,7 +1286,9 @@ export default function LandingTemplatePage() {
         <div className="flex items-center gap-2 mb-4">
           <Eye className="w-4 h-4 text-zinc-500" />
           <h2 className="text-sm font-bold text-white">ตัวอย่างขนาดใหญ่</h2>
-          <span className="text-[11px] text-zinc-600">- {templates.find(t => t.id === activePreview)?.name}</span>
+          <span className="text-[11px] text-zinc-600">
+            - {templates.find(t => t.id === activePreview)?.name}
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1292,8 +1296,8 @@ export default function LandingTemplatePage() {
           <div>
             <DesktopFrame label="Desktop Preview">
               {(() => {
-                const Comp = previewComponents[activePreview]
-                return <Comp isMobile={false} />
+                const Comp = previewComponents[activePreview as TemplateId]
+                return Comp ? <Comp isMobile={false} /> : <ClassicPreview isMobile={false} />
               })()}
             </DesktopFrame>
           </div>
@@ -1302,8 +1306,8 @@ export default function LandingTemplatePage() {
           <div className="flex justify-center">
             <PhoneFrame label="Mobile Preview">
               {(() => {
-                const Comp = previewComponents[activePreview]
-                return <Comp isMobile={true} />
+                const Comp = previewComponents[activePreview as TemplateId]
+                return Comp ? <Comp isMobile={true} /> : <ClassicPreview isMobile={true} />
               })()}
             </PhoneFrame>
           </div>

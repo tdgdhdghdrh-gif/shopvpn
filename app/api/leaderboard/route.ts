@@ -13,6 +13,7 @@ export async function GET() {
         id: true,
         name: true,
         avatar: true,
+        googleAvatar: true,
         createdAt: true,
         dataUsage: true,
       },
@@ -27,7 +28,7 @@ export async function GET() {
     const leaderboard = topUsers.map((user, index) => ({
       rank: index + 1,
       name: maskName(user.name),
-      avatar: user.avatar || null,
+      avatar: user.avatar || user.googleAvatar || null,
       dataUsage: user.dataUsage || 0,
       joinedAt: user.createdAt || null,
     }))

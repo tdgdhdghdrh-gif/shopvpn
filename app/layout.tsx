@@ -21,6 +21,7 @@ import TopNotificationBar from "@/components/TopNotificationBar";
 import BackToTop from "@/components/BackToTop";
 import CustomCursor from "@/components/CustomCursor";
 import DesktopPet from "@/components/DesktopPet";
+import FloatingTextEffect from "@/components/FloatingTextEffect";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -195,23 +196,24 @@ export default async function RootLayout({
         <CustomCursor />
         <SettingsProvider>
           <TopNotificationBar />
-          <MarqueeBar />
-          <CountdownTimer />
-          <ChunkErrorHandler />
-          <ServiceWorkerRegister />
-          <DynamicBackground />
-          <WebEffectsBridge />
-          <GlobalClickEffect />
-          <ImpersonateBanner />
-          <SiteUpdateOverlay />
-          <SiteMusicPlayer />
-          <FloatingButton />
-          <DesktopPet />
-          <div className="overflow-x-hidden relative z-10">
-            {children}
-          </div>
-          <BackToTop />
-        </SettingsProvider>
+            <MarqueeBar />
+            <CountdownTimer />
+            <ChunkErrorHandler />
+            <ServiceWorkerRegister />
+            <DynamicBackground />
+            <WebEffectsBridge />
+            <GlobalClickEffect />
+            <ImpersonateBanner />
+            <SiteUpdateOverlay />
+            <SiteMusicPlayer />
+            <FloatingButton />
+            <DesktopPet />
+            <FloatingTextEffect />
+            <div className="overflow-x-hidden relative z-10">
+              {children}
+            </div>
+            <BackToTop />
+          </SettingsProvider>
       </body>
     </html>
   );

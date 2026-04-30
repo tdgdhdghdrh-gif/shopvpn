@@ -14,6 +14,7 @@ export async function GET() {
         id: true,
         name: true,
         avatar: true,
+        googleAvatar: true,
         referralCount: true,
         totalReferralEarned: true,
         createdAt: true,
@@ -37,7 +38,7 @@ export async function GET() {
       return {
         rank: index + 1,
         name: user.name,
-        avatar: user.avatar,
+        avatar: user.avatar || user.googleAvatar || null,
         referralCount: user.referralCount,
         totalEarned: user.totalReferralEarned,
         badge,

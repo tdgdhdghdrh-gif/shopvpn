@@ -8,6 +8,7 @@ import {
   Gift, CheckCircle2, Rocket, Wifi, Gamepad2, Crown, Droplets, Sun, Building2, Star,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import FirebaseAuthButton from '@/components/FirebaseAuthButton'
 
 const ReCAPTCHA = dynamic(() => import('react-google-recaptcha'), { ssr: false })
 
@@ -516,6 +517,16 @@ function RegisterForm() {
                   )}
                 </button>
               </form>
+
+              {/* Google Register via Firebase */}
+              <div className="mt-5">
+                <div className="relative flex items-center gap-3">
+                  <div className="flex-1 h-px bg-white/[0.06]" />
+                  <span className="text-[11px] text-zinc-600 uppercase tracking-wider">หรือ</span>
+                  <div className="flex-1 h-px bg-white/[0.06]" />
+                </div>
+                <FirebaseAuthButton mode="register" className="mt-4" />
+              </div>
 
               {/* Login link */}
               <div className="mt-8 pt-6 border-t border-white/[0.04] text-center">

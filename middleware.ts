@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from './lib/prisma'
 
 function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for')
@@ -28,8 +29,39 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // === License Check (DISABLED) ===
-  // License check bypassed - all sites are now fully activated
+  // === Maintenance Mode Check ===
+  try {
+    const maintenance = await prisma.maintenanceMode.findFirst()
+    if (maintenance?.enabled) {
+      // Allow admin routes
+      if (pathname.startsWith('/admin') || pathname.startsWith('/login')) {
+        // Check if user has admin session
+        const sessionCookie = request.cookies.get('shop-session')?.value
+        if (sessionCookie) {
+          // Try to verify admin session via API or decode
+          // For now, allow all /admin and /login paths
+          return NextResponse.next()
+        }
+      }
+
+      // Check if IP is in allowed list
+      const clientIP = getClientIP(request)
+      if (maintenance.allowedIps?.includes(clientIP)) {
+        return NextResponse.next()
+      }
+
+      // Block and show maintenance page
+      if (pathname !== '/maintenance') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/maintenance'
+        url.searchParams.set('msg', encodeURIComponent(maintenance.message))
+        return NextResponse.redirect(url)
+      }
+    }
+  } catch (error) {
+    // If DB error, don't block (fail open)
+    console.error('Maintenance check error:', error)
+  }
 
   // === IP Logging ===
   const ip = getClientIP(request)

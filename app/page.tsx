@@ -158,6 +158,7 @@ export default async function HomePage() {
       isRevenueAdmin: true,
       isAgent: true,
       avatar: true,
+      googleAvatar: true,
       referralCount: true,
       createdAt: true,
       _count: {
@@ -175,7 +176,7 @@ export default async function HomePage() {
 
   const isAdmin = dbUser ? (dbUser.isSuperAdmin || dbUser.isAdmin || dbUser.isRevenueAdmin || dbUser.isAgent) : false
   const activeVpnCount = dbUser?._count?.vpnOrders ?? 0
-  const userAvatar = dbUser?.avatar || null
+  const userAvatar = dbUser?.avatar || dbUser?.googleAvatar || null
   const referralCount = dbUser?.referralCount ?? 0
   const memberSince = dbUser?.createdAt ? dbUser.createdAt.toLocaleDateString('th-TH', { month: 'short', year: 'numeric' }) : null
 

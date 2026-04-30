@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
     if (session.isImpersonating && session.realAdminId) {
       const targetUser = await prisma.user.findUnique({
         where: { id: session.userId },
-        select: { id: true, name: true, email: true, balance: true, avatar: true }
+        select: { id: true, name: true, email: true, balance: true, avatar: true, googleAvatar: true }
       })
 
       return NextResponse.json({
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
           name: targetUser.name,
           email: targetUser.email,
           balance: targetUser.balance,
-          avatar: targetUser.avatar,
+          avatar: targetUser.avatar || targetUser.googleAvatar || null,
         } : null,
         realAdminEmail: session.realAdminEmail,
       })

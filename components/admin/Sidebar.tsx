@@ -56,6 +56,8 @@ import {
   Bot,
   Activity,
   Cat,
+  ClipboardList,
+  Type,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -63,6 +65,7 @@ const menuItems = [
   { name: 'ภาพรวม', href: '/admin', icon: LayoutDashboard },
   { name: 'โหนดเครือข่าย', href: '/admin/vpn', icon: Globe },
   { name: 'จัดการ Panel', href: '/admin/panel', icon: Monitor },
+  { name: 'ตั้งค่าการซื้อ VPN', href: '/admin/vpn-buy-settings', icon: Shield },
   { name: 'ผู้ใช้ระบบ', href: '/admin/users', icon: Users },
   { name: 'คำสั่งซื้อ VPN', href: '/admin/orders', icon: ShoppingCart },
   { name: 'ธุรกรรมการเงิน', href: '/admin/topups', icon: PieChart },
@@ -73,6 +76,7 @@ const menuItems = [
   { name: 'Ticket', href: '/admin/tickets', icon: Ticket },
   { name: 'รายงานเน็ตช้า', href: '/admin/slow-reports', icon: AlertTriangle },
   { name: 'ประกาศข่าวสาร', href: '/admin/announcements', icon: Megaphone },
+  { name: 'ข้อความลอย', href: '/admin/floating-texts', icon: Type },
   { name: 'แบนเนอร์โปรโมชั่น', href: '/admin/banners', icon: Image },
   { name: 'Popup โปรโมชั่น', href: '/admin/popups', icon: Maximize2 },
   { name: 'จัดการบทความ', href: '/admin/blog', icon: FileText },
@@ -112,10 +116,11 @@ const superAdminMenuItems = [
   { name: 'ย้ายข้อมูล', href: '/admin/migrate-data', icon: ArrowRightLeft },
   { name: 'จัดการเมนู', href: '/admin/menu-settings', icon: Construction },
   { name: 'ระบบอัปเดต', href: '/admin/updates', icon: AlertTriangle },
+  { name: 'System Health', href: '/admin/health', icon: Activity },
+  { name: 'Audit Log', href: '/admin/audit', icon: ClipboardList },
   { name: 'อัพเดทเว็บ', href: '/admin/update-site', icon: Download },
   { name: 'วันหมดอายุเว็บ', href: '/admin/site-expiry', icon: Calendar },
   { name: 'ตัวละครวิ่ง', href: '/admin/desktop-pet', icon: Cat },
-  { name: 'AI ผู้ช่วย', href: '/admin/ai-assistant', icon: Bot },
 ]
 
 interface SidebarProps {

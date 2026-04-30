@@ -7,7 +7,7 @@ import {
   Upload, X, QrCode, Settings as SettingsIcon, Info, ExternalLink,
   Globe, Image as ImageIcon, Type, DollarSign, Layout, Eye, EyeOff,
   CheckCircle, XCircle, ChevronDown,
-  Gift, Clock, Fingerprint,
+  Gift, Clock, Fingerprint, Smartphone,
 } from 'lucide-react'
 
 interface Settings {
@@ -462,6 +462,7 @@ export default function AdminSettingsPage() {
             </div>
           </SectionCard>
 
+          {/* Trial VPN */}
           {/* Trial VPN */}
           <SectionCard id="trial" title="ทดลองใช้ VPN ฟรี" desc="เปิด/ปิดระบบทดลองฟรี และตั้งระยะเวลา" icon={Gift} color="emerald" mobileSection={mobileSection} onToggle={toggleMobileSection}>
             <div className="space-y-5">

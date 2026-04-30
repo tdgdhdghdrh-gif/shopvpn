@@ -110,6 +110,10 @@ export async function GET() {
         // Trial VPN
         trialEnabled: settings.trialEnabled ?? true,
         trialDurationMinutes: settings.trialDurationMinutes ?? 60,
+        // VPN Buy
+        vpnBuyEnabled: settings.vpnBuyEnabled ?? true,
+        vpnBaseDeviceLimit: settings.vpnBaseDeviceLimit ?? 1,
+        vpnExtraDevicePrice: settings.vpnExtraDevicePrice ?? 1,
         // Server List Template
         serverListTemplate: settings.serverListTemplate || 'detailed',
         // Login / Register / VPN Template

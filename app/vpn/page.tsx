@@ -34,6 +34,11 @@ export default async function VpnPage({ searchParams }: PageProps) {
     prisma.settings.findFirst()
   ])
 
+  // Check if VPN buying is enabled
+  if (settings?.vpnBuyEnabled === false) {
+    redirect('/')
+  }
+
   const user = {
     name: session.name || '',
     email: session.email || '',
@@ -77,6 +82,8 @@ export default async function VpnPage({ searchParams }: PageProps) {
       hasDiscount: user.hasDiscount,
       promoDiscountPercent: userData?.promoDiscountPercent || 0
     },
+    vpnBaseDeviceLimit: settings?.vpnBaseDeviceLimit ?? 1,
+    vpnExtraDevicePrice: settings?.vpnExtraDevicePrice ?? 1,
     inboundOptions: (() => {
       const configs = sv.inboundConfigs as any[] | null
       if (configs && configs.length > 0) {

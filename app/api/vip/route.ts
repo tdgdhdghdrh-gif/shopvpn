@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     // Member since
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { createdAt: true, name: true, avatar: true }
+      select: { createdAt: true, name: true, avatar: true, googleAvatar: true }
     })
 
     return NextResponse.json({
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       topupCount,
       memberSince: user?.createdAt,
       userName: user?.name,
-      userAvatar: user?.avatar
+      userAvatar: user?.avatar || user?.googleAvatar || null
     })
   } catch (error) {
     console.error('Failed to get VIP status:', error)

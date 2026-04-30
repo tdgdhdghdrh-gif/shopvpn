@@ -19,7 +19,7 @@ export async function GET() {
 
     const ads = await prisma.ad.findMany({
       include: {
-        user: { select: { id: true, name: true, email: true, avatar: true } },
+        user: { select: { id: true, name: true, email: true, avatar: true, googleAvatar: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -32,7 +32,18 @@ export async function GET() {
       expired: ads.filter(a => a.status === 'expired').length,
     }
 
-    return NextResponse.json({ ads, stats })
+    // Combine avatar fields for frontend compatibility
+    const mappedAds = ads.map(ad => ({
+      ...ad,
+      user: ad.user ? {
+        id: ad.user.id,
+        name: ad.user.name,
+        email: ad.user.email,
+        avatar: ad.user.avatar || ad.user.googleAvatar || null,
+      } : undefined,
+    }))
+
+    return NextResponse.json({ ads: mappedAds, stats })
   } catch (error) {
     console.error('Admin ads GET error:', error)
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 })

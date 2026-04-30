@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       take: 100,
       include: {
         user: {
-          select: { id: true, name: true, avatar: true }
+          select: { id: true, name: true, avatar: true, googleAvatar: true }
         },
         likes: userId ? {
           where: { userId },
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
       createdAt: r.createdAt,
       user: {
         name: maskName(r.user.name),
-        avatar: r.user.avatar,
+        avatar: r.user.avatar || r.user.googleAvatar || null,
         isOwner: r.user.id === userId,
       },
       likeCount: r._count.likes,
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
         imageUrl: imageUrl || null,
       },
       include: {
-        user: { select: { name: true, avatar: true } },
+        user: { select: { name: true, avatar: true, googleAvatar: true } },
         _count: { select: { likes: true } }
       }
     })
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
         createdAt: review.createdAt,
         user: {
           name: maskName(review.user.name),
-          avatar: review.user.avatar,
+          avatar: review.user.avatar || review.user.googleAvatar || null,
           isOwner: true,
         },
         likeCount: 0,

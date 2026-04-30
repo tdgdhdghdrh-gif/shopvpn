@@ -16,6 +16,7 @@ interface UserData {
   email: string
   balance: number
   avatar?: string | null
+  googleAvatar?: string | null
 }
 
 export default function ProfileClient({ userId }: { userId: string }) {
@@ -236,11 +237,11 @@ export default function ProfileClient({ userId }: { userId: string }) {
                     className="hidden"
                     disabled={avatarUploading}
                   />
-                  {user?.avatar ? (
+                  {user?.avatar || user?.googleAvatar ? (
                     <div className="w-16 h-16 rounded-2xl overflow-hidden ring-2 ring-blue-500/30 group-hover:ring-blue-500/60 transition-all">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img 
-                        src={user.avatar} 
+                        src={user.avatar || user.googleAvatar || ''} 
                         alt={user.name} 
                         className="w-full h-full object-cover"
                       />

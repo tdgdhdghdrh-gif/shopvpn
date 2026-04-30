@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
         name: true,
         password: true,
         avatar: true,
+        googleAvatar: true,
         balance: true,
         promoDiscountPercent: true,
         promoLinkCode: true,

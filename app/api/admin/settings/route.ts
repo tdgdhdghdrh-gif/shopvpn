@@ -132,6 +132,10 @@ export async function POST(request: NextRequest) {
       // Trial VPN
       trialEnabled: body.trialEnabled !== undefined ? Boolean(body.trialEnabled) : (settings?.trialEnabled ?? true),
       trialDurationMinutes: body.trialDurationMinutes !== undefined ? parseInt(body.trialDurationMinutes) || 60 : (settings?.trialDurationMinutes ?? 60),
+      // VPN Buy toggle & device pricing
+      vpnBuyEnabled: body.vpnBuyEnabled !== undefined ? Boolean(body.vpnBuyEnabled) : (settings?.vpnBuyEnabled ?? true),
+      vpnBaseDeviceLimit: body.vpnBaseDeviceLimit !== undefined ? parseInt(body.vpnBaseDeviceLimit) || 1 : (settings?.vpnBaseDeviceLimit ?? 1),
+      vpnExtraDevicePrice: body.vpnExtraDevicePrice !== undefined ? parseFloat(body.vpnExtraDevicePrice) || 1 : (settings?.vpnExtraDevicePrice ?? 1),
       // Server List Template
       serverListTemplate: body.serverListTemplate !== undefined ? body.serverListTemplate : (settings?.serverListTemplate || 'detailed'),
       // Login / Register / VPN Template

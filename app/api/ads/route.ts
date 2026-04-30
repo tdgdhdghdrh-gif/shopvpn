@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
         endDate: { gt: now },
       },
       include: {
-        user: { select: { name: true, avatar: true } },
+        user: { select: { name: true, avatar: true, googleAvatar: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -47,7 +47,16 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    return NextResponse.json({ ads })
+    // Combine avatar fields for frontend compatibility
+    const mappedAds = ads.map(ad => ({
+      ...ad,
+      user: ad.user ? {
+        name: ad.user.name,
+        avatar: ad.user.avatar || ad.user.googleAvatar || null,
+      } : undefined,
+    }))
+
+    return NextResponse.json({ ads: mappedAds })
   } catch (error) {
     console.error('Ads GET error:', error)
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 })

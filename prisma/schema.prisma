@@ -13,6 +13,8 @@ model User {
   name                String
   password            String
   avatar              String?
+  googleId            String?  @unique
+  googleAvatar        String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   isAdmin             Boolean              @default(false)
@@ -137,6 +139,9 @@ model Settings {
   slipEnabled         Boolean  @default(true)  // เปิด/ปิดระบบเติมเงินสลิป
   autoDisableTopup    Boolean  @default(true)  // ซ่อนช่องทางอัตโนมัติถ้าขัดข้องบ่อย
   trialDurationMinutes Int     @default(60)    // ระยะเวลาทดลองฟรี (นาที)
+  vpnBuyEnabled       Boolean  @default(true)  // เปิด/ปิดหน้าซื้อ VPN (/vpn?server=xxx)
+  vpnBaseDeviceLimit  Int      @default(1)     // จำนวนอุปกรณ์ฟรีที่ได้เมื่อซื้อ VPN
+  vpnExtraDevicePrice Float    @default(1)     // ราคาต่ออุปกรณ์เพิ่ม (฿/เครื่อง)
   serverListTemplate  String   @default("detailed") // รูปแบบหน้าเซิร์ฟเวอร์: detailed, image-card
   loginTemplate       String   @default("classic") // ธีมหน้าล็อกอิน: classic, minimal, gaming, corporate, premium, songkran
   registerTemplate    String   @default("classic") // ธีมหน้าสมัครสมาชิก: classic, minimal, gaming, corporate, premium, songkran
@@ -1334,4 +1339,141 @@ model ApiCallLog {
   @@index([apiType])
   @@index([createdAt])
   @@index([success])
+}
+
+// ==========================================
+// System Health & Maintenance
+// ==========================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // e.g. "CREATE_USER", "UPDATE_SETTINGS", "DELETE_ORDER"
+  entity    String   // e.g. "User", "Settings", "VpnOrder"
+  entityId  String?  // ID of affected entity
+  oldValue  String?  // JSON string of old data
+  newValue  String?  // JSON string of new data
+  userId    String   // admin who performed action
+  userName  String   // snapshot of admin name
+  ipAddress String?  // IP of admin
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model MaintenanceMode {
+  id          String    @id @default(cuid())
+  enabled     Boolean   @default(false)
+  message     String    @default("ขณะนี้ระบบกำลังปรับปรุง กรุณากลับมาใหม่ในอีกสักครู่")
+  startTime   DateTime?
+  endTime     DateTime?
+  allowedIps  String[]  @default([])  // IPs that can bypass maintenance
+  updatedBy   String?
+  updatedAt   DateTime  @updatedAt
+}
+
+model ServerHealthLog {
+  id           String   @id @default(cuid())
+  serverName   String
+  serverId     String?
+  cpuPercent   Float?
+  memoryPercent Float?
+  diskPercent  Float?
+  networkRx    Float?   // bytes/sec
+  networkTx    Float?   // bytes/sec
+  activeUsers  Int?
+  latencyMs    Float?
+  isOnline     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([serverName])
+  @@index([createdAt])
+  @@index([isOnline])
+}
+
+// ==========================================
+// Site Appearance / Theme & Mood
+// ==========================================
+
+model SiteAppearance {
+  id                String   @id @default(cuid())
+  themeMode         String   @default("dark")  // dark | light | system
+  seasonalTheme     String?  // songkran | halloween | christmas | chinese-new-year | valentine | loy-krathong | new-year
+  moodColor         String?  // chill | energy | luxury | night | ocean | forest | sunset
+  customPrimaryColor String? // hex color override
+  customBgColor     String?  // hex color override
+  enableParticles   Boolean  @default(false)
+  particleType      String?  // snow | stars | bubbles | leaves | rain | fireflies
+  enableConfetti    Boolean  @default(false)
+  updatedBy         String?
+  updatedAt         DateTime @updatedAt
+}
+
+// ==========================================
+// Screen Announcement - ข้อความแจ้งเตือนบนหน้าจอ
+// ==========================================
+
+model ScreenAnnouncement {
+  id          String    @id @default(cuid())
+  title       String    // หัวข้อ
+  message     String    // ข้อความ
+  type        String    @default("info") // info | warning | success | error | promo
+  position    String    @default("top") // top | bottom | center
+  bgColor     String?   // สีพื้นหลัง custom (hex)
+  textColor   String?   // สีตัวอักษร custom (hex)
+  icon        String?   // emoji หรือ icon name
+  isActive    Boolean   @default(true)
+  dismissible Boolean   @default(true) // ผู้ใช้กดปิดได้หรือไม่
+  showOnce    Boolean   @default(false) // แสดงครั้งเดียวต่อ session
+  startAt     DateTime? // เริ่มแสดง
+  endAt       DateTime? // หยุดแสดง
+  linkUrl     String?   // ลิงก์เมื่อคลิก
+  linkText    String?   // ข้อความปุ่มลิงก์
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive])
+  @@index([startAt])
+  @@index([endAt])
+}
+
+// ==========================================
+// AI Generated Template - ธีม AI
+// ==========================================
+
+model AiGeneratedTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  prompt      String   @db.Text
+  htmlContent String?  @db.Text  // HTML ที่ AI/fallback สร้าง
+  config      Json     // JSON config fallback ถ้าไม่มี htmlContent
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+// ==========================================
+// Floating Text Effect - ข้อความลอย
+// ==========================================
+
+model FloatingTextSetting {
+  id            String   @id @default(cuid())
+  enabled       Boolean  @default(false)
+  interval      Int      @default(2000)   // ms ระหว่างข้อความใหม่
+  minDuration   Int      @default(8)      // วินาทีต่ำสุด
+  maxDuration   Int      @default(14)     // วินาทีสูงสุด
+  fontSize      String   @default("16px")
+  textColor     String   @default("#22d3ee")
+  glowColor     String   @default("rgba(34,211,238,0.8)")
+  showRealData  Boolean  @default(true)   // แสดงข้อมูลจริง
+  customTexts   String[] @default([])     // ข้อความ custom
+  position      String   @default("full")  // full | top-half | bottom-half
+  updatedBy     String?
+  updatedAt     DateTime @updatedAt
 }

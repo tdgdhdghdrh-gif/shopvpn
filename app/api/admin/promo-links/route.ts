@@ -24,9 +24,9 @@ export async function GET(request: NextRequest) {
       const userIds = activations.map((a) => a.userId)
       const users = await prisma.user.findMany({
         where: { id: { in: userIds } },
-        select: { id: true, name: true, email: true, avatar: true, createdAt: true },
+        select: { id: true, name: true, email: true, avatar: true, googleAvatar: true, createdAt: true },
       })
-      const userMap = Object.fromEntries(users.map((u) => [u.id, u]))
+      const userMap = Object.fromEntries(users.map((u) => [u.id, { ...u, avatar: u.avatar || u.googleAvatar || null }]))
 
       const data = activations.map((a) => ({
         id: a.id,

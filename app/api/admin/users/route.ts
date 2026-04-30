@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
         discountExpiry: true,
         createdAt: true,
         avatar: true,
+        googleAvatar: true,
       },
       orderBy: {
         createdAt: 'desc',

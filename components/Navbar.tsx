@@ -255,8 +255,9 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
         const data = await res.json()
         if (data.user) {
           setBalance(data.user.balance)
-          if (data.user.avatar) {
-            setUserAvatar(data.user.avatar)
+          const avatar = data.user.avatar || data.user.googleAvatar
+          if (avatar) {
+            setUserAvatar(avatar)
           }
         }
       } catch (error) {

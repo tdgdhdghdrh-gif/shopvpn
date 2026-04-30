@@ -393,13 +393,60 @@ export async function POST(request: Request) {
     const days = parseInt(formData.get('days') as string || '1')
     const customName = formData.get('customName') as string
     const ipLimitRaw = formData.get('ipLimit') as string
-    const ipLimit = ipLimitRaw ? Math.max(0, Math.min(10, parseInt(ipLimitRaw) || 0)) : 0
     const selectedInboundIdRaw = formData.get('selectedInboundId') as string || ''
     const selectedInboundId = selectedInboundIdRaw ? parseInt(selectedInboundIdRaw) : null
     const couponCode = (formData.get('couponCode') as string || '').trim()
 
     if (!serverId) {
       return NextResponse.json({ success: false, error: 'ไม่พบเซิร์ฟเวอร์' })
+    }
+
+    // Load system settings
+    const sysSettings = await prisma.settings.findFirst().catch(() => null)
+
+    // Check if VPN buying is enabled
+    if (sysSettings?.vpnBuyEnabled === false && !isTrial) {
+      return NextResponse.json({ success: false, error: 'ระบบซื้อ VPN ปิดอยู่ในขณะนี้' })
+    }
+
+    // Get server details
+    const server = await prisma.vpnServer.findUnique({
+      where: { id: serverId },
+      include: {
+        _count: {
+          select: {
+            orders: {
+              where: { isActive: true }
+            }
+          }
+        }
+      }
+    })
+
+    if (!server) {
+      return NextResponse.json({ success: false, error: 'ไม่พบเซิร์ฟเวอร์' })
+    }
+
+    // Check for existing active order on this server for this user
+    const existingActiveOrder = await prisma.vpnOrder.findFirst({
+      where: {
+        userId: session.userId,
+        serverId: serverId,
+        isActive: true,
+        expiryTime: { gt: new Date() }
+      }
+    })
+
+    if (existingActiveOrder && !isTrial) {
+      return NextResponse.json({ success: false, error: 'คุณมีบัญชี VPN ที่ใช้งานอยู่บนเซิร์ฟเวอร์นี้แล้ว กรุณารอหมดอายุหรือต่ออายุ' })
+    }
+
+    // Apply device pricing from system settings
+    const vpnBaseDeviceLimit = sysSettings?.vpnBaseDeviceLimit ?? 1
+    const vpnExtraDevicePrice = sysSettings?.vpnExtraDevicePrice ?? 1
+    let ipLimit = ipLimitRaw ? Math.max(0, Math.min(10, parseInt(ipLimitRaw) || 0)) : 0
+    if (ipLimit < vpnBaseDeviceLimit) {
+      ipLimit = vpnBaseDeviceLimit
     }
 
     // Validate name for paid orders
@@ -442,24 +489,6 @@ export async function POST(request: Request) {
       }
     } else if (!days || days < 1 || days > 365) {
       return NextResponse.json({ success: false, error: 'กรุณาเลือกจำนวนวัน 1-365 วัน' })
-    }
-
-    // Get server details
-    const server = await prisma.vpnServer.findUnique({
-      where: { id: serverId },
-      include: {
-        _count: {
-          select: {
-            orders: {
-              where: { isActive: true }
-            }
-          }
-        }
-      }
-    })
-
-    if (!server) {
-      return NextResponse.json({ success: false, error: 'ไม่พบเซิร์ฟเวอร์' })
     }
 
     // Prevent buying hidden servers
@@ -523,8 +552,9 @@ export async function POST(request: Request) {
       } else {
         totalPrice = days * pricePerDay
       }
-      // Add IP limit surcharge
-      totalPrice += (effectiveIpLimit > 0 ? effectiveIpLimit * 1 : 0)
+      // Add extra device surcharge
+      const extraDevices = Math.max(0, effectiveIpLimit - vpnBaseDeviceLimit)
+      totalPrice += (extraDevices > 0 ? extraDevices * vpnExtraDevicePrice : 0)
     }
 
     // ===== COUPON DISCOUNT (purchase-time) =====

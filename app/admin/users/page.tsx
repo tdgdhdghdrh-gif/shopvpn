@@ -23,6 +23,7 @@ interface UserData {
   discountExpiry: string | null
   createdAt: string
   avatar?: string | null
+  googleAvatar?: string | null
 }
 
 interface VpnOrder {
@@ -747,10 +748,10 @@ export default function AdminUsersPage() {
                     <tr key={user.id} className="group hover:bg-white/[0.02] transition-colors">
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
-                          {user.avatar ? (
+                          {user.avatar || user.googleAvatar ? (
                             <div className="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-white/10 flex-shrink-0">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                              <img src={user.avatar || user.googleAvatar || ''} alt={user.name} className="w-full h-full object-cover" />
                             </div>
                           ) : (
                             <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br ${getAvatarColor(user)} flex-shrink-0`}>
@@ -890,10 +891,10 @@ export default function AdminUsersPage() {
                     onClick={() => setExpandedUser(isExpanded ? null : user.id)}
                     className="w-full flex items-center gap-3 p-4 text-left active:bg-white/[0.02]"
                   >
-                    {user.avatar ? (
+                    {user.avatar || user.googleAvatar ? (
                       <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-white/10 flex-shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                        <img src={user.avatar || user.googleAvatar || ''} alt={user.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br ${getAvatarColor(user)} flex-shrink-0`}>

@@ -51,6 +51,8 @@ interface VpnBuyClientProps {
     name: string
     promoDiscountPercent: number
   }
+  vpnBaseDeviceLimit: number
+  vpnExtraDevicePrice: number
   inboundOptions: InboundOption[]
 }
 
@@ -127,10 +129,10 @@ function SuccessAnimation({ message, subMessage, onComplete }: { message: string
   )
 }
 
-export default function VpnBuyClient({ serverId, server, user, inboundOptions }: VpnBuyClientProps) {
+export default function VpnBuyClient({ serverId, server, user, vpnBaseDeviceLimit, vpnExtraDevicePrice, inboundOptions }: VpnBuyClientProps) {
   const [days, setDays] = useState(1)
   const [customName, setCustomName] = useState('')
-  const [ipLimit, setIpLimit] = useState(server.defaultIpLimit || 0)
+  const [ipLimit, setIpLimit] = useState(Math.max(vpnBaseDeviceLimit, server.defaultIpLimit || 0))
   const [selectedInboundId, setSelectedInboundId] = useState<number | null>(
     inboundOptions.length === 1 ? inboundOptions[0].inboundId : null
   )
@@ -182,7 +184,8 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
   }
 
   // Calculate total with package pricing support
-  const ipCost = ipLimit > 0 ? ipLimit * 1 : 0
+  const extraDevices = Math.max(0, ipLimit - vpnBaseDeviceLimit)
+  const ipCost = extraDevices > 0 ? extraDevices * vpnExtraDevicePrice : 0
   let baseCost = days * PRICE_PER_DAY
   
   // Check for package pricing (weekly / monthly / custom packages)
@@ -632,7 +635,7 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
           </div>
         </div>
 
-        {/* === SECTION 3: IP Limit === */}
+        {/* === SECTION 3: Device Limit === */}
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">
           <div className="p-5">
             <div className="flex items-center justify-between">
@@ -641,54 +644,67 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
                   <MonitorSmartphone className="w-3.5 h-3.5 text-amber-400" />
                 </div>
                 <div>
-                  <span className="text-sm font-semibold text-zinc-200 block leading-tight">จำกัดอุปกรณ์</span>
+                  <span className="text-sm font-semibold text-zinc-200 block leading-tight">จำนวนอุปกรณ์</span>
                   <span className="text-[11px] text-zinc-600">
-                    {ipLimit === 0 ? 'ไม่จำกัดจำนวนเครื่อง' : `จำกัด ${ipLimit} เครื่อง (+${ipCost} ฿)`}
+                    {vpnBaseDeviceLimit > 0
+                      ? `ฟรี ${vpnBaseDeviceLimit} เครื่อง ${extraDevices > 0 ? `(+${ipCost} ฿)` : ''}`
+                      : `จำกัด ${ipLimit} เครื่อง (+${ipCost} ฿)`}
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIpLimit(ipLimit > 0 ? 0 : 2)}
-                className={`relative w-12 h-7 rounded-full transition-all duration-300 flex-shrink-0 ${
-                  ipLimit > 0 
-                    ? 'bg-emerald-500 shadow-inner shadow-emerald-600/50' 
-                    : 'bg-zinc-800 border border-zinc-700'
-                }`}
-              >
-                <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-all duration-300 ${
-                  ipLimit > 0 ? 'translate-x-[22px]' : 'translate-x-0.5'
-                }`} />
-              </button>
             </div>
 
-            {/* IP stepper */}
-            {ipLimit > 0 && (
-              <div className="mt-4 pt-4 border-t border-zinc-800/50">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIpLimit(prev => Math.max(1, prev - 1))}
-                    disabled={ipLimit <= 1}
-                    className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <Minus className="w-3.5 h-3.5 text-zinc-400" />
-                  </button>
-                  <div className="flex-1 flex items-center justify-center gap-2">
-                    <span className="text-2xl font-bold text-white tabular-nums">{ipLimit}</span>
-                    <span className="text-xs text-zinc-500">อุปกรณ์</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIpLimit(prev => Math.min(10, prev + 1))}
-                    disabled={ipLimit >= 10}
-                    className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-zinc-400" />
-                  </button>
+            {/* Device stepper */}
+            <div className="mt-4 pt-4 border-t border-zinc-800/50">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIpLimit(prev => Math.max(1, prev - 1))}
+                  disabled={ipLimit <= 1}
+                  className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <Minus className="w-3.5 h-3.5 text-zinc-400" />
+                </button>
+                <div className="flex-1 flex items-center justify-center gap-2">
+                  <span className="text-2xl font-bold text-white tabular-nums">{ipLimit}</span>
+                  <span className="text-xs text-zinc-500">อุปกรณ์</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setIpLimit(prev => Math.min(10, prev + 1))}
+                  disabled={ipLimit >= 10}
+                  className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-3.5 h-3.5 text-zinc-400" />
+                </button>
               </div>
-            )}
+
+              {/* Detailed Breakdown */}
+              {vpnBaseDeviceLimit > 0 && (
+                <div className="mt-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-zinc-500">อุปกรณ์ฟรี ({Math.min(ipLimit, vpnBaseDeviceLimit)} เครื่อง)</span>
+                    <span className="text-emerald-400 font-bold">ฟรี</span>
+                  </div>
+                  {extraDevices > 0 && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-zinc-500">อุปกรณ์เพิ่ม ({extraDevices} เครื่อง x {vpnExtraDevicePrice} ฿)</span>
+                      <span className="text-amber-400 font-bold">+{ipCost} ฿</span>
+                    </div>
+                  )}
+                  <div className="border-t border-white/5 pt-1.5 flex justify-between items-center text-xs">
+                    <span className="text-zinc-400">รวมอุปกรณ์</span>
+                    <span className="text-white font-bold">{ipLimit} เครื่อง</span>
+                  </div>
+                </div>
+              )}
+
+              {vpnBaseDeviceLimit === 0 && (
+                <p className="text-center text-[10px] text-zinc-600 mt-2">
+                  ไม่มีอุปกรณ์ฟรี / เครื่องละ {vpnExtraDevicePrice} ฿
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -820,8 +836,12 @@ export default function VpnBuyClient({ serverId, server, user, inboundOptions }:
               </div>
               {ipLimit > 0 && (
                 <div className="flex justify-between items-center py-2.5">
-                  <span className="text-sm text-zinc-500">จำกัด IP ({ipLimit} เครื่อง)</span>
-                  <span className="text-sm text-zinc-300 tabular-nums">+{ipCost} ฿</span>
+                  <span className="text-sm text-zinc-500">จำกัดอุปกรณ์ ({ipLimit} เครื่อง)</span>
+                  {ipCost > 0 ? (
+                    <span className="text-sm text-zinc-300 tabular-nums">+{ipCost} ฿</span>
+                  ) : (
+                    <span className="text-sm text-emerald-400 tabular-nums">ฟรี</span>
+                  )}
                 </div>
               )}
               {(user.hasDiscount || user.promoDiscountPercent > 0) && (
