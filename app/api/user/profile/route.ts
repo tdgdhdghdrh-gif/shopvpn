@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, currentPassword, newPassword, avatar } = body
+    const { name, currentPassword, newPassword, avatar, contactLink } = body
 
     // Validate name
     if (!name || name.trim().length < 2) {
@@ -42,6 +42,11 @@ export async function PUT(request: NextRequest) {
     // Handle avatar update
     if (avatar !== undefined) {
       updateData.avatar = avatar || null
+    }
+
+    // Handle contact link update
+    if (contactLink !== undefined) {
+      updateData.contactLink = contactLink || null
     }
 
     // Handle password change
@@ -86,7 +91,8 @@ export async function PUT(request: NextRequest) {
         email: true,
         balance: true,
         isAdmin: true,
-        avatar: true
+        avatar: true,
+        contactLink: true
       }
     })
 

@@ -5,10 +5,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import VpnBuyClient from './VpnBuyClient'
+import ServerImageDisplay from '@/components/ServerImageDisplay'
 import {
   ArrowLeft, Shield, Zap, Globe, Clock, Server, Wifi, Lock,
   Gamepad2, Crown, Building2, Droplets, Sun, Signal, Activity,
-  Target, Award, Star, ChevronRight, Cpu, Radio,
+  Target, Award, Star, ChevronRight, Cpu, Radio, Sparkles,
 } from 'lucide-react'
 
 type VpnThemeId = 'classic' | 'minimal' | 'gaming' | 'corporate' | 'premium' | 'songkran'
@@ -34,7 +35,7 @@ export default async function VpnPage({ searchParams }: PageProps) {
   const [userData, settings] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.userId! },
-      select: { balance: true, discountExpiry: true, isAdmin: true, isSuperAdmin: true, isRevenueAdmin: true, promoDiscountPercent: true }
+      select: { balance: true, discountExpiry: true, isAdmin: true, isSuperAdmin: true, isRevenueAdmin: true, promoDiscountPercent: true, avatar: true, googleAvatar: true, contactLink: true }
     }),
     prisma.settings.findFirst()
   ])
@@ -42,6 +43,14 @@ export default async function VpnPage({ searchParams }: PageProps) {
   // Check if VPN buying is enabled
   if (settings?.vpnBuyEnabled === false) {
     redirect('/')
+  }
+
+  // Check force profile requirements (skip for admins)
+  const isAdminUser = !!(userData?.isSuperAdmin || userData?.isAdmin || userData?.isRevenueAdmin)
+  const needsProfileImage = !isAdminUser && settings?.forceProfileImage && !userData?.avatar && !userData?.googleAvatar
+  const needsContactLink = !isAdminUser && settings?.forceContactLink && !userData?.contactLink
+  if (needsProfileImage || needsContactLink) {
+    redirect('/profile?required=1')
   }
 
   const user = {
@@ -80,12 +89,17 @@ export default async function VpnPage({ searchParams }: PageProps) {
       maxClients: sv.maxClients,
       activeClients: sv._count.orders,
       features: sv.features || [],
+      imageUrl: sv.imageUrl,
+      themeGradient: sv.themeGradient,
+      displayMode: sv.displayMode || 'text',
     },
     user: {
       name: user.name,
       balance: user.balance,
       hasDiscount: user.hasDiscount,
-      promoDiscountPercent: userData?.promoDiscountPercent || 0
+      promoDiscountPercent: userData?.promoDiscountPercent || 0,
+      avatar: userData?.avatar || userData?.googleAvatar || null,
+      contactLink: userData?.contactLink || null
     },
     vpnBaseDeviceLimit: settings?.vpnBaseDeviceLimit ?? 1,
     vpnExtraDevicePrice: settings?.vpnExtraDevicePrice ?? 1,
@@ -422,95 +436,167 @@ export default async function VpnPage({ searchParams }: PageProps) {
                 {themeId === 'corporate' && (
                   <>
                     <div className="relative rounded-2xl border border-blue-500/15 bg-slate-950 overflow-hidden">
-                      {/* Formal blue header */}
-                      <div className="bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 px-5 py-3.5 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur flex items-center justify-center text-2xl">
-                          {sv.flag}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h1 className="text-base font-bold text-white truncate">{sv.name}</h1>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
-                            <span className="text-[10px] text-blue-100/80">Active</span>
-                            {sv.badge && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-white/15 text-white/90">
-                                {sv.badge}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xl font-bold text-white">{sv.pricePerDay}</span>
-                          <span className="text-xs text-blue-200/60 ml-0.5">฿/d</span>
-                        </div>
-                      </div>
-
-                      <div className="p-5 sm:p-6">
-                        {sv.description && <p className="text-[11px] text-zinc-500 mb-5 leading-relaxed">{sv.description}</p>}
-
-                        {/* Table-style specs */}
-                        <div className="rounded-xl border border-blue-500/10 overflow-hidden">
-                          <div className="bg-blue-500/5 px-4 py-2 border-b border-blue-500/10">
-                            <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Server Specifications</span>
-                          </div>
-                          {[Shield, Zap, Globe, Clock].map((Icon, i) => (
-                            <div key={i} className={`flex items-center gap-3 px-4 py-3 ${i < 3 ? 'border-b border-blue-500/5' : ''}`}>
-                              <div className="w-8 h-8 rounded-lg bg-blue-500/8 border border-blue-500/10 flex items-center justify-center">
-                                <Icon className="w-4 h-4 text-blue-400" />
-                              </div>
-                              <span className="text-xs text-zinc-500 flex-1">{specData[i].label}</span>
-                              <span className="text-xs font-semibold text-zinc-200">{specData[i].value}</span>
+                      {/* Image mode: show full image with overlay */}
+                      {sv.displayMode === 'image' && sv.imageUrl && (
+                        <div className="relative w-full bg-zinc-800/80">
+                          <ServerImageDisplay
+                            imageUrl={sv.imageUrl}
+                            alt={sv.name}
+                            className="w-full h-auto block"
+                          />
+                          {/* Dark gradient overlay */}
+                          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                          {/* Info overlay */}
+                          <div className="absolute bottom-3 left-3 right-3">
+                            {/* Server name glass pill */}
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 mb-2">
+                              <span className="text-base">{sv.flag}</span>
+                              <h1 className="text-sm font-bold text-white truncate">{sv.name}</h1>
                             </div>
-                          ))}
-                        </div>
-
-                        {/* Capacity */}
-                        {sv.maxClients > 0 && (
-                          <div className="mt-4 flex items-center justify-between px-1">
-                            <span className="text-[11px] text-zinc-600">Capacity</span>
                             <div className="flex items-center gap-2">
-                              <div className="w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                                <div className="h-full rounded-full bg-blue-500" style={{ width: `${Math.min(100, (sv._count.orders / sv.maxClients) * 100)}%` }} />
+                              {/* Status glass pill */}
+                              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
+                                <span className="text-[10px] text-emerald-300 font-medium">Online</span>
                               </div>
-                              <span className={`text-[11px] font-medium ${sv._count.orders >= sv.maxClients ? 'text-red-400' : 'text-zinc-400'}`}>
-                                {sv._count.orders}/{sv.maxClients}
-                              </span>
+                              {/* Capacity glass pill */}
+                              {sv.maxClients > 0 && (
+                                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
+                                  <span className="text-[10px] text-white/60">จำกัด</span>
+                                  <span className={`text-[10px] font-bold ${sv._count.orders >= sv.maxClients ? 'text-red-400' : 'text-white'}`}>
+                                    {sv._count.orders}/{sv.maxClients}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Price glass pill */}
+                              <div className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
+                                <span className="text-sm font-bold text-white">{sv.pricePerDay}</span>
+                                <span className="text-[10px] text-white/70">฿/วัน</span>
+                              </div>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
+                        </div>
+                      )}
 
-                    {/* Corporate features */}
-                    <div className="hidden lg:block rounded-2xl border border-blue-500/15 bg-slate-950 overflow-hidden">
-                      <div className="p-5 space-y-3.5">
-                        <h3 className="text-[10px] text-blue-400/60 uppercase tracking-wider font-semibold">Enterprise Features</h3>
-                        <div className="space-y-2">
-                          {sv.features && sv.features.length > 0 ? (
-                            sv.features.map((feat: string, i: number) => (
-                              <div key={i} className="flex items-center gap-3">
-                                <div className="w-7 h-7 rounded-lg bg-blue-500/8 border border-blue-500/10 flex items-center justify-center flex-shrink-0">
-                                  <Zap className="w-3.5 h-3.5 text-blue-400" />
+                      {/* Text mode: classic blue header, no image */}
+                      {sv.displayMode !== 'image' && (
+                        <div className="bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 px-5 py-4 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur flex items-center justify-center text-2xl">
+                            {sv.flag}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h1 className="text-base font-bold text-white truncate">{sv.name}</h1>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                              <span className="text-[10px] text-blue-100/80">Active</span>
+                              {sv.badge && (
+                                <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-white/15 text-white/90">
+                                  {sv.badge}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {/* Glass morphism price pill */}
+                          <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
+                            <span className="text-lg font-bold text-white">{sv.pricePerDay}</span>
+                            <span className="text-[10px] text-white/70">฿/d</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Body content - only for text mode */}
+                      {sv.displayMode !== 'image' && (
+                        <div className="p-5 sm:p-6">
+                          {sv.description && <p className="text-[11px] text-zinc-500 mb-5 leading-relaxed">{sv.description}</p>}
+
+                          {/* Table-style specs */}
+                          <div className="rounded-xl border border-blue-500/10 overflow-hidden">
+                            <div className="bg-blue-500/5 px-4 py-2 border-b border-blue-500/10">
+                              <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Server Specifications</span>
+                            </div>
+                            {[Shield, Zap, Globe, Clock].map((Icon, i) => (
+                              <div key={i} className={`flex items-center gap-3 px-4 py-3 ${i < 3 ? 'border-b border-blue-500/5' : ''}`}>
+                                <div className="w-8 h-8 rounded-lg bg-blue-500/8 border border-blue-500/10 flex items-center justify-center">
+                                  <Icon className="w-4 h-4 text-blue-400" />
                                 </div>
-                                <span className="text-xs text-zinc-400 font-medium">{feat}</span>
+                                <span className="text-xs text-zinc-500 flex-1">{specData[i].label}</span>
+                                <span className="text-xs font-semibold text-zinc-200">{specData[i].value}</span>
                               </div>
-                            ))
-                          ) : (
-                            [
-                              { icon: Building2, label: 'Enterprise Security' },
-                              { icon: Shield, label: 'Compliance Ready' },
-                              { icon: Lock, label: 'End-to-End Encryption' },
-                              { icon: Server, label: 'Dedicated Support' },
-                            ].map((feat, i) => (
-                              <div key={i} className="flex items-center gap-3">
-                                <div className="w-7 h-7 rounded-lg bg-blue-500/8 border border-blue-500/10 flex items-center justify-center flex-shrink-0">
-                                  <feat.icon className="w-3.5 h-3.5 text-blue-400" />
+                            ))}
+                          </div>
+
+                          {/* Capacity */}
+                          {sv.maxClients > 0 && (
+                            <div className="mt-4 flex items-center justify-between px-1">
+                              <span className="text-[11px] text-zinc-600">Capacity</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                  <div className="h-full rounded-full bg-blue-500" style={{ width: `${Math.min(100, (sv._count.orders / sv.maxClients) * 100)}%` }} />
                                 </div>
-                                <span className="text-xs text-zinc-400 font-medium">{feat.label}</span>
+                                <span className={`text-[11px] font-medium ${sv._count.orders >= sv.maxClients ? 'text-red-400' : 'text-zinc-400'}`}>
+                                  {sv._count.orders}/{sv.maxClients}
+                                </span>
                               </div>
-                            ))
+                            </div>
                           )}
                         </div>
+                      )}
+                    </div>
+
+                    {/* Corporate features — Premium redesign */}
+                    <div className="hidden lg:block rounded-2xl border border-blue-500/15 bg-slate-950 overflow-hidden">
+                      {/* Header */}
+                      <div className="px-5 pt-5 pb-3 border-b border-blue-500/10">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-blue-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold text-white">จุดเด่น</h3>
+                            <p className="text-[10px] text-zinc-500">รายละเอียดเซิร์ฟเวอร์</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Feature grid */}
+                      <div className="p-4 grid grid-cols-2 gap-2">
+                        {sv.features && sv.features.length > 0 ? (
+                          sv.features.map((feat: string, i: number) => {
+                            const colors = [
+                              { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'text-blue-400' },
+                              { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', icon: 'text-emerald-400' },
+                              { bg: 'bg-violet-500/10', border: 'border-violet-500/20', text: 'text-violet-400', icon: 'text-violet-400' },
+                              { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', icon: 'text-amber-400' },
+                              { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', text: 'text-cyan-400', icon: 'text-cyan-400' },
+                              { bg: 'bg-rose-500/10', border: 'border-rose-500/20', text: 'text-rose-400', icon: 'text-rose-400' },
+                            ]
+                            const c = colors[i % colors.length]
+                            return (
+                              <div key={i} className={`flex items-center gap-2.5 p-3 rounded-xl ${c.bg} border ${c.border} backdrop-blur-sm`}>
+                                <div className={`w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0`}>
+                                  <Zap className={`w-3.5 h-3.5 ${c.icon}`} />
+                                </div>
+                                <span className={`text-[11px] font-medium ${c.text} leading-tight`}>{feat}</span>
+                              </div>
+                            )
+                          })
+                        ) : (
+                          [
+                            { label: 'เล่นเกมลื่นๆ', color: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400', icon: 'text-emerald-400' },
+                            { label: 'ไม่มีสะดุด', color: 'bg-blue-500/10 border-blue-500/20 text-blue-400', icon: 'text-blue-400' },
+                            { label: 'ดูหนัง 4K คมชัด', color: 'bg-violet-500/10 border-violet-500/20 text-violet-400', icon: 'text-violet-400' },
+                            { label: 'ไม่กระตุก', color: 'bg-amber-500/10 border-amber-500/20 text-amber-400', icon: 'text-amber-400' },
+                            { label: 'ปลดล็อกทุกเว็บทั่วโลก', color: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400', icon: 'text-cyan-400' },
+                            { label: 'ปลอดภัย ข้อมูลไม่รั่วไหล', color: 'bg-rose-500/10 border-rose-500/20 text-rose-400', icon: 'text-rose-400' },
+                          ].map((feat, i) => (
+                            <div key={i} className={`flex items-center gap-2.5 p-3 rounded-xl ${feat.color} backdrop-blur-sm`}>
+                              <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                                <Zap className={`w-3.5 h-3.5 ${feat.icon}`} />
+                              </div>
+                              <span className={`text-[11px] font-medium leading-tight`}>{feat.label}</span>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   </>

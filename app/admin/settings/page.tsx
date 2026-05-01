@@ -29,6 +29,8 @@ interface Settings {
   trialEnabled: boolean
   trialDurationMinutes: number
   registrationIpCheck: boolean
+  forceProfileImage: boolean
+  forceContactLink: boolean
 }
 
 const INITIAL_SETTINGS: Settings = {
@@ -50,6 +52,8 @@ const INITIAL_SETTINGS: Settings = {
   trialEnabled: true,
   trialDurationMinutes: 60,
   registrationIpCheck: true,
+  forceProfileImage: false,
+  forceContactLink: false,
 }
 
 function StatusDot({ ok }: { ok: boolean }) {
@@ -282,6 +286,8 @@ export default function AdminSettingsPage() {
           trialEnabled: data.settings.trialEnabled ?? true,
           trialDurationMinutes: data.settings.trialDurationMinutes ?? 60,
           registrationIpCheck: data.settings.registrationIpCheck ?? true,
+          forceProfileImage: data.settings.forceProfileImage ?? false,
+          forceContactLink: data.settings.forceContactLink ?? false,
         }
         setSettings(s)
         setSavedSettings(s)
@@ -516,6 +522,47 @@ export default function AdminSettingsPage() {
                   className={`relative w-12 h-7 rounded-full transition-all ${settings.registrationIpCheck ? 'bg-amber-500' : 'bg-zinc-700'}`}
                 >
                   <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${settings.registrationIpCheck ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
+            </div>
+          </SectionCard>
+
+          {/* Force Profile Requirements */}
+          <SectionCard id="force-profile" title="บังคับกรอกข้อมูลโปรไฟล์" desc="บังคับให้ผู้ใช้กรอกข้อมูลก่อนซื้อ VPN" icon={Shield} color="red" mobileSection={mobileSection} onToggle={toggleMobileSection}>
+            <div className="space-y-4">
+              {/* Force Profile Image */}
+              <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Smartphone className="w-5 h-5 text-rose-400" />
+                  <div>
+                    <p className="text-sm font-bold text-white">บังคับตั้งรูปโปรไฟล์</p>
+                    <p className="text-[10px] text-zinc-500">{settings.forceProfileImage ? 'เปิด — ผู้ใช้ต้องอัปโหลดรูปโปรไฟล์ก่อนซื้อ VPN' : 'ปิด — ไม่บังคับ'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateField('forceProfileImage', !settings.forceProfileImage)}
+                  className={`relative w-12 h-7 rounded-full transition-all ${settings.forceProfileImage ? 'bg-rose-500' : 'bg-zinc-700'}`}
+                >
+                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${settings.forceProfileImage ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
+
+              {/* Force Contact Link */}
+              <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <div className="flex items-center gap-3">
+                  <User className="w-5 h-5 text-orange-400" />
+                  <div>
+                    <p className="text-sm font-bold text-white">บังคับใส่ลิงก์ติดต่อ</p>
+                    <p className="text-[10px] text-zinc-500">{settings.forceContactLink ? 'เปิด — ผู้ใช้ต้องใส่ลิงก์เฟส/ไลน์ก่อนซื้อ VPN' : 'ปิด — ไม่บังคับ'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateField('forceContactLink', !settings.forceContactLink)}
+                  className={`relative w-12 h-7 rounded-full transition-all ${settings.forceContactLink ? 'bg-orange-500' : 'bg-zinc-700'}`}
+                >
+                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${settings.forceContactLink ? 'left-6' : 'left-1'}`} />
                 </button>
               </div>
             </div>

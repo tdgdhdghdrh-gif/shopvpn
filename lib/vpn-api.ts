@@ -632,6 +632,7 @@ export async function getVpnServers() {
     select: {
       id: true,
       name: true,
+      panelType: true,
       flag: true,
       // Sensitive fields (host, port, path, username, password) are NOT exposed here.
       // API routes fetch them directly from the database when needed.
@@ -670,6 +671,7 @@ export async function getVpnServers() {
       // Limits
       maxClients: true,
       defaultIpLimit: true,
+      displayMode: true,
       _count: {
         select: {
           orders: {
@@ -915,6 +917,7 @@ export async function getAllVpnServers() {
     select: {
       id: true,
       name: true,
+      panelType: true,
       flag: true,
       host: true,
       port: true,

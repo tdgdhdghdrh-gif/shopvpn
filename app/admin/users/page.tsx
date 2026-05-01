@@ -5,7 +5,8 @@ import {
   Users, Search, Wallet, Shield, User, Plus, Edit, Trash2, X, Save,
   Mail, CreditCard, Crown, RefreshCw, ChevronLeft, ChevronRight,
   Zap, CheckCircle2, AlertCircle, Lock, Tag, Gift, Clock, Server,
-  Wifi, AlertTriangle, UserPlus, Eye, Copy, UserCheck, Ban, ShieldOff, LogIn
+  Wifi, AlertTriangle, UserPlus, Eye, Copy, UserCheck, Ban, ShieldOff, LogIn,
+  Link as LinkIcon
 } from 'lucide-react'
 
 interface UserData {
@@ -24,6 +25,7 @@ interface UserData {
   createdAt: string
   avatar?: string | null
   googleAvatar?: string | null
+  contactLink?: string | null
 }
 
 interface VpnOrder {
@@ -736,6 +738,7 @@ export default function AdminUsersPage() {
                   <th className="py-4 px-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest">ยอดเงิน</th>
                   <th className="py-4 px-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest">สิทธิ์</th>
                   <th className="py-4 px-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest hidden xl:table-cell">ส่วนลด</th>
+                  <th className="py-4 px-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest hidden lg:table-cell">ติดต่อ</th>
                   <th className="py-4 px-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest hidden xl:table-cell">สมัครเมื่อ</th>
                   <th className="py-4 px-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest text-right">จัดการ</th>
                 </tr>
@@ -787,6 +790,21 @@ export default function AdminUsersPage() {
                             <Tag className="w-3 h-3" />
                             ถึง {formatDate(user.discountExpiry!)}
                           </span>
+                        ) : (
+                          <span className="text-zinc-700 text-[10px]">-</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-5 hidden lg:table-cell">
+                        {user.contactLink ? (
+                          <a 
+                            href={user.contactLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold hover:bg-blue-500/20 transition-colors"
+                          >
+                            <LinkIcon className="w-3 h-3" />
+                            ดูลิงก์
+                          </a>
                         ) : (
                           <span className="text-zinc-700 text-[10px]">-</span>
                         )}
@@ -938,6 +956,18 @@ export default function AdminUsersPage() {
                         <span className="text-[10px] text-zinc-600 flex items-center gap-1">
                           สมัคร {formatDate(user.createdAt)}
                         </span>
+                        {user.contactLink && (
+                          <a 
+                            href={user.contactLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <LinkIcon className="w-3 h-3" />
+                            ลิงก์ติดต่อ
+                          </a>
+                        )}
                       </div>
 
                       {/* Action Buttons */}

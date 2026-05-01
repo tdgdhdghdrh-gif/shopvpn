@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         avatar: true,
         googleAvatar: true,
+        contactLink: true,
       },
       orderBy: {
         createdAt: 'desc',

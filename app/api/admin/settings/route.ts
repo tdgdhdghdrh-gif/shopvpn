@@ -198,6 +198,9 @@ export async function POST(request: NextRequest) {
       customCursorEnabled: body.customCursorEnabled !== undefined ? Boolean(body.customCursorEnabled) : (settings?.customCursorEnabled ?? false),
       customCursorStyle: body.customCursorStyle !== undefined ? body.customCursorStyle : (settings?.customCursorStyle || 'glow'),
       customCursorColor: body.customCursorColor !== undefined ? body.customCursorColor : (settings?.customCursorColor || '#06b6e4'),
+      // Force Profile Requirements
+      forceProfileImage: body.forceProfileImage !== undefined ? Boolean(body.forceProfileImage) : (settings?.forceProfileImage ?? false),
+      forceContactLink: body.forceContactLink !== undefined ? Boolean(body.forceContactLink) : (settings?.forceContactLink ?? false),
       updatedAt: new Date()
     }
 

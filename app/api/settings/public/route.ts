@@ -180,6 +180,9 @@ export async function GET() {
         desktopPetSpeed: settings.desktopPetSpeed ?? 2,
         desktopPetGravity: settings.desktopPetGravity ?? 0.4,
         desktopPetJumpPower: settings.desktopPetJumpPower ?? 10,
+        // Force Profile Requirements
+        forceProfileImage: settings.forceProfileImage ?? false,
+        forceContactLink: settings.forceContactLink ?? false,
       }
     })
   } catch (error) {

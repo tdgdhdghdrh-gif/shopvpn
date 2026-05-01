@@ -38,6 +38,7 @@ interface InboundConfig {
 interface VpnServer {
   id: string
   name: string
+  panelType: string
   flag: string
   host: string
   port: number
@@ -79,6 +80,7 @@ interface VpnServer {
   maxClients: number
   defaultIpLimit: number
   vlessTemplate: string | null
+  displayMode: string
 }
 
 type FilterStatus = 'all' | 'online' | 'offline' | 'hidden' | 'unhealthy'
@@ -154,6 +156,7 @@ export default function AdminVpnPage() {
   const [formData, setFormData] = useState({
     name: '',
     flag: '',
+    panelType: '3xui' as '3xui' | 'customapi',
     host: '',
     port: 2053,
     path: '',
@@ -186,6 +189,7 @@ export default function AdminVpnPage() {
     maxClients: 0,
     defaultIpLimit: 0,
     vlessTemplate: '',
+    displayMode: 'text' as 'text' | 'image',
   })
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -283,6 +287,7 @@ export default function AdminVpnPage() {
     setFormData({
       name: '',
       flag: '',
+      panelType: '3xui',
       host: '',
       port: 2053,
       path: '',
@@ -315,6 +320,7 @@ export default function AdminVpnPage() {
       maxClients: 0,
       defaultIpLimit: 0,
       vlessTemplate: '',
+      displayMode: 'text' as 'text' | 'image',
     })
     setShowModal(true)
     setPanelInbounds([])
@@ -328,6 +334,7 @@ export default function AdminVpnPage() {
     setFormData({
       name: server.name,
       flag: server.flag,
+      panelType: (server.panelType as '3xui' | 'customapi') || '3xui',
       host: server.host,
       port: server.port,
       path: server.path,
@@ -360,6 +367,7 @@ export default function AdminVpnPage() {
       maxClients: server.maxClients ?? 0,
       defaultIpLimit: server.defaultIpLimit ?? 0,
       vlessTemplate: server.vlessTemplate ?? '',
+      displayMode: (server.displayMode as 'text' | 'image') || 'text',
     })
     setShowModal(true)
     if (server.inboundConfigs && Array.isArray(server.inboundConfigs)) {
@@ -426,7 +434,7 @@ export default function AdminVpnPage() {
       if (data.success) {
         setMessage({ 
           type: 'success', 
-          text: `เชื่อมต่อสำเร็จ! ใช้ ${data.useHttp ? 'HTTP' : 'HTTPS'}` 
+          text: formData.panelType === 'customapi' ? 'เชื่อมต่อ Custom API สำเร็จ!' : `เชื่อมต่อสำเร็จ! ใช้ ${data.useHttp ? 'HTTP' : 'HTTPS'}` 
         })
       } else {
         setMessage({ 
@@ -522,7 +530,8 @@ export default function AdminVpnPage() {
       const carriers = taggedInbounds.map(ib => ib.carrier)
       const submitData = {
         ...formData,
-        inboundConfigs: taggedInbounds.length > 0 ? taggedInbounds : undefined,
+        panelType: formData.panelType,
+        inboundConfigs: formData.panelType === 'customapi' ? undefined : (taggedInbounds.length > 0 ? taggedInbounds : undefined),
         supportsAis: carriers.includes('ais') || (taggedInbounds.length === 0 && formData.supportsAis),
         supportsTrue: carriers.includes('true') || (taggedInbounds.length === 0 && formData.supportsTrue),
         supportsDtac: carriers.includes('dtac') || (taggedInbounds.length === 0 && formData.supportsDtac),
@@ -534,6 +543,7 @@ export default function AdminVpnPage() {
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
         features: formData.features ? formData.features.split('\n').map(f => f.trim()).filter(Boolean) : [],
         vlessTemplate: formData.vlessTemplate || null,
+        displayMode: formData.displayMode || 'text',
       }
 
       const res = await fetch(url, {
@@ -1203,6 +1213,40 @@ export default function AdminVpnPage() {
                 </div>
               </div>
 
+              {/* === Panel Type === */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <Wifi className="w-3 h-3 text-blue-400" />
+                  </div>
+                  <p className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">ประเภท Panel</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, panelType: '3xui' })}
+                    className={`p-3 border rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                      formData.panelType === '3xui'
+                        ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+                        : 'bg-white/[0.02] border-white/[0.05] text-zinc-500 hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    3xUI Panel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, panelType: 'customapi' })}
+                    className={`p-3 border rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                      formData.panelType === 'customapi'
+                        ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+                        : 'bg-white/[0.02] border-white/[0.05] text-zinc-500 hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    Custom API
+                  </button>
+                </div>
+              </div>
+
               {/* === Connection === */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -1212,20 +1256,24 @@ export default function AdminVpnPage() {
                   <p className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">การเชื่อมต่อ</p>
                 </div>
                 <div className="space-y-2.5">
-                  <div className="grid grid-cols-3 gap-2.5">
-                    <div className="col-span-2">
-                      <label className={labelClass}>โฮสต์ / IP</label>
-                      <input type="text" required value={formData.host} onChange={(e) => setFormData({...formData, host: e.target.value})} className={inputClass} placeholder="1.2.3.4" />
+                  <div className={formData.panelType === 'customapi' ? '' : 'grid grid-cols-3 gap-2.5'}>
+                    <div className={formData.panelType === 'customapi' ? '' : 'col-span-2'}>
+                      <label className={labelClass}>{formData.panelType === 'customapi' ? 'API URL' : 'โฮสต์ / IP'}</label>
+                      <input type="text" required value={formData.host} onChange={(e) => setFormData({...formData, host: e.target.value})} className={inputClass} placeholder={formData.panelType === 'customapi' ? 'https://panel.example.com' : '1.2.3.4'} />
                     </div>
+                    {formData.panelType !== 'customapi' && (
+                      <div>
+                        <label className={labelClass}>พอร์ต</label>
+                        <input type="number" required value={formData.port} onChange={(e) => setFormData({...formData, port: parseInt(e.target.value)})} className={inputClass} />
+                      </div>
+                    )}
+                  </div>
+                  {formData.panelType !== 'customapi' && (
                     <div>
-                      <label className={labelClass}>พอร์ต</label>
-                      <input type="number" required value={formData.port} onChange={(e) => setFormData({...formData, port: parseInt(e.target.value)})} className={inputClass} />
+                      <label className={labelClass}>Path</label>
+                      <input type="text" required value={formData.path} onChange={(e) => setFormData({...formData, path: e.target.value})} className={inputClass} placeholder="/panel" />
                     </div>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Path</label>
-                    <input type="text" required value={formData.path} onChange={(e) => setFormData({...formData, path: e.target.value})} className={inputClass} placeholder="/panel" />
-                  </div>
+                  )}
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className={labelClass}>Username</label>
@@ -1239,38 +1287,40 @@ export default function AdminVpnPage() {
                 </div>
               </div>
 
-              {/* === Protocol === */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                    <Shield className="w-3 h-3 text-violet-400" />
+              {formData.panelType !== 'customapi' && (
+                /* === Protocol === */
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                      <Shield className="w-3 h-3 text-violet-400" />
+                    </div>
+                    <p className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">โปรโตคอล</p>
                   </div>
-                  <p className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">โปรโตคอล</p>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div>
+                      <label className={labelClass}>Protocol</label>
+                      <select value={formData.protocol} onChange={(e) => setFormData({...formData, protocol: e.target.value})} className={selectClass}>
+                        <option value="vless">VLESS</option>
+                        <option value="vmess">VMess</option>
+                        <option value="trojan">Trojan</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>TLS</label>
+                      <select value={formData.tlsType} onChange={(e) => setFormData({...formData, tlsType: e.target.value})} className={selectClass}>
+                        <option value="Reality">Reality</option>
+                        <option value="XTLS">XTLS</option>
+                        <option value="TLS">TLS</option>
+                        <option value="none">None</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Client Port</label>
+                      <input type="number" value={formData.clientPort} onChange={(e) => setFormData({...formData, clientPort: parseInt(e.target.value) || 443})} className={inputClass} />
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div>
-                    <label className={labelClass}>Protocol</label>
-                    <select value={formData.protocol} onChange={(e) => setFormData({...formData, protocol: e.target.value})} className={selectClass}>
-                      <option value="vless">VLESS</option>
-                      <option value="vmess">VMess</option>
-                      <option value="trojan">Trojan</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>TLS</label>
-                    <select value={formData.tlsType} onChange={(e) => setFormData({...formData, tlsType: e.target.value})} className={selectClass}>
-                      <option value="Reality">Reality</option>
-                      <option value="XTLS">XTLS</option>
-                      <option value="TLS">TLS</option>
-                      <option value="none">None</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Client Port</label>
-                    <input type="number" value={formData.clientPort} onChange={(e) => setFormData({...formData, clientPort: parseInt(e.target.value) || 443})} className={inputClass} />
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* === Category & Speed === */}
               <div className="space-y-3">
@@ -1489,6 +1539,31 @@ export default function AdminVpnPage() {
                       <input type="text" value={formData.imageUrl} onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} className={inputClass} placeholder="https://..." />
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-2.5 mt-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, displayMode: 'text' })}
+                      className={`p-3 border rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                        formData.displayMode !== 'image'
+                          ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+                          : 'bg-white/[0.02] border-white/[0.05] text-zinc-500 hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      แสดงข้อความ (Specs)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, displayMode: 'image' })}
+                      className={`p-3 border rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                        formData.displayMode === 'image'
+                          ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+                          : 'bg-white/[0.02] border-white/[0.05] text-zinc-500 hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      แสดงแค่ภาพ (Image only)
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-zinc-600 ml-0.5 mt-1">รูปแบบการแสดงผลในธีม Corporate หน้าซื้อ VPN</p>
                 </div>
               </div>
 
@@ -1519,21 +1594,22 @@ export default function AdminVpnPage() {
                 </div>
               </div>
 
-              {/* === Inbound & Carrier === */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                    <Download className="w-3 h-3 text-indigo-400" />
+              {formData.panelType !== 'customapi' && (
+                /* === Inbound & Carrier === */
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                      <Download className="w-3 h-3 text-indigo-400" />
+                    </div>
+                    <p className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Inbound & ค่ายมือถือ</p>
                   </div>
-                  <p className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Inbound & ค่ายมือถือ</p>
-                </div>
-                
-                <button
-                  type="button"
-                  onClick={fetchInbounds}
-                  disabled={fetchingInbounds || !formData.host || !formData.username || !formData.password}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 rounded-xl text-xs font-bold text-white transition-all shadow-lg shadow-violet-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
-                >
+                  
+                  <button
+                    type="button"
+                    onClick={fetchInbounds}
+                    disabled={fetchingInbounds || !formData.host || !formData.username || !formData.password}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 rounded-xl text-xs font-bold text-white transition-all shadow-lg shadow-violet-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
                   {fetchingInbounds ? (
                     <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> กำลังดึง...</>
                   ) : (
@@ -1681,6 +1757,7 @@ export default function AdminVpnPage() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* === VLESS Template === */}
               <div className="space-y-3">
@@ -1716,7 +1793,7 @@ export default function AdminVpnPage() {
               </div>
 
               {/* Skip Connection Test */}
-              {modalMode === 'add' && (
+              {modalMode === 'add' && formData.panelType !== 'customapi' && (
                 <button
                   type="button"
                   onClick={() => setFormData({...formData, skipConnectionTest: !formData.skipConnectionTest})}
@@ -1752,7 +1829,7 @@ export default function AdminVpnPage() {
                 <button
                   type="button"
                   onClick={testConnection}
-                  disabled={testingConnection || !formData.host}
+                  disabled={testingConnection || !formData.host || !formData.username || !formData.password}
                   className="px-4 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 rounded-xl text-xs font-bold text-white transition-all active:scale-95 shadow-lg shadow-amber-600/15"
                 >
                   {testingConnection ? (

@@ -23,10 +23,77 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { host, port, path, username, password } = body
+    const { host, port, path, username, password, panelType } = body
 
-    if (!host || !port || !path || !username || !password) {
+    if (!host || !username || !password) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    const pType = panelType || '3xui'
+
+    if (pType === 'customapi') {
+      // Test custom API auth: POST {host}/api/admins/token with form-data
+      const cleanHost = host.trim()
+      const cleanUsername = username.trim()
+      const cleanPassword = password.trim()
+
+      const formData = new URLSearchParams()
+      formData.append('username', cleanUsername)
+      formData.append('password', cleanPassword)
+      formData.append('grant_type', 'password')
+      const formPayload = formData.toString()
+
+      const testCustomApi = await new Promise<{ success: boolean; error?: string }>((resolve) => {
+        try {
+          const url = new URL(cleanHost)
+          const client = url.protocol === 'https:' ? https : http
+          const req = client.request({
+            hostname: url.hostname,
+            port: url.port || (url.protocol === 'https:' ? 443 : 80),
+            path: `${url.pathname}/api/admins/token`.replace(/\/+/g, '/'),
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Content-Length': Buffer.byteLength(formPayload),
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            rejectUnauthorized: false,
+            timeout: 15000,
+          }, (res) => {
+            let data = ''
+            res.on('data', chunk => data += chunk)
+            res.on('end', () => {
+              try {
+                const json = JSON.parse(data)
+                if (json.access_token) {
+                  resolve({ success: true })
+                } else {
+                  resolve({ success: false, error: json.message || 'Invalid credentials' })
+                }
+              } catch {
+                resolve({ success: false, error: 'Invalid response from API' })
+              }
+            })
+          })
+          req.on('error', (err) => resolve({ success: false, error: err.message }))
+          req.on('timeout', () => { req.destroy(); resolve({ success: false, error: 'Timeout' }) })
+          req.write(formPayload)
+          req.end()
+        } catch (err: any) {
+          resolve({ success: false, error: err.message })
+        }
+      })
+
+      return NextResponse.json({
+        success: testCustomApi.success,
+        tests: [{ name: 'Custom API Auth', ...testCustomApi }]
+      })
+    }
+
+    // 3xui test
+    if (!port || !path) {
+      return NextResponse.json({ error: 'Missing required fields for 3xui' }, { status: 400 })
     }
 
     // Normalize inputs to prevent ERR_UNESCAPED_CHARACTERS

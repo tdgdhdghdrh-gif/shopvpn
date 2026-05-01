@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         name: true,
+        panelType: true,
         flag: true,
         host: true,
         port: true,
@@ -78,6 +79,7 @@ export async function GET(request: NextRequest) {
         maxClients: true,
         defaultIpLimit: true,
         vlessTemplate: true,
+        displayMode: true,
       }
     })
 

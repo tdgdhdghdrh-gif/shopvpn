@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft, User, Mail, Lock, Save, AlertCircle, 
-  CheckCircle2, Eye, EyeOff, Loader2, Shield, Camera
+  CheckCircle2, Eye, EyeOff, Loader2, Shield, Camera,
+  LinkIcon, AlertTriangle
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 import { NotificationToggle } from '@/components/PushNotificationPrompt'
@@ -17,6 +18,12 @@ interface UserData {
   balance: number
   avatar?: string | null
   googleAvatar?: string | null
+  contactLink?: string | null
+}
+
+interface SiteSettings {
+  forceProfileImage?: boolean
+  forceContactLink?: boolean
 }
 
 export default function ProfileClient({ userId }: { userId: string }) {
@@ -35,9 +42,17 @@ export default function ProfileClient({ userId }: { userId: string }) {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [contactLink, setContactLink] = useState('')
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>({})
+  const [isRequired, setIsRequired] = useState(false)
 
   useEffect(() => {
     fetchUser()
+    fetchSettings()
+    // Check if redirected from required
+    if (typeof window !== 'undefined' && window.location.search.includes('required=1')) {
+      setIsRequired(true)
+    }
   }, [])
 
   async function fetchUser() {
@@ -48,6 +63,7 @@ export default function ProfileClient({ userId }: { userId: string }) {
       if (data.user) {
         setUser(data.user)
         setName(data.user.name)
+        setContactLink(data.user.contactLink || '')
       } else {
         router.push('/login')
       }
@@ -56,6 +72,18 @@ export default function ProfileClient({ userId }: { userId: string }) {
       setError('ไม่สามารถโหลดข้อมูลผู้ใช้ได้')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function fetchSettings() {
+    try {
+      const res = await fetch('/api/settings/public')
+      if (res.ok) {
+        const data = await res.json()
+        setSiteSettings(data.settings || {})
+      }
+    } catch (error) {
+      // ignore
     }
   }
 
@@ -134,6 +162,7 @@ export default function ProfileClient({ userId }: { userId: string }) {
           name: name.trim(),
           currentPassword: currentPassword || undefined,
           newPassword: newPassword || undefined,
+          contactLink: contactLink.trim() || undefined,
         })
       })
 
@@ -146,9 +175,10 @@ export default function ProfileClient({ userId }: { userId: string }) {
         setConfirmPassword('')
         
         if (user) {
-          setUser({ ...user, name: name.trim() })
+          setUser({ ...user, name: name.trim(), contactLink: contactLink.trim() || null })
         }
         
+        setIsRequired(false)
         router.refresh()
       } else {
         setError(data.error || 'ไม่สามารถบันทึกการเปลี่ยนแปลงได้')
@@ -221,6 +251,21 @@ export default function ProfileClient({ userId }: { userId: string }) {
           <div className="mb-6 bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             {success}
+          </div>
+        )}
+
+        {/* Required warning */}
+        {isRequired && (
+          <div className="mb-6 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-4 rounded-xl text-sm">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold mb-1">กรุณากรอกข้อมูลให้ครบถ้วน</p>
+                <p className="text-xs text-amber-500/70">
+                  แอดมินต้องการข้อมูลเพื่อติดต่อคุณในกรณีฉุกเฉิน กรอกข้อมูลด้านล่างให้ครบแล้วกดบันทึก
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -312,6 +357,34 @@ export default function ProfileClient({ userId }: { userId: string }) {
                   />
                 </div>
                 <p className="text-xs text-gray-600 mt-1">อีเมลไม่สามารถแก้ไขได้</p>
+              </div>
+
+              {/* Contact Link */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4" />
+                  ลิงก์ติดต่อ (เฟสบุ๊ก/ไลน์)
+                  {siteSettings.forceContactLink && (
+                    <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">บังคับ</span>
+                  )}
+                </label>
+                <div className="relative">
+                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
+                  <input
+                    type="url"
+                    value={contactLink}
+                    onChange={(e) => setContactLink(e.target.value)}
+                    className={`w-full bg-black/50 border rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none transition-colors ${
+                      siteSettings.forceContactLink && !contactLink.trim() && isRequired
+                        ? 'border-amber-500/50 focus:border-amber-500'
+                        : 'border-white/10 focus:border-blue-500'
+                    }`}
+                    placeholder="https://facebook.com/xxx หรือ https://line.me/ti/p/xxx"
+                  />
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  แอดมินจะใช้ลิงก์นี้ติดต่อคุณเมื่อมีปัญหา
+                </p>
               </div>
             </div>
           </div>

@@ -189,7 +189,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { host, port, path, username, password } = body
+    const { host, port, path, username, password, panelType } = body
+
+    if (panelType === 'customapi') {
+      return NextResponse.json({ success: true, inbounds: [] })
+    }
 
     if (!host || !port || !path || !username || !password) {
       return NextResponse.json({ error: 'Missing connection details' }, { status: 400 })

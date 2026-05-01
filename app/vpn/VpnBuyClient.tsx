@@ -139,6 +139,7 @@ export default function VpnBuyClient({ serverId, server, user, vpnBaseDeviceLimi
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isTrialSubmitting, setIsTrialSubmitting] = useState(false)
   const [message, setMessage] = useState('')
+  const [showMessageModal, setShowMessageModal] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [successData, setSuccessData] = useState({ message: '', subMessage: '', redirect: '' })
   const [trialEnabled, setTrialEnabled] = useState(true)
@@ -306,9 +307,11 @@ export default function VpnBuyClient({ serverId, server, user, vpnBaseDeviceLimi
         setShowSuccess(true)
       } else {
         setMessage(data.error || 'สร้างบัญชีทดลองไม่สำเร็จ')
+        setShowMessageModal(true)
       }
     } catch (err) {
       setMessage('เกิดข้อผิดพลาด')
+      setShowMessageModal(true)
     } finally {
       setIsTrialSubmitting(false)
     }
@@ -343,9 +346,11 @@ export default function VpnBuyClient({ serverId, server, user, vpnBaseDeviceLimi
         setShowSuccess(true)
       } else {
         setMessage(data.error || 'สั่งซื้อไม่สำเร็จ')
+        setShowMessageModal(true)
       }
     } catch (err) {
       setMessage('เกิดข้อผิดพลาด')
+      setShowMessageModal(true)
     } finally {
       setIsSubmitting(false)
     }
@@ -396,19 +401,64 @@ export default function VpnBuyClient({ serverId, server, user, vpnBaseDeviceLimi
       
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* Error/Success Message */}
-        {message && !showSuccess && (
-          <div className={`p-3.5 rounded-2xl text-sm font-medium flex items-center gap-3 ${
-            message.includes('สำเร็จ') 
-              ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
-              : 'bg-red-500/10 border border-red-500/20 text-red-400'
-          }`}>
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-              message.includes('สำเร็จ') ? 'bg-emerald-500/20' : 'bg-red-500/20'
-            }`}>
-              {message.includes('สำเร็จ') ? <Check className="w-4 h-4" /> : <span className="text-sm">!</span>}
+        {/* Professional Error Modal */}
+        {showMessageModal && message && !showSuccess && (
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setShowMessageModal(false)}
+          >
+            <div 
+              className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl shadow-black/50 overflow-hidden animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top accent line */}
+              <div className="h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500" />
+              
+              {/* Close button */}
+              <button 
+                onClick={() => setShowMessageModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-700 transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="p-6 pt-8 text-center">
+                {/* Icon */}
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                  <AlertTriangle className="w-8 h-8 text-red-400" />
+                </div>
+
+                {/* Title */}
+                <h3 className="text-lg font-bold text-white mb-2">
+                  {message.includes('ชื่อ') || message.includes('ตั้ง') ? 'กรุณาตั้งชื่อบัญชี' : 'เกิดข้อผิดพลาด'}
+                </h3>
+
+                {/* Message */}
+                <p className="text-sm text-zinc-400 leading-relaxed mb-6">
+                  {message}
+                </p>
+
+                {/* Action buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowMessageModal(false)}
+                    className="flex-1 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-white transition-all"
+                  >
+                    ปิด
+                  </button>
+                  {(message.includes('ชื่อ') || message.includes('ตั้ง') || message.includes('โปรไฟล์')) && (
+                    <a
+                      href="/profile"
+                      onClick={() => setShowMessageModal(false)}
+                      className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-all flex items-center justify-center gap-2"
+                    >
+                      ไปตั้งค่า
+                      <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
-            <span>{message}</span>
           </div>
         )}
 
@@ -509,9 +559,9 @@ export default function VpnBuyClient({ serverId, server, user, vpnBaseDeviceLimi
           </div>
         )}
 
-        {/* === Features (mobile - shown only when admin defines features) === */}
+        {/* === Features === */}
         {server.features && server.features.length > 0 && (
-          <div className="lg:hidden rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">
+          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">
             <div className="p-5">
               <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/10 flex items-center justify-center">

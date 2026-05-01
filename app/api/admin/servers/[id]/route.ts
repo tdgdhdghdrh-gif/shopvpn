@@ -43,29 +43,38 @@ export async function PUT(
       name, flag, host, port, path, username, password, inboundId, 
       protocol, tlsType, flow, sni, clientPort,
       supportsAis, supportsTrue, supportsDtac, category, speed,
-      inboundConfigs,
+      inboundConfigs, panelType,
       // Per-server pricing & decoration
       pricePerDay, priceWeekly, priceMonthly, customPackages,
       description, badge, tags, features, themeColor, themeGradient, imageUrl,
       sortOrder, maxClients, defaultIpLimit,
-      vlessTemplate
+      vlessTemplate, displayMode
     } = body
 
-    if (!name || !host || !port || !path || !username) {
+    const pType = panelType || '3xui'
+
+    if (!name || !host) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    if (pType === '3xui') {
+      if (!port || !path || !username) {
+        return NextResponse.json({ error: 'Missing required fields for 3xui' }, { status: 400 })
+      }
+    }
+
     // inboundId is required unless inboundConfigs provides one
-    const effectiveInboundId = inboundId || (inboundConfigs?.[0]?.inboundId) || 0
+    const effectiveInboundId = pType === '3xui' ? (inboundId || (inboundConfigs?.[0]?.inboundId) || 0) : 0
 
     // Prepare update data
     const updateData: any = {
       name,
+      panelType: pType,
       flag: flag || '🌐',
       host,
-      port,
-      path,
-      username,
+      port: pType === 'customapi' ? 0 : (port || 0),
+      path: pType === 'customapi' ? '' : (path || ''),
+      username: username || '',
       inboundId: effectiveInboundId,
       protocol: protocol || 'vless',
       tlsType: tlsType || 'Reality',
@@ -97,6 +106,8 @@ export async function PUT(
       defaultIpLimit: defaultIpLimit ?? 0,
       // VLESS template
       vlessTemplate: vlessTemplate !== undefined ? (vlessTemplate || null) : undefined,
+      // Display mode
+      displayMode: displayMode || 'text',
     }
 
     // Only update password if provided

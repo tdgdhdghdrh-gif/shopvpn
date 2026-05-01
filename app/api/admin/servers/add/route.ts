@@ -167,49 +167,65 @@ export async function POST(request: NextRequest) {
       name, flag, host, port, path, username, password, inboundId, 
       protocol, tlsType, flow, sni, clientPort,
       supportsAis, supportsTrue, supportsDtac, category, speed,
-      skipConnectionTest, inboundConfigs,
+      skipConnectionTest, inboundConfigs, panelType,
       // Per-server pricing & decoration
       pricePerDay, priceWeekly, priceMonthly, customPackages,
       description, badge, tags, features, themeColor, themeGradient, imageUrl,
       sortOrder, maxClients, defaultIpLimit,
-      vlessTemplate
+      vlessTemplate, displayMode
     } = body
 
-    if (!name || !host || !port || !path) {
-      return NextResponse.json({ error: 'กรุณากรอกข้อมูลที่จำเป็นทั้งหมด (ชื่อ, โฮสต์, พอร์ต, เส้นทาง)' }, { status: 400 })
+    const pType = panelType || '3xui'
+
+    if (!name || !host) {
+      return NextResponse.json({ error: 'กรุณากรอกข้อมูลที่จำเป็นทั้งหมด (ชื่อ, โฮสต์)' }, { status: 400 })
     }
 
-    // inboundId is required unless inboundConfigs provides one
-    const effectiveInboundId = inboundId || (inboundConfigs?.[0]?.inboundId) || 0
-    if (!effectiveInboundId) {
-      return NextResponse.json({ error: 'กรุณาระบุ Inbound ID หรือดึง Inbound จาก Panel' }, { status: 400 })
-    }
+    if (pType === '3xui') {
+      if (!port || !path) {
+        return NextResponse.json({ error: 'กรุณากรอกข้อมูลที่จำเป็นทั้งหมด (พอร์ต, เส้นทาง)' }, { status: 400 })
+      }
 
-    // Test connection before saving (unless skipped)
-    if (!skipConnectionTest) {
-      const testResult = await testPanelConnection(host, port, path, username || '', password || '')
-      
-      if (!testResult.success) {
-        return NextResponse.json({ 
-          error: 'เชื่อมต่อไม่สำเร็จ: ' + (testResult.error || 'ตรวจสอบข้อมูลไม่ถูกต้อง'),
-          details: 'ไม่สามารถเข้าสู่ระบบ Panel ได้ กรุณาตรวจสอบ:\n1. Host/IP ถูกต้อง\n2. Port ถูกต้อง\n3. Path ถูกต้อง (เช่น /xxx/)\n4. Username/Password ถูกต้อง\n\nหรือเลือก "ข้ามการตรวจสอบ" หากต้องการบันทึกโดยไม่ทดสอบ',
-          connectionError: true
-        }, { status: 400 })
+      // inboundId is required unless inboundConfigs provides one
+      const effectiveInboundId = inboundId || (inboundConfigs?.[0]?.inboundId) || 0
+      if (!effectiveInboundId) {
+        return NextResponse.json({ error: 'กรุณาระบุ Inbound ID หรือดึง Inbound จาก Panel' }, { status: 400 })
+      }
+
+      // Test connection before saving (unless skipped)
+      if (!skipConnectionTest) {
+        const testResult = await testPanelConnection(host, port, path, username || '', password || '')
+        
+        if (!testResult.success) {
+          return NextResponse.json({ 
+            error: 'เชื่อมต่อไม่สำเร็จ: ' + (testResult.error || 'ตรวจสอบข้อมูลไม่ถูกต้อง'),
+            details: 'ไม่สามารถเข้าสู่ระบบ Panel ได้ กรุณาตรวจสอบ:\n1. Host/IP ถูกต้อง\n2. Port ถูกต้อง\n3. Path ถูกต้อง (เช่น /xxx/)\n4. Username/Password ถูกต้อง\n\nหรือเลือก "ข้ามการตรวจสอบ" หากต้องการบันทึกโดยไม่ทดสอบ',
+            connectionError: true
+          }, { status: 400 })
+        }
+      }
+    } else if (pType === 'customapi') {
+      if (!username || !password) {
+        return NextResponse.json({ error: 'กรุณากรอก Username และ Password สำหรับ Custom API' }, { status: 400 })
       }
     }
 
     // ถ้าเป็นตัวแทน ให้ผูก agentId
     const isAgentOnly = user.isAgent && !user.isSuperAdmin && !user.isAdmin
 
+    // inboundId is required unless inboundConfigs provides one (3xui only)
+    const effectiveInboundId = pType === '3xui' ? (inboundId || (inboundConfigs?.[0]?.inboundId) || 0) : 0
+
     const server = await prisma.vpnServer.create({
       data: {
         name,
+        panelType: pType,
         flag: flag || '🌐',
         host,
-        port,
-        path,
-        username,
-        password,
+        port: pType === 'customapi' ? 0 : (port || 0),
+        path: pType === 'customapi' ? '' : (path || ''),
+        username: username || '',
+        password: password || '',
         inboundId: effectiveInboundId,
         protocol: protocol || 'vless',
         tlsType: tlsType || 'Reality',
@@ -246,6 +262,8 @@ export async function POST(request: NextRequest) {
         defaultIpLimit: defaultIpLimit ?? 0,
         // VLESS template
         vlessTemplate: vlessTemplate || undefined,
+        // Display mode
+        displayMode: displayMode || 'text',
       }
     })
 

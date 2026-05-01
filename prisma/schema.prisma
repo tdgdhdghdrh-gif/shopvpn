@@ -56,6 +56,7 @@ model User {
   ads                 Ad[]
   premiumAppOrders    PremiumAppOrder[]
   adminMenuAccess     Json?            // JSON array of allowed admin menu hrefs (per-user override), null = use role default
+  contactLink         String?          // ลิงก์ติดต่อ (เฟสบุ๊ก/ไลน์) สำหรับให้แอดมินติดต่อกลับ
 }
 
 model Product {
@@ -221,11 +222,16 @@ model Settings {
   customCursorEnabled     Boolean  @default(false)
   customCursorStyle       String?  @default("glow") // glow, trail, dot
   customCursorColor       String?  @default("#06b6e4")
+
+  // Force Profile Requirements
+  forceProfileImage       Boolean  @default(false) // บังคับให้ผู้ใช้ตั้งรูปโปรไฟล์
+  forceContactLink        Boolean  @default(false) // บังคับให้ผู้ใช้ใส่ลิงก์ติดต่อ
 }
 
 model VpnServer {
   id           String     @id @default(cuid())
   name         String
+  panelType    String     @default("3xui")
   host         String
   port         Int
   path         String
@@ -281,6 +287,7 @@ model VpnServer {
   isHidden       Boolean  @default(false) // ซ่อนจากหน้าเลือกเซิร์ฟเวอร์ของผู้ใช้
   healthStatus   String   @default("unknown") // healthy, unhealthy, checking, unknown
   lastHealthCheck DateTime?
+  displayMode    String   @default("text") // "text" | "image"
 
   orders       VpnOrder[]
 }
