@@ -427,20 +427,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'ไม่พบเซิร์ฟเวอร์' })
     }
 
-    // Check for existing active order on this server for this user
-    const existingActiveOrder = await prisma.vpnOrder.findFirst({
-      where: {
-        userId: session.userId,
-        serverId: serverId,
-        isActive: true,
-        expiryTime: { gt: new Date() }
-      }
-    })
-
-    if (existingActiveOrder && !isTrial) {
-      return NextResponse.json({ success: false, error: 'คุณมีบัญชี VPN ที่ใช้งานอยู่บนเซิร์ฟเวอร์นี้แล้ว กรุณารอหมดอายุหรือต่ออายุ' })
-    }
-
     // Apply device pricing from system settings
     const vpnBaseDeviceLimit = sysSettings?.vpnBaseDeviceLimit ?? 1
     const vpnExtraDevicePrice = sysSettings?.vpnExtraDevicePrice ?? 1
