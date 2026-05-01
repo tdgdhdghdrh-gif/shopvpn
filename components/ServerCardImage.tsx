@@ -125,6 +125,15 @@ function ServerImageCard({ server, user, defaultPrices }: {
           <div className={cn("w-2 h-2 rounded-full", isOnline ? "bg-emerald-400" : "bg-red-400")} />
           <span className="text-[10px] font-bold text-white/80">{isOnline ? 'Online' : 'Offline'}</span>
         </div>
+
+        {/* Full capacity overlay */}
+        {server.maxClients && server.maxClients > 0 && (server.userCount ?? 0) >= server.maxClients && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+            <div className="bg-red-500/90 text-white px-4 py-2 rounded-xl text-sm font-bold">
+              เต็มแล้ว — เลือกเซิร์ฟอื่น
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Info Area */}

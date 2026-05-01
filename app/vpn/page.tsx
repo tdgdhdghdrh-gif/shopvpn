@@ -26,6 +26,11 @@ export default async function VpnPage({ searchParams }: PageProps) {
   const preSelectedServer = servers.find(s => s.id === params.server)
   if (!preSelectedServer) redirect('/')
 
+  // Check if server is full
+  if (preSelectedServer.maxClients > 0 && preSelectedServer._count.orders >= preSelectedServer.maxClients) {
+    redirect('/?error=server-full')
+  }
+
   const [userData, settings] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.userId! },

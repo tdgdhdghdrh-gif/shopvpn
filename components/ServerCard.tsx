@@ -509,15 +509,22 @@ export default function ServerCard({ server, user, totalServers = 1 }: { server:
         </div>
 
         {/* Connect Button */}
-        <Link
-          href={user ? `/vpn?server=${server.id}` : '/login'}
-          className="group/btn relative w-full py-2.5 rounded-xl bg-white text-black font-bold flex items-center justify-center gap-2 transition-all hover:bg-zinc-200 active:scale-[0.98] text-xs overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-          <Zap className="relative z-10 w-3.5 h-3.5" />
-          <span className="relative z-10">{user ? 'เชื่อมต่อทันที' : 'เข้าสู่ระบบ'}</span>
-          <ChevronRight className="relative z-10 w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-        </Link>
+        {server.maxClients && server.maxClients > 0 && realUsers >= server.maxClients ? (
+          <div className="w-full py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-bold flex items-center justify-center gap-2 text-xs cursor-not-allowed">
+            <Lock className="w-3.5 h-3.5" />
+            <span>เต็มแล้ว — โปรเลือกเซิร์ฟอื่น</span>
+          </div>
+        ) : (
+          <Link
+            href={user ? `/vpn?server=${server.id}` : '/login'}
+            className="group/btn relative w-full py-2.5 rounded-xl bg-white text-black font-bold flex items-center justify-center gap-2 transition-all hover:bg-zinc-200 active:scale-[0.98] text-xs overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
+            <Zap className="relative z-10 w-3.5 h-3.5" />
+            <span className="relative z-10">{user ? 'เชื่อมต่อทันที' : 'เข้าสู่ระบบ'}</span>
+            <ChevronRight className="relative z-10 w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
+          </Link>
+        )}
       </div>
     </div>
   )
