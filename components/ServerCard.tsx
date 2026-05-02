@@ -422,11 +422,11 @@ export default function ServerCard({ server, user, totalServers = 1 }: { server:
           <div className="bg-black/30 border border-white/5 rounded-lg py-1.5 px-1 text-center">
             <CheckCircle2 className="w-3 h-3 text-emerald-400 mx-auto mb-0.5" />
             <div className={cn("text-[11px] font-bold transition-colors duration-300 leading-tight", 
-              server.maxClients && server.maxClients > 0 
+              server.maxClients > 0 
                 ? (server.maxClients - realUsers <= 5 ? 'text-amber-400' : 'text-emerald-400')
                 : 'text-emerald-400'
             )}>
-              {server.maxClients && server.maxClients > 0 
+              {server.maxClients > 0 
                 ? Math.max(0, server.maxClients - realUsers)
                 : slots}
             </div>
@@ -509,7 +509,7 @@ export default function ServerCard({ server, user, totalServers = 1 }: { server:
         </div>
 
         {/* Connect Button */}
-        {server.maxClients && server.maxClients > 0 && realUsers >= server.maxClients ? (
+        {server.maxClients > 0 && realUsers >= server.maxClients ? (
           <div className="w-full py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-bold flex items-center justify-center gap-2 text-xs cursor-not-allowed">
             <Lock className="w-3.5 h-3.5" />
             <span>เต็มแล้ว — โปรเลือกเซิร์ฟอื่น</span>

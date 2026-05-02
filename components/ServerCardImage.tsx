@@ -127,7 +127,7 @@ function ServerImageCard({ server, user, defaultPrices }: {
         </div>
 
         {/* Full capacity overlay */}
-        {server.maxClients && server.maxClients > 0 && (server.userCount ?? 0) >= server.maxClients && (
+        {server.maxClients > 0 && (server.userCount ?? 0) >= server.maxClients && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <div className="bg-red-500/90 text-white px-4 py-2 rounded-xl text-sm font-bold">
               เต็มแล้ว — เลือกเซิร์ฟอื่น

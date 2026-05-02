@@ -438,25 +438,13 @@ export default function VpnBuyClient({ serverId, server, user, vpnBaseDeviceLimi
                   {message}
                 </p>
 
-                {/* Action buttons */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowMessageModal(false)}
-                    className="flex-1 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-white transition-all"
-                  >
-                    ปิด
-                  </button>
-                  {(message.includes('ชื่อ') || message.includes('ตั้ง') || message.includes('โปรไฟล์')) && (
-                    <a
-                      href="/profile"
-                      onClick={() => setShowMessageModal(false)}
-                      className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-all flex items-center justify-center gap-2"
-                    >
-                      ไปตั้งค่า
-                      <ArrowUpRight className="w-4 h-4" />
-                    </a>
-                  )}
-                </div>
+                {/* Action button */}
+                <button
+                  onClick={() => setShowMessageModal(false)}
+                  className="w-full py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-white transition-all"
+                >
+                  ปิด
+                </button>
               </div>
             </div>
           </div>

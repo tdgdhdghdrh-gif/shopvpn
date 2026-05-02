@@ -72,6 +72,20 @@ export async function callLLM(messages: AiMessage[], apiKey: string, baseUrl: st
   return callOpenAICompatible(messages, apiKey, baseUrl, model)
 }
 
+// ─── Call LLM with streaming ───
+export async function callLLMStream(
+  messages: AiMessage[],
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  onChunk: (chunk: string) => void,
+): Promise<string> {
+  if (isGemini(baseUrl)) {
+    return callGeminiStream(messages, apiKey, baseUrl, model, onChunk)
+  }
+  return callOpenAICompatibleStream(messages, apiKey, baseUrl, model, onChunk)
+}
+
 // ─── Gemini API ───
 async function callGemini(messages: AiMessage[], apiKey: string, baseUrl: string, model: string): Promise<string> {
   const systemMsg = messages.find(m => m.role === 'system')
@@ -177,6 +191,146 @@ async function callOpenAICompatible(messages: AiMessage[], apiKey: string, baseU
 
     req.on('error', (err) => reject(err))
     req.on('timeout', () => { req.destroy(); reject(new Error('LLM timeout')) })
+    req.write(payload)
+    req.end()
+  })
+}
+
+// ─── OpenAI-compatible streaming ───
+async function callOpenAICompatibleStream(
+  messages: AiMessage[],
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  onChunk: (chunk: string) => void,
+): Promise<string> {
+  const url = new URL(`${baseUrl.replace(/\/$/, '')}/chat/completions`)
+  const payload = JSON.stringify({
+    model,
+    messages,
+    temperature: 0.2,
+    max_tokens: 8192,
+    stream: true,
+  })
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Length': Buffer.byteLength(payload),
+        },
+        timeout: 120000,
+      },
+      (res) => {
+        let buffer = ''
+        let fullContent = ''
+
+        res.on('data', (chunk: Buffer) => {
+          buffer += chunk.toString()
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed || !trimmed.startsWith('data: ')) continue
+            const data = trimmed.slice(6)
+            if (data === '[DONE]') continue
+            try {
+              const json = JSON.parse(data)
+              const content = json.choices?.[0]?.delta?.content
+              if (content) {
+                fullContent += content
+                onChunk(content)
+              }
+            } catch {}
+          }
+        })
+
+        res.on('end', () => {
+          resolve(fullContent)
+        })
+      }
+    )
+
+    req.on('error', (err) => reject(err))
+    req.on('timeout', () => { req.destroy(); reject(new Error('LLM timeout')) })
+    req.write(payload)
+    req.end()
+  })
+}
+
+// ─── Gemini streaming ───
+async function callGeminiStream(
+  messages: AiMessage[],
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  onChunk: (chunk: string) => void,
+): Promise<string> {
+  const systemMsg = messages.find(m => m.role === 'system')
+  const chatMessages = messages.filter(m => m.role !== 'system')
+
+  const contents = chatMessages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }))
+
+  const body: any = { contents }
+  if (systemMsg) {
+    body.systemInstruction = { parts: [{ text: systemMsg.content }] }
+  }
+
+  const payload = JSON.stringify(body)
+  const path = `/v1beta/models/${model}:streamGenerateContent?key=${apiKey}`
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: 'generativelanguage.googleapis.com',
+        path,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload),
+        },
+        timeout: 120000,
+      },
+      (res) => {
+        let buffer = ''
+        let fullContent = ''
+
+        res.on('data', (chunk: Buffer) => {
+          buffer += chunk.toString()
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed) continue
+            try {
+              const json = JSON.parse(trimmed)
+              const text = json.candidates?.[0]?.content?.parts?.[0]?.text || ''
+              if (text) {
+                fullContent += text
+                onChunk(text)
+              }
+            } catch {}
+          }
+        })
+
+        res.on('end', () => {
+          resolve(fullContent)
+        })
+      }
+    )
+
+    req.on('error', (err) => reject(err))
+    req.on('timeout', () => { req.destroy(); reject(new Error('Gemini timeout')) })
     req.write(payload)
     req.end()
   })
