@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Zap, Shield, Globe, ChevronRight, TrendingUp, BarChart3, PieChart, Building2 } from 'lucide-react'
+import { Zap, Shield, Globe, ChevronRight, TrendingUp, BarChart3, PieChart, Building2, Gamepad2 } from 'lucide-react'
 
 export default function LandingGaming() {
   const [health, setHealth] = useState(100)
