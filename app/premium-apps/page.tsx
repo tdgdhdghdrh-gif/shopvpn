@@ -24,6 +24,12 @@ interface PremiumApp {
   sold: number
   isFeatured: boolean
   sortOrder: number
+  dailyPrice: number | null
+  weeklyPrice: number | null
+  monthlyPrice: number | null
+  allowDaily: boolean
+  allowWeekly: boolean
+  allowMonthly: boolean
 }
 
 interface OrderHistory {
@@ -80,6 +86,7 @@ export default function PremiumAppsPage() {
 
   // Confirm modal
   const [confirmApp, setConfirmApp] = useState<PremiumApp | null>(null)
+  const [selectedPackage, setSelectedPackage] = useState<'base' | 'daily' | 'weekly' | 'monthly'>('base')
 
   // Success modal
   const [successData, setSuccessData] = useState<{
@@ -94,6 +101,9 @@ export default function PremiumAppsPage() {
 
   // Copied state
   const [copied, setCopied] = useState(false)
+
+  // Page config
+  const [pageConfig, setPageConfig] = useState<any>(null)
 
   useEffect(() => {
     fetch('/api/user/me')
@@ -122,9 +132,20 @@ export default function PremiumAppsPage() {
     }
   }, [])
 
+  const fetchPageConfig = useCallback(async () => {
+    try {
+      const res = await fetch('/api/premium-apps/settings')
+      const data = await res.json()
+      if (data.success) setPageConfig(data.config)
+    } catch {
+      // error
+    }
+  }, [])
+
   useEffect(() => {
     fetchApps()
-  }, [fetchApps])
+    fetchPageConfig()
+  }, [fetchApps, fetchPageConfig])
 
   // Fetch order history when switching to history tab
   const fetchOrders = useCallback(async () => {
@@ -167,7 +188,7 @@ export default function PremiumAppsPage() {
   const availableCategories = ['all', ...Array.from(new Set(apps.map(a => a.category)))]
 
   // Handle buy
-  async function handleBuy(app: PremiumApp) {
+  async function handleBuy(app: PremiumApp, pkgType: 'base' | 'daily' | 'weekly' | 'monthly' = 'base') {
     if (!user) {
       setToast({ type: 'error', text: 'กรุณาเข้าสู่ระบบก่อนซื้อ' })
       return
@@ -177,7 +198,7 @@ export default function PremiumAppsPage() {
       const res = await fetch('/api/premium-apps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appId: app.id }),
+        body: JSON.stringify({ appId: app.id, packageType: pkgType }),
       })
       const data = await res.json()
       if (data.success) {
@@ -213,6 +234,28 @@ export default function PremiumAppsPage() {
   }
 
   // Copy to clipboard
+  function getPackagePrice(app: PremiumApp, pkg: 'base' | 'daily' | 'weekly' | 'monthly'): number {
+    if (pkg === 'daily' && app.dailyPrice !== null) return app.dailyPrice
+    if (pkg === 'weekly' && app.weeklyPrice !== null) return app.weeklyPrice
+    if (pkg === 'monthly' && app.monthlyPrice !== null) return app.monthlyPrice
+    return app.price
+  }
+
+  function getPackageDisplayPrice(app: PremiumApp): string {
+    const prices: number[] = [app.price]
+    if (app.allowDaily && app.dailyPrice !== null) prices.push(app.dailyPrice)
+    if (app.allowWeekly && app.weeklyPrice !== null) prices.push(app.weeklyPrice)
+    if (app.allowMonthly && app.monthlyPrice !== null) prices.push(app.monthlyPrice)
+    const min = Math.min(...prices)
+    const max = Math.max(...prices)
+    if (min === max) return `${min.toLocaleString('th-TH')} ฿`
+    return `${min.toLocaleString('th-TH')} - ${max.toLocaleString('th-TH')} ฿`
+  }
+
+  function hasPackages(app: PremiumApp): boolean {
+    return app.allowDaily || app.allowWeekly || app.allowMonthly
+  }
+
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
@@ -375,7 +418,7 @@ export default function PremiumAppsPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
               {featuredApps.map((app) => (
-                <AppCard key={app.id} app={app} onBuy={() => setConfirmApp(app)} featured />
+                <AppCard key={app.id} app={app} onBuy={() => { setSelectedPackage('base'); setConfirmApp(app) }} featured />
               ))}
             </div>
           </div>
@@ -393,7 +436,7 @@ export default function PremiumAppsPage() {
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {regularApps.map((app) => (
-                <AppCard key={app.id} app={app} onBuy={() => setConfirmApp(app)} />
+                <AppCard key={app.id} app={app} onBuy={() => { setSelectedPackage('base'); setConfirmApp(app) }} />
               ))}
             </div>
           </div>
@@ -544,11 +587,70 @@ export default function PremiumAppsPage() {
                 </div>
               </div>
 
+              {/* Package Selection */}
+              {hasPackages(confirmApp) && (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-zinc-400">เลือกแพ็คเกจ</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setSelectedPackage('base')}
+                      className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                        selectedPackage === 'base'
+                          ? 'bg-violet-500/10 border-violet-500/30 text-violet-400'
+                          : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      <div className="text-sm font-black">{confirmApp.price.toLocaleString('th-TH')} ฿</div>
+                      <div className="text-[10px] opacity-70">พื้นฐาน</div>
+                    </button>
+                    {confirmApp.allowDaily && (
+                      <button
+                        onClick={() => setSelectedPackage('daily')}
+                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                          selectedPackage === 'daily'
+                            ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                            : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-zinc-300'
+                        }`}
+                      >
+                        <div className="text-sm font-black">{getPackagePrice(confirmApp, 'daily').toLocaleString('th-TH')} ฿</div>
+                        <div className="text-[10px] opacity-70">รายวัน</div>
+                      </button>
+                    )}
+                    {confirmApp.allowWeekly && (
+                      <button
+                        onClick={() => setSelectedPackage('weekly')}
+                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                          selectedPackage === 'weekly'
+                            ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                            : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-zinc-300'
+                        }`}
+                      >
+                        <div className="text-sm font-black">{getPackagePrice(confirmApp, 'weekly').toLocaleString('th-TH')} ฿</div>
+                        <div className="text-[10px] opacity-70">รายสัปดาห์</div>
+                      </button>
+                    )}
+                    {confirmApp.allowMonthly && (
+                      <button
+                        onClick={() => setSelectedPackage('monthly')}
+                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                          selectedPackage === 'monthly'
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                            : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-zinc-300'
+                        }`}
+                      >
+                        <div className="text-sm font-black">{getPackagePrice(confirmApp, 'monthly').toLocaleString('th-TH')} ฿</div>
+                        <div className="text-[10px] opacity-70">รายเดือน</div>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Price Summary */}
               <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-zinc-500">ราคา</span>
-                  <span className="text-sm font-bold text-white">{confirmApp.price.toLocaleString('th-TH')} ฿</span>
+                  <span className="text-sm font-bold text-white">{getPackagePrice(confirmApp, selectedPackage).toLocaleString('th-TH')} ฿</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-zinc-500">ยอดเงินปัจจุบัน</span>
@@ -557,14 +659,14 @@ export default function PremiumAppsPage() {
                 <div className="h-px bg-white/5" />
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-zinc-500">ยอดเงินหลังซื้อ</span>
-                  <span className={`text-sm font-bold ${(user?.balance || 0) >= confirmApp.price ? 'text-white' : 'text-red-400'}`}>
-                    {((user?.balance || 0) - confirmApp.price).toLocaleString('th-TH')} ฿
+                  <span className={`text-sm font-bold ${(user?.balance || 0) >= getPackagePrice(confirmApp, selectedPackage) ? 'text-white' : 'text-red-400'}`}>
+                    {((user?.balance || 0) - getPackagePrice(confirmApp, selectedPackage)).toLocaleString('th-TH')} ฿
                   </span>
                 </div>
               </div>
 
               {/* Warning if not enough balance */}
-              {(user?.balance || 0) < confirmApp.price && (
+              {(user?.balance || 0) < getPackagePrice(confirmApp, selectedPackage) && (
                 <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
                   <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                   <div className="flex-1">
@@ -585,8 +687,8 @@ export default function PremiumAppsPage() {
                 ยกเลิก
               </button>
               <button
-                onClick={() => handleBuy(confirmApp)}
-                disabled={!!buying || (user?.balance || 0) < confirmApp.price}
+                onClick={() => handleBuy(confirmApp, selectedPackage)}
+                disabled={!!buying || (user?.balance || 0) < getPackagePrice(confirmApp, selectedPackage)}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-400 hover:to-pink-400 rounded-xl text-sm font-bold text-white transition-all shadow-lg shadow-violet-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {buying === confirmApp.id ? (
@@ -786,7 +888,7 @@ function AppCard({ app, onBuy, featured = false }: { app: PremiumApp; onBuy: () 
         {/* Price overlay */}
         <div className="absolute bottom-3 left-3 flex items-center gap-2">
           <span className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-lg text-white font-black text-sm">
-            {app.price.toLocaleString('th-TH')} ฿
+            {getPackageDisplayPrice(app)}
           </span>
         </div>
 
@@ -801,12 +903,21 @@ function AppCard({ app, onBuy, featured = false }: { app: PremiumApp; onBuy: () 
 
       {/* Content */}
       <div className="p-4 sm:p-5">
-        {/* Category */}
-        <div className="flex items-center gap-2 mb-2">
+        {/* Category + Packages */}
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${cat.color}`}>
             <CatIcon className="w-3 h-3" />
             {cat.label}
           </span>
+          {app.allowDaily && (
+            <span className="text-[9px] font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-1.5 py-0.5">วัน</span>
+          )}
+          {app.allowWeekly && (
+            <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">สัปดาห์</span>
+          )}
+          {app.allowMonthly && (
+            <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-1.5 py-0.5">เดือน</span>
+          )}
           {app.stock > 0 && (
             <span className="text-[10px] text-zinc-600 font-medium">
               เหลือ {app.stock} ชิ้น

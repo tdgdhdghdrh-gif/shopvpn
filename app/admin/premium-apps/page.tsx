@@ -6,7 +6,7 @@ import {
   Star, ArrowUp, ArrowDown, Search, Upload, Image as ImageIcon, X,
   Smartphone, Monitor, Apple, Gamepad2, Music, BookOpen, Globe, Shield,
   Video, Sparkles, Crown, Tag, ShoppingCart, ToggleLeft, ToggleRight,
-  Download, ExternalLink, FileText, Copy, ChevronDown,
+  Download, ExternalLink, FileText, Copy, ChevronDown, Clock,
 } from 'lucide-react'
 
 interface PremiumAppData {
@@ -26,6 +26,14 @@ interface PremiumAppData {
   isActive: boolean
   isFeatured: boolean
   sortOrder: number
+  dailyPrice: number | null
+  weeklyPrice: number | null
+  monthlyPrice: number | null
+  allowDaily: boolean
+  allowWeekly: boolean
+  allowMonthly: boolean
+  scheduleMode: string
+  scheduleConfig: any
   createdAt: string
   _count?: { orders: number }
 }
@@ -63,6 +71,14 @@ const defaultForm = {
   isActive: true,
   isFeatured: false,
   sortOrder: 0,
+  dailyPrice: '',
+  weeklyPrice: '',
+  monthlyPrice: '',
+  allowDaily: true,
+  allowWeekly: true,
+  allowMonthly: true,
+  scheduleMode: 'always',
+  scheduleConfig: { daysOfWeek: [], weekOfMonth: 1, dayOfMonth: 1 },
 }
 
 export default function AdminPremiumAppsPage() {
@@ -78,8 +94,14 @@ export default function AdminPremiumAppsPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [form, setForm] = useState(defaultForm)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Page settings
+  const [pageConfig, setPageConfig] = useState<any>(null)
+  const [showPageSettings, setShowPageSettings] = useState(false)
+  const [savingPageConfig, setSavingPageConfig] = useState(false)
+  const [showScheduleHelp, setShowScheduleHelp] = useState(false)
 
-  useEffect(() => { fetchApps() }, [])
+  useEffect(() => { fetchApps(); fetchPageConfig() }, [])
 
   useEffect(() => {
     if (toast) {
@@ -95,6 +117,35 @@ export default function AdminPremiumAppsPage() {
       const data = await res.json()
       if (data.success) setApps(data.apps)
     } catch { } finally { setLoading(false) }
+  }
+
+  async function fetchPageConfig() {
+    try {
+      const res = await fetch('/api/admin/premium-apps/settings')
+      const data = await res.json()
+      if (data.success) setPageConfig(data.config)
+    } catch { }
+  }
+
+  async function savePageConfig() {
+    if (!pageConfig) return
+    setSavingPageConfig(true)
+    try {
+      const res = await fetch('/api/admin/premium-apps/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: pageConfig }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setToast({ type: 'success', message: 'บันทึกการตั้งค่าหน้าร้านสำเร็จ' })
+        setShowPageSettings(false)
+      } else {
+        setToast({ type: 'error', message: data.error || 'บันทึกไม่สำเร็จ' })
+      }
+    } catch {
+      setToast({ type: 'error', message: 'บันทึกไม่สำเร็จ' })
+    } finally { setSavingPageConfig(false) }
   }
 
   function resetForm() {
@@ -118,6 +169,14 @@ export default function AdminPremiumAppsPage() {
       isActive: app.isActive,
       isFeatured: app.isFeatured,
       sortOrder: app.sortOrder,
+      dailyPrice: app.dailyPrice !== null ? String(app.dailyPrice) : '',
+      weeklyPrice: app.weeklyPrice !== null ? String(app.weeklyPrice) : '',
+      monthlyPrice: app.monthlyPrice !== null ? String(app.monthlyPrice) : '',
+      allowDaily: app.allowDaily,
+      allowWeekly: app.allowWeekly,
+      allowMonthly: app.allowMonthly,
+      scheduleMode: app.scheduleMode || 'always',
+      scheduleConfig: (app.scheduleConfig as any) || { daysOfWeek: [], weekOfMonth: 1, dayOfMonth: 1 },
     })
     setEditingId(app.id)
     setShowForm(true)
@@ -284,13 +343,22 @@ export default function AdminPremiumAppsPage() {
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 mt-1 ml-[46px]">จัดการสินค้าที่จำหน่ายบนเว็บไซต์</p>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true) }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-400 hover:to-pink-400 text-white shadow-lg shadow-violet-500/20 transition-all hover:scale-105 active:scale-95"
-        >
-          <Plus className="w-4 h-4" />
-          เพิ่มแอพใหม่
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPageSettings(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-zinc-300 transition-all"
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            ตกแต่งหน้าร้าน
+          </button>
+          <button
+            onClick={() => { resetForm(); setShowForm(true) }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-400 hover:to-pink-400 text-white shadow-lg shadow-violet-500/20 transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            เพิ่มแอพใหม่
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -327,7 +395,7 @@ export default function AdminPremiumAppsPage() {
           </div>
 
           <div className="p-5 space-y-5">
-            {/* Row 1: Name + Price */}
+            {/* Row 1: Name + Base Price */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-bold text-zinc-400 mb-1.5 block">ชื่อแอพ *</label>
@@ -340,7 +408,7 @@ export default function AdminPremiumAppsPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-zinc-400 mb-1.5 block">ราคา (บาท) *</label>
+                <label className="text-xs font-bold text-zinc-400 mb-1.5 block">ราคาพื้นฐาน (บาท) *</label>
                 <input
                   type="number"
                   value={form.price}
@@ -350,6 +418,212 @@ export default function AdminPremiumAppsPage() {
                   className="w-full px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-violet-500/30 transition-colors"
                 />
               </div>
+            </div>
+
+            {/* Package Duration Pricing */}
+            <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Tag className="w-4 h-4 text-cyan-400" />
+                <h4 className="text-sm font-bold text-white">แพ็คเกจระยะเวลา</h4>
+                <span className="text-[10px] text-zinc-500">(ไม่บังคับ — ถ้าไม่ใส่จะใช้ราคาพื้นฐาน)</span>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Daily */}
+                <div className={`p-3 rounded-xl border transition-all ${form.allowDaily ? 'bg-cyan-500/5 border-cyan-500/20' : 'bg-zinc-900/30 border-white/5 opacity-60'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-cyan-400">รายวัน</span>
+                    <button
+                      onClick={() => setForm(p => ({ ...p, allowDaily: !p.allowDaily }))}
+                      className={`text-xs px-2 py-0.5 rounded-lg font-bold transition-all ${form.allowDaily ? 'bg-cyan-500/10 text-cyan-400' : 'bg-zinc-800 text-zinc-500'}`}
+                    >
+                      {form.allowDaily ? 'เปิด' : 'ปิด'}
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    value={form.dailyPrice}
+                    onChange={e => setForm(p => ({ ...p, dailyPrice: e.target.value }))}
+                    placeholder="ราคารายวัน"
+                    disabled={!form.allowDaily}
+                    className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-sm text-white placeholder-zinc-600 outline-none focus:border-cyan-500/30 transition-colors disabled:opacity-30"
+                  />
+                </div>
+
+                {/* Weekly */}
+                <div className={`p-3 rounded-xl border transition-all ${form.allowWeekly ? 'bg-purple-500/5 border-purple-500/20' : 'bg-zinc-900/30 border-white/5 opacity-60'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-purple-400">รายสัปดาห์</span>
+                    <button
+                      onClick={() => setForm(p => ({ ...p, allowWeekly: !p.allowWeekly }))}
+                      className={`text-xs px-2 py-0.5 rounded-lg font-bold transition-all ${form.allowWeekly ? 'bg-purple-500/10 text-purple-400' : 'bg-zinc-800 text-zinc-500'}`}
+                    >
+                      {form.allowWeekly ? 'เปิด' : 'ปิด'}
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    value={form.weeklyPrice}
+                    onChange={e => setForm(p => ({ ...p, weeklyPrice: e.target.value }))}
+                    placeholder="ราคารายสัปดาห์"
+                    disabled={!form.allowWeekly}
+                    className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-sm text-white placeholder-zinc-600 outline-none focus:border-purple-500/30 transition-colors disabled:opacity-30"
+                  />
+                </div>
+
+                {/* Monthly */}
+                <div className={`p-3 rounded-xl border transition-all ${form.allowMonthly ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-zinc-900/30 border-white/5 opacity-60'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-emerald-400">รายเดือน</span>
+                    <button
+                      onClick={() => setForm(p => ({ ...p, allowMonthly: !p.allowMonthly }))}
+                      className={`text-xs px-2 py-0.5 rounded-lg font-bold transition-all ${form.allowMonthly ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}
+                    >
+                      {form.allowMonthly ? 'เปิด' : 'ปิด'}
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    value={form.monthlyPrice}
+                    onChange={e => setForm(p => ({ ...p, monthlyPrice: e.target.value }))}
+                    placeholder="ราคารายเดือน"
+                    disabled={!form.allowMonthly}
+                    className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-sm text-white placeholder-zinc-600 outline-none focus:border-emerald-500/30 transition-colors disabled:opacity-30"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Schedule / Rotation Selling */}
+            <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <h4 className="text-sm font-bold text-white">ตั้งเวลาขาย (Rotation)</h4>
+                </div>
+                <button
+                  onClick={() => setShowScheduleHelp(!showScheduleHelp)}
+                  className="text-[10px] text-zinc-500 hover:text-zinc-300 underline"
+                >
+                  {showScheduleHelp ? 'ซ่อนคำอธิบาย' : 'ดูคำอธิบาย'}
+                </button>
+              </div>
+              
+              {showScheduleHelp && (
+                <div className="p-3 bg-amber-500/5 border border-amber-500/15 rounded-lg text-[11px] text-zinc-400 leading-relaxed">
+                  <span className="text-amber-400 font-bold">วิธีใช้:</span> เลือกโหมดเวลาเพื่อกำหนดว่าสินค้านี้จะขายเมื่อไหร่
+                  <br/>• <span className="text-white font-bold">ขายตลอด</span> — ขายได้ทุกวัน (default)
+                  <br/>• <span className="text-white font-bold">รายวัน</span> — ขายเฉพาะวันที่เลือก เช่น ขายเฉพาะจันทร์ พุธ ศุกร์
+                  <br/>• <span className="text-white font-bold">รายสัปดาห์</span> — ขายเฉพาะสัปดาห์ที่ N ของเดือน เช่น สัปดาห์ที่ 1
+                  <br/>• <span className="text-white font-bold">รายเดือน</span> — ขายเฉพาะวันที่ N ของทุกเดือน เช่น วันที่ 15
+                  <br/><span className="text-amber-400">* สินค้าที่ไม่ตรงเวลาจะซ่อนอัตโนมัติจากหน้าร้าน</span>
+                </div>
+              )}
+
+              {/* Schedule Mode */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'always', label: 'ขายตลอด', color: 'emerald' },
+                  { value: 'daily', label: 'รายวัน', color: 'cyan' },
+                  { value: 'weekly', label: 'รายสัปดาห์', color: 'purple' },
+                  { value: 'monthly', label: 'รายเดือน', color: 'amber' },
+                ].map((mode) => (
+                  <button
+                    key={mode.value}
+                    onClick={() => setForm(p => ({ ...p, scheduleMode: mode.value }))}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                      form.scheduleMode === mode.value
+                        ? `bg-${mode.color}-500/10 border-${mode.color}-500/30 text-${mode.color}-400`
+                        : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Daily: Days of week */}
+              {form.scheduleMode === 'daily' && (
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold text-zinc-500">เลือกวันที่เปิดขาย</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { day: 1, label: 'จ' },
+                      { day: 2, label: 'อ' },
+                      { day: 3, label: 'พ' },
+                      { day: 4, label: 'พฤ' },
+                      { day: 5, label: 'ศ' },
+                      { day: 6, label: 'ส' },
+                      { day: 0, label: 'อา' },
+                    ].map((d) => {
+                      const isSelected = (form.scheduleConfig?.daysOfWeek || []).includes(d.day)
+                      return (
+                        <button
+                          key={d.day}
+                          onClick={() => {
+                            const current = form.scheduleConfig?.daysOfWeek || []
+                            const updated = isSelected
+                              ? current.filter((x: number) => x !== d.day)
+                              : [...current, d.day]
+                            setForm(p => ({ ...p, scheduleConfig: { ...p.scheduleConfig, daysOfWeek: updated } }))
+                          }}
+                          className={`w-10 h-10 rounded-xl text-xs font-bold border transition-all ${
+                            isSelected
+                              ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                              : 'bg-zinc-900 border-white/5 text-zinc-600 hover:text-zinc-400'
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Weekly: Week of month */}
+              {form.scheduleMode === 'weekly' && (
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold text-zinc-500">เลือกสัปดาห์ของเดือน</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4].map((week) => (
+                      <button
+                        key={week}
+                        onClick={() => setForm(p => ({ ...p, scheduleConfig: { ...p.scheduleConfig, weekOfMonth: week } }))}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                          form.scheduleConfig?.weekOfMonth === week
+                            ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                            : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-zinc-300'
+                        }`}
+                      >
+                        สัปดาห์ที่ {week}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Monthly: Day of month */}
+              {form.scheduleMode === 'monthly' && (
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold text-zinc-500">เลือกวันที่ของเดือน</p>
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                      <button
+                        key={day}
+                        onClick={() => setForm(p => ({ ...p, scheduleConfig: { ...p.scheduleConfig, dayOfMonth: day } }))}
+                        className={`h-9 rounded-lg text-xs font-bold border transition-all ${
+                          form.scheduleConfig?.dayOfMonth === day
+                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                            : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-zinc-300'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Row 2: Category + Platform */}
@@ -636,6 +910,20 @@ export default function AdminPremiumAppsPage() {
                               </span>
                             </>
                           )}
+                          {app.scheduleMode && app.scheduleMode !== 'always' && (
+                            <>
+                              <span className="text-[10px] text-zinc-600">|</span>
+                              <span className={`text-[10px] font-bold ${
+                                app.scheduleMode === 'daily' ? 'text-cyan-400' :
+                                app.scheduleMode === 'weekly' ? 'text-purple-400' :
+                                app.scheduleMode === 'monthly' ? 'text-amber-400' : 'text-zinc-500'
+                              }`}>
+                                {app.scheduleMode === 'daily' ? 'รายวัน' :
+                                 app.scheduleMode === 'weekly' ? `สัปดาห์ที่ ${(app.scheduleConfig as any)?.weekOfMonth || 1}` :
+                                 app.scheduleMode === 'monthly' ? `วันที่ ${(app.scheduleConfig as any)?.dayOfMonth || 1}` : ''}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
@@ -708,6 +996,130 @@ export default function AdminPremiumAppsPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Page Settings Modal */}
+      {showPageSettings && pageConfig && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPageSettings(false)} />
+          <div className="relative bg-zinc-950 border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                ตั้งค่าหน้าร้าน (Premium Apps)
+              </h3>
+              <button onClick={() => setShowPageSettings(false)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-all">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <label className="text-xs font-bold text-zinc-400 mb-1.5 block">ชื่อหน้า</label>
+                <input
+                  type="text"
+                  value={pageConfig.pageTitle || ''}
+                  onChange={e => setPageConfig((p: any) => ({ ...p, pageTitle: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-violet-500/30 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-zinc-400 mb-1.5 block">คำอธิบายใต้ชื่อ</label>
+                <input
+                  type="text"
+                  value={pageConfig.pageSubtitle || ''}
+                  onChange={e => setPageConfig((p: any) => ({ ...p, pageSubtitle: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-violet-500/30 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-zinc-400 mb-1.5 block">แบดจ์ด้านบน</label>
+                <input
+                  type="text"
+                  value={pageConfig.heroBadge || ''}
+                  onChange={e => setPageConfig((p: any) => ({ ...p, heroBadge: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-violet-500/30 transition-colors"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: 'showStatsBar', label: 'แสดงสถิติ' },
+                  { key: 'showCategoryFilter', label: 'แสดงตัวกรองหมวดหมู่' },
+                  { key: 'showSearch', label: 'แสดงช่องค้นหา' },
+                  { key: 'showSoldCount', label: 'แสดงจำนวนขาย' },
+                  { key: 'showStockCount', label: 'แสดงจำนวนสต็อก' },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setPageConfig((p: any) => ({ ...p, [item.key]: !p[item.key] }))}
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                      pageConfig[item.key]
+                        ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400'
+                        : 'bg-zinc-900 border-white/5 text-zinc-500'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <span className={`w-2 h-2 rounded-full ${pageConfig[item.key] ? 'bg-emerald-400' : 'bg-zinc-700'}`} />
+                  </button>
+                ))}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-zinc-400 mb-1.5 block">สไตล์การ์ด</label>
+                <div className="flex gap-2">
+                  {['default', 'compact', 'large'].map((style) => (
+                    <button
+                      key={style}
+                      onClick={() => setPageConfig((p: any) => ({ ...p, cardStyle: style }))}
+                      className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
+                        pageConfig.cardStyle === style
+                          ? 'bg-violet-500/10 border-violet-500/30 text-violet-400'
+                          : 'bg-zinc-900 border-white/5 text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      {style === 'default' ? 'ปกติ' : style === 'compact' ? 'กะทัดรัด' : 'ใหญ่'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-zinc-400 mb-1.5 block">สีหลัก</label>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'violet', color: 'bg-violet-500' },
+                    { value: 'cyan', color: 'bg-cyan-500' },
+                    { value: 'emerald', color: 'bg-emerald-500' },
+                    { value: 'rose', color: 'bg-rose-500' },
+                    { value: 'amber', color: 'bg-amber-500' },
+                  ].map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => setPageConfig((p: any) => ({ ...p, primaryColor: c.value }))}
+                      className={`w-8 h-8 rounded-full ${c.color} transition-all ${pageConfig.primaryColor === c.value ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 px-5 pb-5">
+              <button
+                onClick={() => setShowPageSettings(false)}
+                className="flex-1 px-4 py-2.5 bg-zinc-900 border border-white/5 rounded-xl text-sm font-bold text-zinc-400 hover:text-white transition-all"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={savePageConfig}
+                disabled={savingPageConfig}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
+              >
+                {savingPageConfig ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                บันทึก
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

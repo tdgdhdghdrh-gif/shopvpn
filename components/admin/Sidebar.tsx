@@ -58,6 +58,8 @@ import {
   Cat,
   ClipboardList,
   Type,
+  Trophy,
+  Dices,
 } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
 
@@ -80,6 +82,10 @@ const menuItems = [
   { name: 'แบนเนอร์โปรโมชั่น', href: '/admin/banners', icon: Image },
   { name: 'Popup โปรโมชั่น', href: '/admin/popups', icon: Maximize2 },
   { name: 'จัดการบทความ', href: '/admin/blog', icon: FileText },
+  { name: 'จัดการกิจกรรม', href: '/admin/site-events', icon: Sparkles },
+  { name: 'ผู้ได้รับรางวัล', href: '/admin/award-winners', icon: Trophy },
+  { name: 'สุ่มผู้โชคดี', href: '/admin/lucky-draw', icon: Dices },
+  { name: 'จัดการ Setup Guide', href: '/admin/setup-guide', icon: Smartphone },
   { name: 'รายชื่อแอดมิน', href: '/admin/contacts', icon: Users },
   { name: 'IP Security', href: '/admin/ip-logs', icon: Shield },
   { name: 'จัดการกงล้อนำโชค', href: '/admin/lucky-wheel', icon: RotateCcw },
@@ -163,7 +169,7 @@ export default function Sidebar({ isSuperAdmin = false, isAdmin = false, isReven
 
 
   // กรองเมนูตามระดับยศ — ใช้ per-user override ก่อน, ถ้าไม่มีใช้ role config จาก DB, ถ้าไม่มีใช้ fallback hardcode
-  const adminAllowedHrefsFallback = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/v2box-codes']
+  const adminAllowedHrefsFallback = ['/admin', '/admin/vpn', '/admin/panel', '/admin/users', '/admin/revenue', '/admin/events', '/admin/tickets', '/admin/slow-reports', '/admin/contacts', '/admin/ip-logs', '/admin/promo-links', '/admin/announcements', '/admin/banners', '/admin/popups', '/admin/blog', '/admin/lucky-wheel', '/admin/coupons', '/admin/ads', '/admin/landing-template', '/admin/web-effects', '/admin/hamburger-menu', '/admin/homepage', '/admin/premium-apps', '/admin/default-homepage', '/admin/custom-pages', '/admin/server-template', '/admin/allowed-ips', '/admin/v2box-codes', '/admin/setup-guide', '/admin/site-events', '/admin/award-winners']
   const agentAllowedHrefsFallback = ['/admin', '/admin/vpn', '/admin/revenue']
   const revenueAllowedHrefsFallback = ['/admin', '/admin/revenue']
 

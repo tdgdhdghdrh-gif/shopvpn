@@ -7,6 +7,7 @@ import { getSiteUrl } from "@/lib/server-utils";
 import ChunkErrorHandler from "@/components/ChunkErrorHandler";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SettingsProvider } from "@/components/SettingsProvider";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import DynamicBackground from "@/components/DynamicBackground";
 import WebEffectsBridge from "@/components/WebEffectsBridge";
 import GlobalClickEffect from "@/components/GlobalClickEffect";
@@ -194,26 +195,28 @@ export default async function RootLayout({
         )}
         <Preloader />
         <CustomCursor />
-        <SettingsProvider>
-          <TopNotificationBar />
-            <MarqueeBar />
-            <CountdownTimer />
-            <ChunkErrorHandler />
-            <ServiceWorkerRegister />
-            <DynamicBackground />
-            <WebEffectsBridge />
-            <GlobalClickEffect />
-            <ImpersonateBanner />
-            <SiteUpdateOverlay />
-            <SiteMusicPlayer />
-            <FloatingButton />
-            <DesktopPet />
-            <FloatingTextEffect />
-            <div className="overflow-x-hidden relative z-10">
-              {children}
-            </div>
-            <BackToTop />
-          </SettingsProvider>
+        <LanguageProvider>
+          <SettingsProvider>
+            <TopNotificationBar />
+              <MarqueeBar />
+              <CountdownTimer />
+              <ChunkErrorHandler />
+              <ServiceWorkerRegister />
+              <DynamicBackground />
+              <WebEffectsBridge />
+              <GlobalClickEffect />
+              <ImpersonateBanner />
+              <SiteUpdateOverlay />
+              <SiteMusicPlayer />
+              <FloatingButton />
+              <DesktopPet />
+              <FloatingTextEffect />
+              <div className="overflow-x-hidden relative z-10">
+                {children}
+              </div>
+              <BackToTop />
+            </SettingsProvider>
+          </LanguageProvider>
       </body>
     </html>
   );

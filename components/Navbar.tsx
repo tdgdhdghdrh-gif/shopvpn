@@ -56,6 +56,7 @@ import {
 import { logoutAction } from '@/lib/actions'
 import OnboardingAutoTour from '@/components/OnboardingAutoTour'
 import { useSettings } from '@/components/SettingsProvider'
+import { useLanguage } from '@/components/LanguageProvider'
 
 interface MenuItem {
   href: string
@@ -132,6 +133,96 @@ const iconMap: Record<string, any> = {
   LogOut, LogIn,
 }
 
+// Menu label translations
+const menuLabelTranslations: Record<string, Record<string, string>> = {
+  'th': {
+    'หน้าแรก': 'หน้าแรก',
+    'Free VLESS': 'Free VLESS',
+    'โปรเสริมที่ต้องสมัคร': 'โปรเสริมที่ต้องสมัคร',
+    'เติมเงินเข้าระบบ': 'เติมเงินเข้าระบบ',
+    'อันดับผู้ใช้': 'อันดับผู้ใช้',
+    'รีวิวจากผู้ใช้': 'รีวิวจากผู้ใช้',
+    'แจ้งปัญหาเน็ตช้า': 'แจ้งปัญหาเน็ตช้า',
+    'รายชื่อแอดมิน': 'รายชื่อแอดมิน',
+    'ประกาศข่าวสาร': 'ประกาศข่าวสาร',
+    'บทความ & เคล็ดลับ': 'บทความ & เคล็ดลับ',
+    'กิจกรรม': 'กิจกรรม',
+    'กงล้อนำโชค': 'กงล้อนำโชค',
+    'เช็คอินรายวัน': 'เช็คอินรายวัน',
+    'เปรียบเทียบเซิร์ฟเวอร์': 'เปรียบเทียบเซิร์ฟเวอร์',
+    'คูปองส่วนลด': 'คูปองส่วนลด',
+    'อันดับนักแนะนำ': 'อันดับนักแนะนำ',
+    'ซื้อของ': 'ซื้อของ',
+    'สมาชิก VIP': 'สมาชิก VIP',
+    'ภารกิจ & ความสำเร็จ': 'ภารกิจ & ความสำเร็จ',
+    'ส่งของขวัญ': 'ส่งของขวัญ',
+    'แจ้งเตือน': 'แจ้งเตือน',
+    'รายการสั่งซื้อ VPN': 'รายการสั่งซื้อ VPN',
+    'การเชื่อมต่อ VPN': 'การเชื่อมต่อ VPN',
+    'ต่ออายุ VPN': 'ต่ออายุ VPN',
+    'แลกเปลี่ยนเซิร์ฟเวอร์': 'แลกเปลี่ยนเซิร์ฟเวอร์',
+    'ประวัติการเติมเงิน': 'ประวัติการเติมเงิน',
+    'ตั้งค่าโปรไฟล์': 'ตั้งค่าโปรไฟล์',
+    'เชิญเพื่อน': 'เชิญเพื่อน',
+    'ติดต่อแอดมิน': 'ติดต่อแอดมิน',
+    'แชทสด': 'แชทสด',
+    'ลงทะเบียนฝากขาย': 'ลงทะเบียนฝากขาย',
+    'จัดการร้านค้า': 'จัดการร้านค้า',
+    'ลงโฆษณา': 'ลงโฆษณา',
+    'แดชบอร์ดแอดมิน': 'แดชบอร์ดแอดมิน',
+    'จัดการเซิร์ฟเวอร์': 'จัดการเซิร์ฟเวอร์',
+    'จัดการสมาชิก': 'จัดการสมาชิก',
+    'จัดการบทความ': 'จัดการบทความ',
+    'แบนเนอร์โปรโมชั่น': 'แบนเนอร์โปรโมชั่น',
+    'Popup โปรโมชั่น': 'Popup โปรโมชั่น',
+  },
+  'en': {
+    'หน้าแรก': 'Home',
+    'Free VLESS': 'Free VLESS',
+    'โปรเสริมที่ต้องสมัคร': 'Required Packages',
+    'เติมเงินเข้าระบบ': 'Top Up',
+    'อันดับผู้ใช้': 'Leaderboard',
+    'รีวิวจากผู้ใช้': 'User Reviews',
+    'แจ้งปัญหาเน็ตช้า': 'Report Slow Net',
+    'รายชื่อแอดมิน': 'Contact Admin',
+    'ประกาศข่าวสาร': 'Announcements',
+    'บทความ & เคล็ดลับ': 'Blog & Tips',
+    'กิจกรรม': 'Events',
+    'กงล้อนำโชค': 'Lucky Wheel',
+    'เช็คอินรายวัน': 'Daily Check-in',
+    'เปรียบเทียบเซิร์ฟเวอร์': 'Server Compare',
+    'คูปองส่วนลด': 'Coupons',
+    'อันดับนักแนะนำ': 'Referral Rank',
+    'ซื้อของ': 'Shop',
+    'สมาชิก VIP': 'VIP Member',
+    'ภารกิจ & ความสำเร็จ': 'Missions & Achievements',
+    'ส่งของขวัญ': 'Send Gift',
+    'แจ้งเตือน': 'Notifications',
+    'รายการสั่งซื้อ VPN': 'VPN Orders',
+    'การเชื่อมต่อ VPN': 'VPN Connections',
+    'ต่ออายุ VPN': 'Renew VPN',
+    'แลกเปลี่ยนเซิร์ฟเวอร์': 'Exchange Server',
+    'ประวัติการเติมเงิน': 'Top-up History',
+    'ตั้งค่าโปรไฟล์': 'Profile Settings',
+    'เชิญเพื่อน': 'Invite Friends',
+    'ติดต่อแอดมิน': 'Contact Admin',
+    'แชทสด': 'Live Chat',
+    'ลงทะเบียนฝากขาย': 'Become Reseller',
+    'จัดการร้านค้า': 'Manage Store',
+    'ลงโฆษณา': 'Advertise',
+    'แดชบอร์ดแอดมิน': 'Admin Dashboard',
+    'จัดการเซิร์ฟเวอร์': 'Manage Servers',
+    'จัดการสมาชิก': 'Manage Users',
+    'จัดการบทความ': 'Manage Blog',
+    'แบนเนอร์โปรโมชั่น': 'Banners',
+    'Popup โปรโมชั่น': 'Popups',
+  },
+}
+
+function translateMenuLabel(label: string, lang: string): string {
+  return menuLabelTranslations[lang]?.[label] || label
+}
+
 // Config types from hamburger-menu admin
 interface HamburgerMenuItemConfig {
   href: string
@@ -191,6 +282,7 @@ const menuItems: MenuItem[] = [
   { href: '/contacts', icon: Users, label: 'รายชื่อแอดมิน', color: 'text-blue-400', section: 'main', description: 'ติดต่อแอดมินผ่าน Facebook ได้ตลอด 24 ชม.', menuId: 'menu-contacts', isNew: true },
   { href: '/announcements', icon: Megaphone, label: 'ประกาศข่าวสาร', color: 'text-cyan-400', section: 'main', description: 'ข่าวสาร อัพเดท โปรโมชั่น', menuId: 'menu-announcements', isNew: true },
   { href: '/blog', icon: BookOpen, label: 'บทความ & เคล็ดลับ', color: 'text-cyan-400', section: 'main', description: 'อ่านบทความ เคล็ดลับ VPN รีวิวแอป', menuId: 'menu-blog', isNew: true },
+  { href: '/events', icon: Sparkles, label: 'กิจกรรม', color: 'text-pink-400', section: 'main', description: 'กิจกรรมและโปรโมชั่นพิเศษ', menuId: 'menu-events', isNew: true },
   { href: '/lucky-wheel', icon: RotateCcw, label: 'กงล้อนำโชค', color: 'text-yellow-400', section: 'main', description: 'หมุนฟรีวันละ 1 ครั้ง ลุ้นรางวัลมากมาย!', menuId: 'menu-lucky-wheel', isNew: true },
   { href: '/daily-checkin', icon: Calendar, label: 'เช็คอินรายวัน', color: 'text-emerald-400', section: 'main', description: 'เช็คอินทุกวันรับเครดิตฟรี!', menuId: 'menu-daily-checkin', isNew: true },
   { href: '/server-compare', icon: Activity, label: 'เปรียบเทียบเซิร์ฟเวอร์', color: 'text-blue-400', section: 'main', description: 'เทียบ Ping, Speed, Load ก่อนซื้อ', menuId: 'menu-server-compare', isNew: true },
@@ -245,6 +337,7 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { settings } = useSettings()
+  const { lang, setLang, t } = useLanguage()
 
   useEffect(() => {
     if (!user) return
@@ -408,10 +501,10 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-1">
               {[
-                { label: 'HOME', href: '/', icon: Home },
-                { label: 'FREE VLESS', href: '/public-vless', icon: Globe, color: 'text-zinc-400' },
-                { label: 'BLOG', href: '/blog', icon: BookOpen, color: 'text-cyan-400' },
-                { label: 'TOPUP', href: '/topup', icon: CreditCard, color: 'text-pink-400', protected: true },
+                { label: t('nav.home'), href: '/', icon: Home },
+                { label: t('nav.freeVless'), href: '/public-vless', icon: Globe, color: 'text-zinc-400' },
+                { label: t('nav.blog'), href: '/blog', icon: BookOpen, color: 'text-cyan-400' },
+                { label: t('nav.topup'), href: '/topup', icon: CreditCard, color: 'text-pink-400', protected: true },
               ].filter((link) => !isMenuDisabled(link.href)).map((link) => (
                 (!link.protected || user) && (
                   <Link 
@@ -440,7 +533,7 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                     <WalletIcon className="w-3.5 h-3.5 text-zinc-400" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[7px] text-zinc-500 font-black uppercase leading-none">BALANCE</span>
+                    <span className="text-[7px] text-zinc-500 font-black uppercase leading-none">{t('nav.balance')}</span>
                     <span className="text-white font-black text-xs leading-none mt-0.5">
                       {formatBalance(balance)} <span className="text-[8px] opacity-60">฿</span>
                     </span>
@@ -465,6 +558,16 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                 )
               })()}
 
+              {/* Language Toggle - Desktop */}
+              <button
+                onClick={() => setLang(lang === 'th' ? 'en' : 'th')}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all text-[10px] font-black"
+                title={t('lang.switch')}
+              >
+                <Languages className="w-3.5 h-3.5" />
+                <span>{lang === 'th' ? 'TH' : 'EN'}</span>
+              </button>
+
               {/* Auth Buttons or User Menu */}
               {!user ? (
                 <div className="flex items-center gap-1.5">
@@ -472,13 +575,13 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                     href="/login" 
                     className="px-3 py-1.5 text-zinc-400 hover:text-white text-[11px] font-black transition-all"
                   >
-                    LOGIN
+                    {t('nav.login')}
                   </Link>
                   <Link 
                     href="/register" 
                     className="px-4 py-2 bg-white text-black hover:scale-105 rounded-xl text-[11px] font-black transition-all shadow-lg active:scale-95 italic"
                   >
-                    JOIN NOW
+                    {t('nav.joinNow')}
                   </Link>
                 </div>
               ) : (
@@ -552,14 +655,24 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                     </div>
                   )}
                   <div className="flex flex-col">
-                    <span className="text-zinc-500 text-[8px] font-medium uppercase tracking-wider">ยินดีต้อนรับ</span>
+                    <span className="text-zinc-500 text-[8px] font-medium uppercase tracking-wider">{t('nav.welcome')}</span>
                     <span className="text-white font-medium text-sm">{user.name}</span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <div className="w-1 h-1 rounded-full bg-emerald-500" />
-                      <span className="text-emerald-500 text-[8px]">Online</span>
+                      <span className="text-emerald-500 text-[8px]">{t('nav.online')}</span>
                     </div>
                   </div>
                 </div>
+
+                {/* Language Toggle - Logged In Mobile */}
+                <button
+                  onClick={() => setLang(lang === 'th' ? 'en' : 'th')}
+                  className="w-full mb-4 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all"
+                >
+                  <Languages className="w-3.5 h-3.5" />
+                  <span>{t('lang.switch')}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[10px]">{lang === 'th' ? 'TH' : 'EN'}</span>
+                </button>
 
                 {/* Menu Sections */}
                 <div className="flex-1 overflow-y-auto pr-2 space-y-6">
@@ -575,7 +688,7 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                         return (
                           <div key={section.id}>
                             <h4 className={`${sectionLabelColor} text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5`}>
-                              {section.label}
+                              {section.id === 'main' ? t('nav.menuMain') : section.id === 'account' ? t('nav.menuAccount') : section.id === 'marketplace' ? t('nav.menuMarketplace') : section.label}
                             </h4>
                             <div className="space-y-1">
                               {visibleItems.map((item) => {
@@ -587,7 +700,7 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                                     key={item.href}
                                     href={item.href}
                                     icon={Icon}
-                                    label={item.label}
+                                    label={original ? translateMenuLabel(original.label, lang) : item.label}
                                     color={item.color}
                                     section={item.section}
                                     description={original?.description || ''}
@@ -599,7 +712,7 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                               })}
                               {section.id === 'marketplace' && !isReseller && (
                                 <div className="px-3 py-2 text-[10px] text-zinc-500 italic">
-                                  ลงทะเบียนฝากขายเพื่อเปิดร้านค้า
+                                  {t('nav.registerReseller')}
                                 </div>
                               )}
                             </div>
@@ -612,12 +725,13 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                     <>
                       {/* Main Section */}
                       <div>
-                        <h4 className="text-zinc-500 text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5">เมนูหลัก</h4>
+                        <h4 className="text-zinc-500 text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5">{t('nav.menuMain')}</h4>
                         <div className="space-y-1">
                           {menuItems.filter(m => m.section === 'main' && !isMenuDisabled(m.href)).map((item) => (
                             <MenuLink 
                               key={item.href} 
                               {...item} 
+                              label={translateMenuLabel(item.label, lang)}
                               onClick={() => !showOnboarding && setIsOpen(false)} 
                             />
                           ))}
@@ -626,12 +740,13 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
 
                       {/* Account Section */}
                       <div>
-                        <h4 className="text-zinc-500 text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5">บัญชีของฉัน</h4>
+                        <h4 className="text-zinc-500 text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5">{t('nav.menuAccount')}</h4>
                         <div className="space-y-1">
                           {menuItems.filter(m => m.section === 'account' && !isMenuDisabled(m.href)).map((item) => (
                             <MenuLink 
                               key={item.href} 
                               {...item} 
+                              label={translateMenuLabel(item.label, lang)}
                               onClick={() => !showOnboarding && setIsOpen(false)} 
                             />
                           ))}
@@ -640,18 +755,19 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
 
                       {/* Marketplace Section */}
                       <div>
-                        <h4 className="text-emerald-500/60 text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5">ตลาดซื้อขาย</h4>
+                        <h4 className="text-emerald-500/60 text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5">{t('nav.menuMarketplace')}</h4>
                         <div className="space-y-1">
                           {menuItems.filter(m => m.section === 'marketplace' && !isMenuDisabled(m.href)).map((item) => (
                             <MenuLink 
                               key={item.href} 
                               {...item} 
+                              label={translateMenuLabel(item.label, lang)}
                               onClick={() => !showOnboarding && setIsOpen(false)} 
                             />
                           ))}
                           {!isReseller && (
                             <div className="px-3 py-2 text-[10px] text-zinc-500 italic">
-                              ลงทะเบียนฝากขายเพื่อเปิดร้านค้า
+                              {t('nav.registerReseller')}
                             </div>
                           )}
                         </div>
@@ -662,12 +778,13 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                   {/* Admin Section */}
                   {isAdmin && (
                     <div>
-                      <h4 className="text-purple-500 text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5">ผู้ดูแลระบบ</h4>
+                      <h4 className="text-purple-500 text-[8px] font-medium uppercase tracking-wider px-4 mb-1.5">{t('nav.menuAdmin')}</h4>
                       <div className="space-y-1">
                         {adminMenuItems.map((item) => (
                           <MenuLink 
                             key={item.href} 
                             {...item} 
+                            label={translateMenuLabel(item.label, lang)}
                             onClick={() => !showOnboarding && setIsOpen(false)} 
                           />
                         ))}
@@ -684,7 +801,7 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                       className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-lg transition-all text-xs font-medium group"
                     >
                       <LogOut className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-                      ออกจากระบบ
+                      {t('nav.logout')}
                     </button>
                   </form>
                 </div>
@@ -694,22 +811,31 @@ export default function Navbar({ user, isAdmin = false }: NavbarProps) {
                 <div className="w-24 h-24 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-8">
                   <User className="w-12 h-12 text-zinc-600" />
                 </div>
-                <h3 className="text-base font-medium text-white mb-1">เข้าสู่ระบบ</h3>
-                <p className="text-zinc-500 text-xs mb-6">เพื่อใช้งานบริการ</p>
+                {/* Language Toggle - Mobile/Guest */}
+                <button
+                  onClick={() => setLang(lang === 'th' ? 'en' : 'th')}
+                  className="mx-auto mb-6 flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-bold hover:bg-zinc-700 transition-all"
+                >
+                  <Languages className="w-4 h-4" />
+                  {lang === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+                </button>
+
+                <h3 className="text-base font-medium text-white mb-1">{t('nav.guestTitle')}</h3>
+                <p className="text-zinc-500 text-xs mb-6">{t('nav.guestDesc')}</p>
                 <div className="space-y-2">
                   <Link 
                     href="/login" 
                     onClick={() => setIsOpen(false)}
                     className="block w-full py-2.5 bg-white text-black rounded-lg font-medium text-xs transition-all active:scale-95"
                   >
-                    เข้าสู่ระบบ
+                    {t('nav.login')}
                   </Link>
                   <Link 
                     href="/register" 
                     onClick={() => setIsOpen(false)}
                     className="block w-full py-2.5 bg-zinc-800 border border-zinc-700 text-white rounded-lg font-medium text-xs hover:bg-zinc-700 transition-all active:scale-95"
                   >
-                    สมัครสมาชิก
+                    {t('nav.register')}
                   </Link>
                 </div>
               </div>

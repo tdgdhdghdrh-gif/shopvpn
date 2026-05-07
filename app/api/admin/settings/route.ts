@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
     })
     
     if (!settings) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       settings = await prisma.settings.create({
         data: {
           truemoneyPhone: '0825658423',
@@ -69,6 +70,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to get settings' }, { status: 500 })
   }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 // POST - Save settings
 export async function POST(request: NextRequest) {
@@ -144,6 +147,10 @@ export async function POST(request: NextRequest) {
       vpnTemplate: body.vpnTemplate !== undefined ? body.vpnTemplate : (settings?.vpnTemplate || 'classic'),
       // Registration IP Check
       registrationIpCheck: body.registrationIpCheck !== undefined ? Boolean(body.registrationIpCheck) : (settings?.registrationIpCheck ?? true),
+      // Setup Guide
+      setupGuideConfig: body.setupGuideConfig !== undefined ? body.setupGuideConfig : (settings?.setupGuideConfig || null),
+      // Premium Apps Page Config
+      premiumAppPageConfig: body.premiumAppPageConfig !== undefined ? body.premiumAppPageConfig : (settings?.premiumAppPageConfig || null),
       // Custom CSS/JS
       customCss: body.customCss !== undefined ? body.customCss : (settings?.customCss || null),
       customJs: body.customJs !== undefined ? body.customJs : (settings?.customJs || null),

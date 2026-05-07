@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft, ShoppingBag, Copy, CheckCircle2, Clock, Server, 
   Wifi, WifiOff, RefreshCw, ExternalLink, Filter, ChevronDown,
-  Calendar, Tag, Zap
+  Calendar, Tag, Zap, QrCode
 } from 'lucide-react'
 
 interface VpnOrder {
@@ -100,6 +100,7 @@ export default function OrdersPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterType>('all')
   const [showFilterMenu, setShowFilterMenu] = useState(false)
+  const [showQrModal, setShowQrModal] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrders()
@@ -390,6 +391,13 @@ export default function OrdersPage() {
                         <p className="text-[10px] text-gray-600 font-mono truncate">{order.vlessLink}</p>
                       </div>
                       <button
+                        onClick={() => setShowQrModal(order.id)}
+                        className="p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-purple-500/10 hover:border-purple-500/20 transition-all active:scale-90 flex-shrink-0"
+                        title="แสดง QR Code"
+                      >
+                        <QrCode className="w-4 h-4 text-purple-400" />
+                      </button>
+                      <button
                         onClick={() => copyLink(order.vlessLink, order.id)}
                         className={`p-2.5 rounded-xl border transition-all active:scale-90 flex-shrink-0 ${
                           copiedId === order.id 
@@ -429,6 +437,45 @@ export default function OrdersPage() {
           </div>
         )}
       </main>
+
+      {/* QR Code Modal */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowQrModal(null)} />
+          <div className="relative bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center">
+            <h3 className="text-sm font-bold text-white mb-1">QR Code</h3>
+            <p className="text-[11px] text-gray-500 mb-4">สแกนเพื่อเพิ่มการเชื่อมต่อในแอป VPN</p>
+            <div className="bg-white rounded-xl p-4 mx-auto w-fit">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(orders.find(o => o.id === showQrModal)?.vlessLink || '')}`}
+                alt="QR Code"
+                className="w-48 h-48"
+              />
+            </div>
+            <p className="text-[10px] font-mono text-zinc-500 mt-3 truncate px-4">
+              {orders.find(o => o.id === showQrModal)?.vlessLink}
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  const link = orders.find(o => o.id === showQrModal)?.vlessLink || ''
+                  const url = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(link)}`
+                  window.open(url, '_blank')
+                }}
+                className="flex-1 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-500 border border-cyan-400/20 rounded-xl text-xs font-bold text-white hover:from-cyan-500 hover:to-cyan-400 transition-all active:scale-95"
+              >
+                ดาวน์โหลด
+              </button>
+              <button
+                onClick={() => setShowQrModal(null)}
+                className="flex-1 py-2.5 bg-zinc-800 border border-white/10 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-all active:scale-95"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

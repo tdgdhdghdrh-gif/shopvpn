@@ -46,7 +46,14 @@ export async function POST(request: NextRequest) {
     if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { name, description, price, imageUrl, category, platform, features, downloadUrl, instructions, stockCodes, isActive, isFeatured, sortOrder } = body
+    const { 
+      name, description, price, imageUrl, category, platform, 
+      features, downloadUrl, instructions, stockCodes, 
+      isActive, isFeatured, sortOrder,
+      dailyPrice, weeklyPrice, monthlyPrice,
+      allowDaily, allowWeekly, allowMonthly,
+      scheduleMode, scheduleConfig,
+    } = body
 
     if (!name?.trim()) return NextResponse.json({ success: false, error: 'กรุณาระบุชื่อสินค้า' }, { status: 400 })
     if (price === undefined || price < 0) return NextResponse.json({ success: false, error: 'กรุณาระบุราคา' }, { status: 400 })
@@ -72,6 +79,14 @@ export async function POST(request: NextRequest) {
         isActive: isActive !== false,
         isFeatured: isFeatured === true,
         sortOrder: sortOrder || 0,
+        dailyPrice: dailyPrice !== undefined && dailyPrice !== '' ? parseFloat(dailyPrice) : null,
+        weeklyPrice: weeklyPrice !== undefined && weeklyPrice !== '' ? parseFloat(weeklyPrice) : null,
+        monthlyPrice: monthlyPrice !== undefined && monthlyPrice !== '' ? parseFloat(monthlyPrice) : null,
+        allowDaily: allowDaily !== false,
+        allowWeekly: allowWeekly !== false,
+        allowMonthly: allowMonthly !== false,
+        scheduleMode: scheduleMode || 'always',
+        scheduleConfig: scheduleConfig || null,
       }
     })
 
@@ -106,6 +121,27 @@ export async function PUT(request: NextRequest) {
     if (fields.isActive !== undefined) data.isActive = fields.isActive
     if (fields.isFeatured !== undefined) data.isFeatured = fields.isFeatured
     if (fields.sortOrder !== undefined) data.sortOrder = fields.sortOrder
+
+    // Package duration fields
+    if (fields.dailyPrice !== undefined) {
+      const val = fields.dailyPrice
+      data.dailyPrice = val !== '' && val !== null ? parseFloat(val) : null
+    }
+    if (fields.weeklyPrice !== undefined) {
+      const val = fields.weeklyPrice
+      data.weeklyPrice = val !== '' && val !== null ? parseFloat(val) : null
+    }
+    if (fields.monthlyPrice !== undefined) {
+      const val = fields.monthlyPrice
+      data.monthlyPrice = val !== '' && val !== null ? parseFloat(val) : null
+    }
+    if (fields.allowDaily !== undefined) data.allowDaily = fields.allowDaily
+    if (fields.allowWeekly !== undefined) data.allowWeekly = fields.allowWeekly
+    if (fields.allowMonthly !== undefined) data.allowMonthly = fields.allowMonthly
+
+    // Schedule fields
+    if (fields.scheduleMode !== undefined) data.scheduleMode = fields.scheduleMode
+    if (fields.scheduleConfig !== undefined) data.scheduleConfig = fields.scheduleConfig
 
     // If stockCodes is being updated, auto-calculate stock
     if (fields.stockCodes !== undefined) {

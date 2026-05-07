@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession, checkImpersonation } from '@/lib/session'
+import { isProductAvailableBySchedule } from '@/lib/schedule'
 
-// GET - List active premium apps (public)
+// GET - List active premium apps (public) - filtered by schedule
 export async function GET() {
   try {
     const apps = await prisma.premiumApp.findMany({
@@ -21,10 +22,23 @@ export async function GET() {
         sold: true,
         isFeatured: true,
         sortOrder: true,
+        dailyPrice: true,
+        weeklyPrice: true,
+        monthlyPrice: true,
+        allowDaily: true,
+        allowWeekly: true,
+        allowMonthly: true,
+        scheduleMode: true,
+        scheduleConfig: true,
       }
     })
 
-    return NextResponse.json({ success: true, apps })
+    // Filter by schedule
+    const filteredApps = apps.filter(app => {
+      return isProductAvailableBySchedule(app.scheduleMode, app.scheduleConfig as any)
+    })
+
+    return NextResponse.json({ success: true, apps: filteredApps })
   } catch (error) {
     console.error('GET public premium-apps error:', error)
     return NextResponse.json({ success: false, error: 'เกิดข้อผิดพลาด' }, { status: 500 })
@@ -43,7 +57,7 @@ export async function POST(request: NextRequest) {
     const impBlock = await checkImpersonation()
     if (impBlock) return impBlock
 
-    const { appId } = await request.json()
+    const { appId, packageType } = await request.json()
     if (!appId) return NextResponse.json({ success: false, error: 'ไม่พบสินค้าที่ต้องการซื้อ' }, { status: 400 })
 
     // Use interactive transaction for atomicity
@@ -52,6 +66,26 @@ export async function POST(request: NextRequest) {
       const app = await tx.premiumApp.findUnique({ where: { id: appId } })
       if (!app || !app.isActive) {
         throw new Error('ไม่พบสินค้านี้หรือหยุดจำหน่ายแล้ว')
+      }
+
+      // Check schedule
+      if (!isProductAvailableBySchedule(app.scheduleMode, app.scheduleConfig as any)) {
+        throw new Error('สินค้านี้ไม่เปิดขายในช่วงเวลานี้')
+      }
+
+      // Determine final price based on package type
+      let finalPrice = app.price
+      const validPackage = packageType || 'base'
+      
+      if (validPackage === 'daily') {
+        if (!app.allowDaily) throw new Error('ไม่เปิดขายแบบรายวัน')
+        if (app.dailyPrice !== null && app.dailyPrice !== undefined) finalPrice = app.dailyPrice
+      } else if (validPackage === 'weekly') {
+        if (!app.allowWeekly) throw new Error('ไม่เปิดขายแบบรายสัปดาห์')
+        if (app.weeklyPrice !== null && app.weeklyPrice !== undefined) finalPrice = app.weeklyPrice
+      } else if (validPackage === 'monthly') {
+        if (!app.allowMonthly) throw new Error('ไม่เปิดขายแบบรายเดือน')
+        if (app.monthlyPrice !== null && app.monthlyPrice !== undefined) finalPrice = app.monthlyPrice
       }
 
       // Parse stockCodes — extract top line
@@ -71,8 +105,8 @@ export async function POST(request: NextRequest) {
       const user = await tx.user.findUnique({ where: { id: session.userId! }, select: { id: true, balance: true } })
       if (!user) throw new Error('ไม่พบผู้ใช้')
 
-      if (user.balance < app.price) {
-        throw new Error(`NEED_TOPUP:ยอดเงินไม่เพียงพอ (ต้องการ ${app.price} ฿, มี ${user.balance} ฿)`)
+      if (user.balance < finalPrice) {
+        throw new Error(`NEED_TOPUP:ยอดเงินไม่เพียงพอ (ต้องการ ${finalPrice} ฿, มี ${user.balance} ฿)`)
       }
 
       // Create order with deliveredCode
@@ -81,7 +115,7 @@ export async function POST(request: NextRequest) {
           userId: session.userId!,
           appId: app.id,
           appName: app.name,
-          price: app.price,
+          price: finalPrice,
           deliveredCode,
         }
       })
@@ -89,7 +123,7 @@ export async function POST(request: NextRequest) {
       // Deduct user balance
       await tx.user.update({
         where: { id: session.userId! },
-        data: { balance: { decrement: app.price } }
+        data: { balance: { decrement: finalPrice } }
       })
 
       // Update app: remove used code, update stock, increment sold
@@ -107,6 +141,8 @@ export async function POST(request: NextRequest) {
         deliveredCode,
         downloadUrl: app.downloadUrl,
         instructions: app.instructions,
+        finalPrice,
+        packageType: validPackage,
       }
     })
 
@@ -116,6 +152,8 @@ export async function POST(request: NextRequest) {
       deliveredCode: result.deliveredCode,
       downloadUrl: result.downloadUrl || null,
       instructions: result.instructions || null,
+      finalPrice: result.finalPrice,
+      packageType: result.packageType,
     })
   } catch (error: any) {
     console.error('POST buy premium-app error:', error)

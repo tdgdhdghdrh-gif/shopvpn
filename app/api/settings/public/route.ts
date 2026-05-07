@@ -183,6 +183,8 @@ export async function GET() {
         // Force Profile Requirements
         forceProfileImage: settings.forceProfileImage ?? false,
         forceContactLink: settings.forceContactLink ?? false,
+        // Setup Guide
+        setupGuideConfig: settings.setupGuideConfig || null,
       }
     })
   } catch (error) {

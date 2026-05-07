@@ -226,6 +226,12 @@ model Settings {
   // Force Profile Requirements
   forceProfileImage       Boolean  @default(false) // บังคับให้ผู้ใช้ตั้งรูปโปรไฟล์
   forceContactLink        Boolean  @default(false) // บังคับให้ผู้ใช้ใส่ลิงก์ติดต่อ
+
+  // Setup Guide (โปรเสริมที่ต้องสมัคร)
+  setupGuideConfig        Json?    // JSON config for /setup-guide page content
+
+  // Premium Apps Page Config
+  premiumAppPageConfig    Json?    // JSON config for /premium-apps page appearance
 }
 
 model VpnServer {
@@ -288,6 +294,7 @@ model VpnServer {
   healthStatus   String   @default("unknown") // healthy, unhealthy, checking, unknown
   lastHealthCheck DateTime?
   displayMode    String   @default("text") // "text" | "image"
+  isEventServer  Boolean  @default(false) // เซิร์ฟเวอร์กิจกรรม — ใช้สำหรับกรองผู้เข้าร่วมกิจกรรม
 
   orders       VpnOrder[]
 }
@@ -1110,25 +1117,35 @@ model HomepageStatCard {
 
 // ===== Premium App Store =====
 model PremiumApp {
-  id           String   @id @default(cuid())
-  name         String
-  description  String   @db.Text
-  price        Float
-  imageUrl     String
-  category     String   @default("general") // general, streaming, productivity, vpn, game, social, music, education
-  platform     String   @default("all")     // all, ios, android, windows, mac
-  features     String?  @db.Text            // JSON array of feature strings
-  downloadUrl  String?                      // ลิงก์ดาวน์โหลดหรือคำสั่งหลังซื้อ (fallback)
-  instructions String?  @db.Text            // วิธีติดตั้ง / ข้อมูลเพิ่มเติมแสดงหลังซื้อ (fallback)
-  stockCodes   String?  @db.Text            // 1 บรรทัด = 1 รหัส/ลิงก์, ซื้อ = ดึงบรรทัดบนสุด
-  stock        Int      @default(0)         // คำนวณจากจำนวนบรรทัดใน stockCodes
-  sold         Int      @default(0)
-  isActive     Boolean  @default(true)
-  isFeatured   Boolean  @default(false)
-  sortOrder    Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  orders       PremiumAppOrder[]
+  id            String   @id @default(cuid())
+  name          String
+  description   String   @db.Text
+  price         Float
+  imageUrl      String
+  category      String   @default("general") // general, streaming, productivity, vpn, game, social, music, education
+  platform      String   @default("all")     // all, ios, android, windows, mac
+  features      String?  @db.Text            // JSON array of feature strings
+  downloadUrl   String?                      // ลิงก์ดาวน์โหลดหรือคำสั่งหลังซื้อ (fallback)
+  instructions  String?  @db.Text            // วิธีติดตั้ง / ข้อมูลเพิ่มเติมแสดงหลังซื้อ (fallback)
+  stockCodes    String?  @db.Text            // 1 บรรทัด = 1 รหัส/ลิงก์, ซื้อ = ดึงบรรทัดบนสุด
+  stock         Int      @default(0)         // คำนวณจากจำนวนบรรทัดใน stockCodes
+  sold          Int      @default(0)
+  isActive      Boolean  @default(true)
+  isFeatured    Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  // Package duration pricing & toggles
+  dailyPrice    Float?
+  weeklyPrice   Float?
+  monthlyPrice  Float?
+  allowDaily    Boolean  @default(true)
+  allowWeekly   Boolean  @default(true)
+  allowMonthly  Boolean  @default(true)
+  // Schedule / Rotation selling
+  scheduleMode  String   @default("always") // always, daily, weekly, monthly
+  scheduleConfig Json?   // { daysOfWeek: [0,1,2], weekOfMonth: 1, dayOfMonth: 15 }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        PremiumAppOrder[]
 
   @@index([isActive, sortOrder])
   @@index([category])
@@ -1148,6 +1165,19 @@ model PremiumAppOrder {
 
   @@index([userId])
   @@index([appId])
+}
+
+model SiteEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  imageUrl    String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model CustomPage {
