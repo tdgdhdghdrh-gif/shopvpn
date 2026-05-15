@@ -230,6 +230,13 @@ model Settings {
   // Setup Guide (โปรเสริมที่ต้องสมัคร)
   setupGuideConfig        Json?    // JSON config for /setup-guide page content
 
+  // Server Page Decoration (3C)
+  serverCardStyle       String  @default("default")  // default | glass | neon | premium | minimal | gaming
+  serverSectionTheme    String  @default("default")  // default | gradient | neon | pulse | sparkle
+  serverSectionTitle    String? // override "เลือกเซิร์ฟเวอร์"
+  serverSectionSubtitle String?
+  serverPageWidgets     Json?   // [{ id, type, position, config }]
+
   // Premium Apps Page Config
   premiumAppPageConfig    Json?    // JSON config for /premium-apps page appearance
 }
@@ -1443,6 +1450,13 @@ model SiteAppearance {
   enableParticles   Boolean  @default(false)
   particleType      String?  // snow | stars | bubbles | leaves | rain | fireflies
   enableConfetti    Boolean  @default(false)
+  // Gradient Background
+  gradientEnabled   Boolean  @default(false)
+  gradientType      String   @default("linear")  // linear | radial | conic | mesh
+  gradientColors    Json?    // array of hex colors e.g. ["#ec4899","#8b5cf6","#06b6d4"]
+  gradientAngle     Int      @default(135)        // 0-360 (linear only)
+  gradientAnimated  Boolean  @default(false)
+  gradientSpeed     Int      @default(15)         // 5-60 seconds per cycle
   updatedBy         String?
   updatedAt         DateTime @updatedAt
 }

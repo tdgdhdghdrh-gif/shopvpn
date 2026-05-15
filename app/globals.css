@@ -706,3 +706,76 @@ body {
     font-size: 1.1rem;
   }
 }
+
+/* =================================================
+   Server Page Decoration (3C)
+   ================================================= */
+
+/* === Card Styles === */
+.server-card-glass .grid > *,
+.server-card-glass [class*="rounded-2xl"]:not(.grid):not(.server-cards-wrap) {
+  background: rgba(255,255,255,0.04) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
+.server-card-neon .grid > *,
+.server-card-neon [class*="rounded-2xl"]:not(.grid):not(.server-cards-wrap) {
+  border: 1px solid rgba(34,211,238,0.5) !important;
+  box-shadow: 0 0 20px rgba(34,211,238,0.25), inset 0 0 8px rgba(34,211,238,0.08);
+  background: #0a0e14 !important;
+}
+.server-card-premium .grid > *,
+.server-card-premium [class*="rounded-2xl"]:not(.grid):not(.server-cards-wrap) {
+  background: linear-gradient(135deg, rgba(180,140,40,0.12), rgba(180,140,40,0.03)) !important;
+  border: 1px solid rgba(234,179,8,0.4) !important;
+  box-shadow: 0 4px 24px rgba(234,179,8,0.10);
+}
+.server-card-minimal .grid > *,
+.server-card-minimal [class*="rounded-2xl"]:not(.grid):not(.server-cards-wrap) {
+  background: #0a0a0a !important;
+  border: 1px solid #1f1f1f !important;
+  box-shadow: none !important;
+}
+.server-card-gaming .grid > *,
+.server-card-gaming [class*="rounded-2xl"]:not(.grid):not(.server-cards-wrap) {
+  background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(37,99,235,0.10)) !important;
+  border: 1px solid rgba(124,58,237,0.4) !important;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+/* === Section Themes === */
+.server-section-gradient .server-section-title-gradient {
+  background: linear-gradient(90deg, #ec4899, #8b5cf6, #06b6d4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+.server-section-neon .server-section-title-neon {
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34,211,238,0.7), 0 0 20px rgba(34,211,238,0.4);
+}
+.server-section-pulse .server-section-title-pulse {
+  animation: serverTitlePulse 2s ease-in-out infinite;
+}
+@keyframes serverTitlePulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.85; }
+}
+.server-section-sparkle .server-section-title-sparkle::before {
+  content: '✨';
+  margin-right: 6px;
+  display: inline-block;
+  animation: serverSparkleSpin 3s linear infinite;
+}
+.server-section-sparkle .server-section-title-sparkle::after {
+  content: '✨';
+  margin-left: 6px;
+  display: inline-block;
+  animation: serverSparkleSpin 3s linear infinite reverse;
+}
+@keyframes serverSparkleSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}

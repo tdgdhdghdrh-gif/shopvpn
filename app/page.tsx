@@ -123,10 +123,17 @@ export default async function HomePage() {
   // ถ้าผู้ใช้ล็อกอินอยู่ และแอดมินตั้งหน้าแรกไว้ไม่ใช่ / → redirect ไปหน้าที่ตั้งไว้
   let serverListTemplate = 'detailed'
   let defaultPrices = { daily: 4, weekly: 25, monthly: 100 }
-  
+  let serverDeco = {
+    cardStyle: 'default',
+    sectionTheme: 'default',
+    sectionTitle: '',
+    sectionSubtitle: '',
+    widgets: [] as any[],
+  }
+
   if (session.isLoggedIn) {
     const settings = await prisma.settings.findFirst({
-      select: { defaultHomePage: true, serverListTemplate: true, vpnDailyPrice: true, vpnMonthlyPrice: true, vpnWeeklyPrice: true }
+      select: { defaultHomePage: true, serverListTemplate: true, vpnDailyPrice: true, vpnMonthlyPrice: true, vpnWeeklyPrice: true, serverCardStyle: true, serverSectionTheme: true, serverSectionTitle: true, serverSectionSubtitle: true, serverPageWidgets: true }
     })
     const homePage = settings?.defaultHomePage || '/'
     if (homePage !== '/') {
@@ -137,6 +144,13 @@ export default async function HomePage() {
       daily: settings?.vpnDailyPrice ?? 4,
       weekly: settings?.vpnWeeklyPrice ?? 25,
       monthly: settings?.vpnMonthlyPrice ?? 100,
+    }
+    serverDeco = {
+      cardStyle: settings?.serverCardStyle || 'default',
+      sectionTheme: settings?.serverSectionTheme || 'default',
+      sectionTitle: settings?.serverSectionTitle || '',
+      sectionSubtitle: settings?.serverSectionSubtitle || '',
+      widgets: Array.isArray(settings?.serverPageWidgets) ? settings!.serverPageWidgets as any[] : [],
     }
   }
 
@@ -278,6 +292,42 @@ export default async function HomePage() {
   if (user) {
     // Filter only visible sections
     const visibleSections = sections.filter((s: any) => s.isVisible)
+
+    // Helper: render a widget on the server section
+    function renderServerWidget(w: any) {
+      if (!w || !w.type) return null
+      const cfg = w.config || {}
+      switch (w.type) {
+        case 'banner':
+          return (
+            <div key={w.id} className="mb-4 px-4 py-3 rounded-2xl flex items-center gap-3" style={{ backgroundColor: cfg.bgColor || '#1e293b', color: cfg.textColor || '#ffffff' }}>
+              {cfg.emoji && <span className="text-2xl">{cfg.emoji}</span>}
+              <span className="text-sm font-bold">{cfg.text || ''}</span>
+            </div>
+          )
+        case 'text': {
+          const sizeMap: Record<string, string> = { sm: 'text-xs', md: 'text-sm', lg: 'text-base', xl: 'text-xl' }
+          const alignMap: Record<string, string> = { left: 'text-left', center: 'text-center', right: 'text-right' }
+          return (
+            <p key={w.id} className={`mb-3 ${sizeMap[cfg.size] || 'text-sm'} ${alignMap[cfg.align] || 'text-center'}`} style={{ color: cfg.color || '#94a3b8' }}>
+              {cfg.content || ''}
+            </p>
+          )
+        }
+        case 'divider': {
+          if (cfg.style === 'space') return <div key={w.id} className="my-4" />
+          if (cfg.style === 'gradient') return <div key={w.id} className="my-4 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+          if (cfg.style === 'dashed') return <div key={w.id} className="my-4 border-t border-dashed" style={{ borderColor: cfg.color || '#27272a' }} />
+          return <div key={w.id} className="my-4 border-t" style={{ borderColor: cfg.color || '#27272a' }} />
+        }
+        case 'image':
+          if (!cfg.url) return null
+          // eslint-disable-next-line @next/next/no-img-element
+          return <img key={w.id} src={cfg.url} alt={cfg.alt || ''} className="w-full h-auto rounded-2xl mb-4" />
+        default:
+          return null
+      }
+    }
 
     // Helper: render a single section by type
     function renderSection(section: any) {
@@ -509,14 +559,23 @@ export default async function HomePage() {
         // ===== Server Section =====
         case 'servers':
           return (
-            <div key={section.id || 'servers'}>
+            <div key={section.id || 'servers'} className={`server-section server-section-${serverDeco.sectionTheme}`}>
+              {/* Widgets before */}
+              {serverDeco.widgets.filter((w: any) => w.position === 'before').map((w: any) => renderServerWidget(w))}
+
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 rounded-full bg-gradient-to-b from-cyan-400 to-blue-500" />
-                  <h2 className="text-sm font-bold text-white">เลือกเซิร์ฟเวอร์</h2>
+                  <h2 className={`text-sm font-bold text-white server-section-title-${serverDeco.sectionTheme}`}>
+                    {serverDeco.sectionTitle || 'เลือกเซิร์ฟเวอร์'}
+                  </h2>
                   <span className="px-2 py-0.5 rounded-md bg-zinc-900 border border-white/5 text-[10px] text-zinc-500 font-medium">{servers.length} รายการ</span>
                 </div>
               </div>
+              {serverDeco.sectionSubtitle && (
+                <p className="text-xs text-zinc-500 mb-3 -mt-2">{serverDeco.sectionSubtitle}</p>
+              )}
+              <div className={`server-cards-wrap server-card-${serverDeco.cardStyle}`}>
               {serverListTemplate === 'image-card' ? (
                 <ServerCardImageList
                   servers={servers.map((server) => ({
@@ -538,14 +597,18 @@ export default async function HomePage() {
                     </div>
                   ) : (
                     servers.map((server) => (
-                      <ServerCard key={server.id} server={{ 
-                        ...server, 
+                      <ServerCard key={server.id} server={{
+                        ...server,
                         userCount: server._count.orders,
                       }} user={user} totalServers={servers.length} />
                     ))
                   )}
                 </div>
               )}
+              </div>
+
+              {/* Widgets after */}
+              {serverDeco.widgets.filter((w: any) => w.position === 'after').map((w: any) => renderServerWidget(w))}
             </div>
           )
 

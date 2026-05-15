@@ -268,6 +268,67 @@ export async function GET(request: NextRequest) {
       ? Math.round(((newUsersToday - newUsersYesterday) / newUsersYesterday) * 100)
       : newUsersToday > 0 ? 100 : 0
 
+    // === ADDITIONAL ANALYTICS (3C dashboard) ===
+    const last30Start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const last7Start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const [
+      revenueByDay30,
+      ordersByHour,
+      ordersByDow,
+      packageMix,
+      topUsersBySpend,
+      serverHealthDist,
+    ] = await Promise.all([
+      prisma.$queryRawUnsafe(`
+        SELECT DATE("createdAt") AS date,
+               SUM(amount)::float AS topup,
+               COUNT(*)::int AS count
+        FROM "TopUp"
+        WHERE status='SUCCESS' AND "createdAt" >= $1
+        GROUP BY DATE("createdAt")
+        ORDER BY date ASC
+      `, last30Start),
+      prisma.$queryRawUnsafe(`
+        SELECT EXTRACT(HOUR FROM "createdAt")::int AS hour,
+               COUNT(*)::int AS count,
+               COALESCE(SUM(price),0)::float AS amount
+        FROM "VpnOrder"
+        WHERE "createdAt" >= $1
+        GROUP BY hour
+        ORDER BY hour ASC
+      `, last7Start),
+      prisma.$queryRawUnsafe(`
+        SELECT EXTRACT(DOW FROM "createdAt")::int AS dow,
+               COUNT(*)::int AS orders,
+               COALESCE(SUM(price),0)::float AS revenue
+        FROM "VpnOrder"
+        WHERE "createdAt" >= $1
+        GROUP BY dow
+        ORDER BY dow ASC
+      `, last30Start),
+      prisma.vpnOrder.groupBy({
+        by: ['packageType'],
+        where: { createdAt: { gte: last30Start } },
+        _count: true,
+        _sum: { price: true },
+      }),
+      prisma.$queryRawUnsafe(`
+        SELECT u.id, u.name, u.email, u.avatar,
+               COALESCE(SUM(t.amount),0)::float AS spend,
+               COUNT(t.id)::int AS topups
+        FROM "User" u
+        INNER JOIN "TopUp" t ON t."userId" = u.id
+        WHERE t.status='SUCCESS' AND t."createdAt" >= $1
+        GROUP BY u.id
+        ORDER BY spend DESC
+        LIMIT 10
+      `, monthStart),
+      prisma.vpnServer.groupBy({
+        by: ['healthStatus'],
+        _count: true,
+      }).catch(() => [] as any[]),
+    ])
+
     return NextResponse.json({
       isSuperAdmin: admin?.isSuperAdmin || false,
       overview: {
@@ -352,7 +413,50 @@ export async function GET(request: NextRequest) {
           serverFlag: o.server.flag,
           createdAt: o.createdAt,
         })),
-      }
+      },
+      analytics: {
+        revenueByDay30: (revenueByDay30 as any[]).map((d: any) => ({
+          date: new Date(d.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
+          topup: Number(d.topup) || 0,
+          count: Number(d.count) || 0,
+        })),
+        ordersByHour: Array.from({ length: 24 }, (_, h) => {
+          const row = (ordersByHour as any[]).find((r: any) => Number(r.hour) === h)
+          return {
+            hour: `${String(h).padStart(2, '0')}:00`,
+            count: row ? Number(row.count) : 0,
+            amount: row ? Number(row.amount) : 0,
+          }
+        }),
+        ordersByDow: (() => {
+          const names = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+          return Array.from({ length: 7 }, (_, d) => {
+            const row = (ordersByDow as any[]).find((r: any) => Number(r.dow) === d)
+            return {
+              day: names[d],
+              orders: row ? Number(row.orders) : 0,
+              revenue: row ? Number(row.revenue) : 0,
+            }
+          })
+        })(),
+        packageMix: packageMix.map(p => ({
+          packageType: p.packageType,
+          count: p._count,
+          revenue: p._sum.price || 0,
+        })),
+        topUsers: (topUsersBySpend as any[]).map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          avatar: u.avatar,
+          spend: Number(u.spend) || 0,
+          topups: Number(u.topups) || 0,
+        })),
+        serverHealth: serverHealthDist.map((h: any) => ({
+          status: h.healthStatus || 'unknown',
+          count: h._count,
+        })),
+      },
     })
   } catch (error) {
     console.error('Dashboard API error:', error)

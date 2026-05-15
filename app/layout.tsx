@@ -7,8 +7,12 @@ import { getSiteUrl } from "@/lib/server-utils";
 import ChunkErrorHandler from "@/components/ChunkErrorHandler";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SettingsProvider } from "@/components/SettingsProvider";
+import { SiteAppearanceProvider } from "@/components/SiteAppearanceProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import DynamicBackground from "@/components/DynamicBackground";
+import GradientBackground from "@/components/GradientBackground";
+import ParticleBackground from "@/components/ParticleBackground";
+import ThemeEffects from "@/components/ThemeEffects";
 import WebEffectsBridge from "@/components/WebEffectsBridge";
 import GlobalClickEffect from "@/components/GlobalClickEffect";
 import ImpersonateBanner from "@/components/ImpersonateBanner";
@@ -197,12 +201,16 @@ export default async function RootLayout({
         <CustomCursor />
         <LanguageProvider>
           <SettingsProvider>
+            <SiteAppearanceProvider>
             <TopNotificationBar />
               <MarqueeBar />
               <CountdownTimer />
               <ChunkErrorHandler />
               <ServiceWorkerRegister />
               <DynamicBackground />
+              <GradientBackground />
+              <ParticleBackground />
+              <ThemeEffects />
               <WebEffectsBridge />
               <GlobalClickEffect />
               <ImpersonateBanner />
@@ -215,6 +223,7 @@ export default async function RootLayout({
                 {children}
               </div>
               <BackToTop />
+            </SiteAppearanceProvider>
             </SettingsProvider>
           </LanguageProvider>
       </body>

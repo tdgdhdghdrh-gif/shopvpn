@@ -3,17 +3,22 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { 
+import {
   Users, Wallet, Globe, Activity, TrendingUp, TrendingDown,
   ShoppingBag, CreditCard, Server, ArrowUpRight, ArrowDownRight,
   Clock, Zap, RefreshCw, Eye, ChevronRight, Banknote,
   UserPlus, ShieldCheck, Wifi, BarChart3, DollarSign, Package,
   AlertTriangle, Star, MessageSquare, Gift, TestTube, Layers,
-  Signal, Crown, Shield, ArrowRight
+  Signal, Crown, Shield, ArrowRight, Hourglass, CalendarDays,
+  PieChart as PieChartIcon, Receipt, Trophy, Heart, Landmark, KeyRound
 } from 'lucide-react'
 
 const DashboardChart = dynamic(() => import('@/components/admin/DashboardChart'), { ssr: false })
 const DonutChartDynamic = dynamic(() => import('@/components/admin/DashboardChart').then(mod => ({ default: mod.DonutChart })), { ssr: false })
+const ComposedRevenueChart = dynamic(() => import('@/components/admin/DashboardChart').then(mod => ({ default: mod.ComposedRevenueChart })), { ssr: false })
+const HourlyBars = dynamic(() => import('@/components/admin/DashboardChart').then(mod => ({ default: mod.HourlyBars })), { ssr: false })
+const DowChart = dynamic(() => import('@/components/admin/DashboardChart').then(mod => ({ default: mod.DowChart })), { ssr: false })
+const PackageRadial = dynamic(() => import('@/components/admin/DashboardChart').then(mod => ({ default: mod.PackageRadial })), { ssr: false })
 
 interface DashboardData {
   isSuperAdmin?: boolean
@@ -81,6 +86,14 @@ interface DashboardData {
       createdAt: string
     }[]
   }
+  analytics?: {
+    revenueByDay30: { date: string; topup: number; count: number }[]
+    ordersByHour: { hour: string; count: number; amount: number }[]
+    ordersByDow: { day: string; orders: number; revenue: number }[]
+    packageMix: { packageType: string; count: number; revenue: number }[]
+    topUsers: { id: string; name: string; email: string; avatar: string | null; spend: number; topups: number }[]
+    serverHealth: { status: string; count: number }[]
+  }
 }
 
 function formatRelativeTime(dateStr: string) {
@@ -108,13 +121,13 @@ function getMethodLabel(method: string) {
   }
 }
 
-function getMethodIcon(method: string) {
+function MethodIcon({ method, className = 'w-4 h-4' }: { method: string; className?: string }) {
   switch (method) {
-    case 'truemoney': return '🟠'
-    case 'slip': return '🏦'
-    case 'admin': return '👑'
-    case 'referral': return '🎁'
-    default: return '💳'
+    case 'truemoney': return <Wallet className={`${className} text-orange-400`} />
+    case 'slip': return <Landmark className={`${className} text-blue-400`} />
+    case 'admin': return <KeyRound className={`${className} text-amber-400`} />
+    case 'referral': return <Heart className={`${className} text-violet-400`} />
+    default: return <CreditCard className={`${className} text-zinc-400`} />
   }
 }
 
@@ -404,6 +417,188 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* ========== ROW 3.5: Advanced Analytics ========== */}
+      {data.analytics && (
+        <>
+          {/* Composed Revenue Chart — 30 days */}
+          <div className="bg-zinc-900/40 border border-white/[0.06] rounded-2xl p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-emerald-500/10 border border-emerald-500/15 rounded-lg flex items-center justify-center">
+                  <CalendarDays className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">รายได้รายวัน 30 วันย้อนหลัง</h3>
+                  <p className="text-[10px] text-zinc-600">แท่ง = จำนวนครั้ง / เส้น = ยอดเงิน</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-[10px] text-zinc-500">
+                <span>รวม {data.analytics.revenueByDay30.reduce((s, d) => s + d.topup, 0).toLocaleString()} ฿</span>
+                <span>{data.analytics.revenueByDay30.reduce((s, d) => s + d.count, 0)} ครั้ง</span>
+              </div>
+            </div>
+            <ComposedRevenueChart data={data.analytics.revenueByDay30} height={280} />
+          </div>
+
+          {/* Hourly + DoW */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
+            {/* Hourly */}
+            <div className="bg-zinc-900/40 border border-white/[0.06] rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-cyan-500/10 border border-cyan-500/15 rounded-lg flex items-center justify-center">
+                  <Hourglass className="w-3.5 h-3.5 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">ออเดอร์ตามชั่วโมง</h3>
+                  <p className="text-[10px] text-zinc-600">7 วันล่าสุด · เวลาที่ขายดี</p>
+                </div>
+              </div>
+              <HourlyBars data={data.analytics.ordersByHour} height={220} />
+            </div>
+
+            {/* Day of week */}
+            <div className="bg-zinc-900/40 border border-white/[0.06] rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-violet-500/10 border border-violet-500/15 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">รูปแบบรายสัปดาห์</h3>
+                  <p className="text-[10px] text-zinc-600">30 วัน · วันไหนคนซื้อเยอะสุด</p>
+                </div>
+              </div>
+              <DowChart data={data.analytics.ordersByDow} height={220} />
+            </div>
+          </div>
+
+          {/* Package Mix + Top Users */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5">
+            {/* Package Mix Radial */}
+            <div className="bg-zinc-900/40 border border-white/[0.06] rounded-2xl p-4 sm:p-5 xl:col-span-1">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-amber-500/10 border border-amber-500/15 rounded-lg flex items-center justify-center">
+                  <PieChartIcon className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">สัดส่วนแพ็คเกจ</h3>
+                  <p className="text-[10px] text-zinc-600">30 วันล่าสุด</p>
+                </div>
+              </div>
+              {(() => {
+                const colors = ['#10b981', '#3b82f6', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4']
+                const labels: Record<string, string> = { TRIAL: 'ทดลอง', DAILY: 'รายวัน', WEEKLY: 'รายสัปดาห์', MONTHLY: 'รายเดือน' }
+                const mix = data.analytics!.packageMix.map((m, i) => ({
+                  name: labels[m.packageType] || m.packageType,
+                  count: m.count,
+                  revenue: m.revenue,
+                  fill: colors[i % colors.length],
+                }))
+                return <PackageRadial data={mix} height={220} />
+              })()}
+              <div className="mt-3 space-y-1.5">
+                {data.analytics.packageMix.map((m, i) => {
+                  const labels: Record<string, string> = { TRIAL: 'ทดลอง', DAILY: 'รายวัน', WEEKLY: 'รายสัปดาห์', MONTHLY: 'รายเดือน' }
+                  const colors = ['#10b981', '#3b82f6', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4']
+                  return (
+                    <div key={m.packageType} className="flex items-center gap-2 text-[11px]">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
+                      <span className="text-zinc-400 flex-1">{labels[m.packageType] || m.packageType}</span>
+                      <span className="font-bold text-white tabular-nums">{m.count}</span>
+                      <span className="text-zinc-600 tabular-nums w-16 text-right">{m.revenue.toLocaleString()}฿</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Top Users by Spend */}
+            <div className="bg-zinc-900/40 border border-white/[0.06] rounded-2xl p-4 sm:p-5 xl:col-span-2">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-yellow-500/10 border border-yellow-500/15 rounded-lg flex items-center justify-center">
+                    <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Top Spender เดือนนี้</h3>
+                    <p className="text-[10px] text-zinc-600">ผู้ใช้ที่เติมเงินสูงสุด 10 อันดับ</p>
+                  </div>
+                </div>
+                <Link href="/admin/users" className="text-[10px] font-bold text-zinc-600 hover:text-white flex items-center gap-1 transition-colors">
+                  ทั้งหมด <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+              {data.analytics.topUsers.length === 0 ? (
+                <p className="text-xs text-zinc-700 text-center py-8">ยังไม่มีข้อมูล</p>
+              ) : (
+                <div className="space-y-2">
+                  {data.analytics.topUsers.map((u, i) => {
+                    const maxSpend = data.analytics!.topUsers[0]?.spend || 1
+                    const pct = maxSpend > 0 ? Math.min(100, (u.spend / maxSpend) * 100) : 0
+                    const rankColor = i === 0 ? 'text-yellow-400' : i === 1 ? 'text-zinc-300' : i === 2 ? 'text-amber-600' : 'text-zinc-600'
+                    return (
+                      <div key={u.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/[0.02] transition-colors">
+                        <span className={`text-xs font-black tabular-nums w-5 text-right ${rankColor}`}>{i + 1}</span>
+                        <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-[10px] font-black text-zinc-400 overflow-hidden flex-shrink-0">
+                          {u.avatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" />
+                          ) : (u.name?.[0]?.toUpperCase() || '?')}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-[11px] font-bold text-white truncate">{u.name}</p>
+                            <span className="text-xs font-black text-emerald-400 tabular-nums flex-shrink-0 ml-2">{u.spend.toLocaleString()}฿</span>
+                          </div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] text-zinc-600 truncate">{u.email}</span>
+                            <span className="text-[10px] text-zinc-600 flex-shrink-0">{u.topups} ครั้ง</span>
+                          </div>
+                          <ProgressBar value={u.spend} max={maxSpend} color={i === 0 ? 'bg-yellow-500' : i < 3 ? 'bg-emerald-500' : 'bg-zinc-600'} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Server Health Distribution */}
+          {data.analytics.serverHealth.length > 0 && (
+            <div className="bg-zinc-900/40 border border-white/[0.06] rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-blue-500/10 border border-blue-500/15 rounded-lg flex items-center justify-center">
+                  <Activity className="w-3.5 h-3.5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">สถานะเซิร์ฟเวอร์</h3>
+                  <p className="text-[10px] text-zinc-600">การกระจายของ Health Check</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {(() => {
+                  const labels: Record<string, { label: string; color: string; bg: string; border: string }> = {
+                    healthy: { label: 'ใช้งานได้', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+                    unhealthy: { label: 'มีปัญหา', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+                    checking: { label: 'กำลังตรวจ', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+                    unknown: { label: 'ยังไม่ตรวจ', color: 'text-zinc-400', bg: 'bg-zinc-500/10', border: 'border-zinc-500/20' },
+                  }
+                  return data.analytics!.serverHealth.map((h) => {
+                    const meta = labels[h.status] || labels.unknown
+                    return (
+                      <div key={h.status} className={`p-3 rounded-xl border ${meta.border} ${meta.bg}`}>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{meta.label}</p>
+                        <p className={`text-2xl font-black mt-1 ${meta.color}`}>{h.count}</p>
+                      </div>
+                    )
+                  })
+                })()}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
       {/* ========== ROW 4: Top Servers + Revenue Summary ========== */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
         {/* Top Servers */}
@@ -521,8 +716,8 @@ export default function AdminPage() {
             ) : (
               recent.topups.slice(0, 6).map((t) => (
                 <div key={t.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/[0.02] transition-colors">
-                  <div className="w-8 h-8 bg-white/[0.03] border border-white/[0.05] rounded-lg flex items-center justify-center text-sm flex-shrink-0">
-                    {getMethodIcon(t.method)}
+                  <div className="w-8 h-8 bg-white/[0.03] border border-white/[0.05] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MethodIcon method={t.method} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-bold text-white truncate">{t.userName}</p>
